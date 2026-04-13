@@ -1,0 +1,85 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .s{fill:none;stroke:#f97316;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+      .f{fill:#f97316;opacity:.08}
+    </style>
+  </defs>
+
+  <!-- Paw -->
+  <g transform="translate(36 42)" opacity="0.9">
+    <circle class="f" cx="28" cy="30" r="15"/>
+    <circle class="s" cx="28" cy="30" r="15"/>
+    <circle class="s" cx="12" cy="14" r="6"/>
+    <circle class="s" cx="28" cy="10" r="6"/>
+    <circle class="s" cx="44" cy="14" r="6"/>
+    <circle class="s" cx="52" cy="28" r="6"/>
+  </g>
+
+  <!-- Bone -->
+  <g transform="translate(206 34)" opacity="0.85">
+    <circle class="s" cx="10" cy="10" r="6"/>
+    <circle class="s" cx="10" cy="28" r="6"/>
+    <circle class="s" cx="66" cy="10" r="6"/>
+    <circle class="s" cx="66" cy="28" r="6"/>
+    <rect class="s" x="16" y="14" width="44" height="10" rx="5"/>
+    <rect class="f" x="16" y="14" width="44" height="10" rx="5"/>
+  </g>
+
+  <!-- Fish -->
+  <g transform="translate(48 212)" opacity="0.85">
+    <path class="s" d="M8 18C18 6 38 6 48 18C38 30 18 30 8 18Z"/>
+    <path class="s" d="M48 18L66 6V30L48 18Z"/>
+    <circle cx="22" cy="16" r="2" fill="#f97316" opacity="0.35"/>
+  </g>
+
+  <!-- Ball -->
+  <g transform="translate(238 226)" opacity="0.85">
+    <circle class="s" cx="18" cy="18" r="14"/>
+    <path class="s" d="M4 18H32"/>
+    <path class="s" d="M18 4V32"/>
+    <path class="s" d="M8 8C14 12 22 12 28 8"/>
+    <path class="s" d="M8 28C14 24 22 24 28 28"/>
+  </g>
+
+  <!-- Bowl -->
+  <g transform="translate(134 152)" opacity="0.8">
+    <path class="s" d="M6 14H42"/>
+    <path class="s" d="M10 14C12 30 36 30 38 14"/>
+    <path class="s" d="M16 32H32"/>
+    <circle class="f" cx="24" cy="10" r="5"/>
+  </g>
+
+  <!-- Collar + Tag -->
+  <g transform="translate(248 124)" opacity="0.8">
+    <path class="s" d="M8 18C14 8 30 8 36 18"/>
+    <path class="s" d="M18 18H26"/>
+    <circle class="s" cx="22" cy="28" r="6"/>
+    <circle cx="22" cy="28" r="2" fill="#f97316" opacity="0.25"/>
+  </g>
+
+  <!-- Small paws for texture -->
+  <g opacity="0.55">
+    <g transform="translate(140 54) scale(0.7)">
+      <circle class="s" cx="18" cy="20" r="10"/>
+      <circle class="s" cx="8" cy="10" r="4"/>
+      <circle class="s" cx="18" cy="6" r="4"/>
+      <circle class="s" cx="28" cy="10" r="4"/>
+      <circle class="s" cx="34" cy="20" r="4"/>
+    </g>
+    <g transform="translate(22 152) scale(0.65)">
+      <circle class="s" cx="18" cy="20" r="10"/>
+      <circle class="s" cx="8" cy="10" r="4"/>
+      <circle class="s" cx="18" cy="6" r="4"/>
+      <circle class="s" cx="28" cy="10" r="4"/>
+      <circle class="s" cx="34" cy="20" r="4"/>
+    </g>
+    <g transform="translate(176 270) scale(0.7)">
+      <circle class="s" cx="18" cy="20" r="10"/>
+      <circle class="s" cx="8" cy="10" r="4"/>
+      <circle class="s" cx="18" cy="6" r="4"/>
+      <circle class="s" cx="28" cy="10" r="4"/>
+      <circle class="s" cx="34" cy="20" r="4"/>
+    </g>
+  </g>
+</svg>

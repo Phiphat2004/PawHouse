@@ -1,0 +1,28 @@
+{
+  "name": "pawcare-services",
+  "version": "1.0.0",
+  "description": "PawCare Microservices - Run all services together",
+  "scripts": {
+    "dev": "concurrently -n \"AUTH,PRODUCT,POST,ACCOUNT,ORDER\" -c \"blue,green,yellow,magenta,cyan\" \"npm run dev:auth\" \"npm run dev:product\" \"npm run dev:post\" \"npm run dev:account\" \"npm run dev:order\"",
+    "dev:auth": "cd auth-service && npm run dev",
+    "dev:product": "cd product-service && npm run dev",
+    "dev:post": "cd post-service && npm run dev",
+    "dev:account": "cd accountManagement-service && npm run dev",
+    "dev:order": "cd order-service && npm run dev",
+    "start": "concurrently -n \"AUTH,PRODUCT,POST,ACCOUNT,ORDER\" -c \"blue,green,yellow,magenta,cyan\" \"npm run start:auth\" \"npm run start:product\" \"npm run start:post\" \"npm run start:account\" \"npm run start:order\"",
+    "start:auth": "cd auth-service && npm start",
+    "start:product": "cd product-service && npm start",
+    "start:post": "cd post-service && npm start",
+    "start:account": "cd accountManagement-service && npm start",
+    "start:order": "cd order-service && npm start",
+    "install:all": "npm run install:auth && npm run install:product && npm run install:post && npm run install:account && npm run install:order",
+    "install:auth": "cd auth-service && npm install",
+    "install:product": "cd product-service && npm install",
+    "install:post": "cd post-service && npm install",
+    "install:account": "cd accountManagement-service && npm install",
+    "install:order": "cd order-service && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
