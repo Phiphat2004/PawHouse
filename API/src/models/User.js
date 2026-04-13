@@ -40,18 +40,15 @@ const userSchema = new mongoose.Schema(
         addressLine: String,
       },
     },
-    role: {
-      type: String,
-      enum: ["user", "admin", "staff", "veterinarian"],
-      default: "user",
+    roles: {
+      type: [
+        {
+          type: String,
+          enum: ["customer", "admin", "staff", "veterinarian"],
+        },
+      ],
+      default: ["customer"],
     },
-    roles: [
-      {
-        type: String,
-        enum: ["admin", "staff", "customer"],
-        default: "customer",
-      },
-    ],
     is_banned: { type: Boolean, default: false },
     is_deleted: { type: Boolean, default: false },
     settings: {

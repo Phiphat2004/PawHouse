@@ -67,7 +67,7 @@ async function register({ fullName, email, password }) {
       passwordHash,
       isVerified: false,
       tokenVersion: 0,
-      roles: ["customer", "admin"], // Default to admin for development
+      roles: ["customer"],
       profile: { fullName: fullName || "" },
     });
   }
@@ -209,9 +209,7 @@ async function login({ email, password }, deviceInfo = {}) {
       userId: user._id,
       tokenVersion: user.tokenVersion,
       email: user.email,
-      roles: user.roles.includes("admin")
-        ? user.roles
-        : [...user.roles, "admin"], // Temporarily grant admin
+      roles: user.roles,
     },
     config.jwt.secret,
     { expiresIn: config.jwt.expiresIn },
