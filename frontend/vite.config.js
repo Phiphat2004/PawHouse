@@ -69,73 +69,13 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     proxy: {
-      // Uploads from auth-service (avatars, etc.)
-      '/uploads': {
-        target: 'http://localhost:5001',
-        changeOrigin: true
-      },
-      // Auth routes → auth-service (port 5001)
-      '/api/auth': {
-        target: 'http://localhost:5001',
-        changeOrigin: true
-      },
-      // Product routes → product-service (port 5002)
-      '/api/products': {
-        target: 'http://localhost:5002',
-        changeOrigin: true
-      },
-      // Category routes → product-service (port 5002)
-      '/api/categories': {
-        target: 'http://localhost:5002',
-        changeOrigin: true
-      },
-      // Review routes → product-service (port 5002)
-      '/api/reviews': {
-        target: 'http://localhost:5002',
-        changeOrigin: true
-      },
-      // Cart routes → product-service (port 5002)
-      '/api/cart': {
-        target: 'http://localhost:5002',
-        changeOrigin: true
-      },
-      // Stock routes → product-service (port 5002)
-      '/api/stock': {
-        target: 'http://localhost:5002',
-        changeOrigin: true
-      },
-      // Warehouse routes → product-service (port 5002)
-      '/api/warehouses': {
-        target: 'http://localhost:5002',
-        changeOrigin: true
-      },
-      // Post routes → post-service (port 5003)
-      '/api/posts': {
-        target: 'http://localhost:5003',
-        changeOrigin: true
-      },
-      // Tag routes → post-service (port 5003)
-      '/api/tags': {
-        target: 'http://localhost:5003',
-        changeOrigin: true
-      },
-      // Account Management routes → account-management-service (port 5005)
-      '/api/admin/account-management': {
-        target: 'http://localhost:5005',
-        changeOrigin: true
-      },
-      // Order routes → order-service (port 5006)
-      '/api/orders': {
-        target: 'http://localhost:5006',
-        changeOrigin: true
-      },
-      // Payment routes → order-service (port 5006)
-      '/api/payments': {
-        target: 'http://localhost:5006',
-        changeOrigin: true
-      },
-      // Other routes → backend (port 5000)
+      // Tất cả /api/* → Monolith API (port 5000)
       '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      },
+      // Static uploads (avatars, ...)
+      '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true
       }
