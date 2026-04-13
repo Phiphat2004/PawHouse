@@ -1,4 +1,4 @@
-const config = require('../config');
+const config = require("../config");
 
 let resendClient = null;
 
@@ -7,10 +7,10 @@ let resendClient = null;
  */
 function getResendClient() {
   if (resendClient) return resendClient;
-  const apiKey = config.email.resendApiKey;
+  const apiKey = config.resend.apiKey;
   if (!apiKey) return null;
   try {
-    const { Resend } = require('resend');
+    const { Resend } = require("resend");
     resendClient = new Resend(apiKey);
     return resendClient;
   } catch {
@@ -30,55 +30,60 @@ async function sendEmail({ to, subject, html }) {
         from: config.email.from,
         to,
         subject,
-        html
+        html,
       });
       if (result.error) {
-        console.error('[EMAIL-RESEND] Error:', result.error.message);
+        console.error("[EMAIL-RESEND] Error:", result.error.message);
       } else {
         console.log(`[EMAIL-RESEND] Sent to ${to}: "${subject}"`);
         return true;
       }
     } catch (err) {
-      console.error('[EMAIL-RESEND] Error:', err.message);
+      console.error("[EMAIL-RESEND] Error:", err.message);
     }
   }
 
   // Resend API error or not configured
-  console.warn(`[EMAIL] Resend not configured or failed — skipping email to ${to}`);
+  console.warn(
+    `[EMAIL] Resend not configured or failed — skipping email to ${to}`,
+  );
   return false;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function formatPrice(n) {
-  return Number(n || 0).toLocaleString('vi-VN') + '₫';
+  return Number(n || 0).toLocaleString("vi-VN") + "₫";
 }
 
 function formatDate(d) {
-  return new Date(d).toLocaleString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+  return new Date(d).toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 const STATUS_LABELS = {
-  pending:   'Chờ xác nhận',
-  confirmed: 'Đã xác nhận',
-  packing:   'Đang đóng gói',
-  shipping:  'Đang giao hàng',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã hủy',
-  refunded:  'Đã hoàn tiền'
+  pending: "Chờ xác nhận",
+  confirmed: "Đã xác nhận",
+  packing: "Đang đóng gói",
+  shipping: "Đang giao hàng",
+  completed: "Hoàn thành",
+  cancelled: "Đã hủy",
+  refunded: "Đã hoàn tiền",
 };
 
 const STATUS_COLORS = {
-  pending:   '#f59e0b',
-  confirmed: '#3b82f6',
-  packing:   '#8b5cf6',
-  shipping:  '#6366f1',
-  completed: '#22c55e',
-  cancelled: '#ef4444',
-  refunded:  '#6b7280'
+  pending: "#f59e0b",
+  confirmed: "#3b82f6",
+  packing: "#8b5cf6",
+  shipping: "#6366f1",
+  completed: "#22c55e",
+  cancelled: "#ef4444",
+  refunded: "#6b7280",
 };
 
 // ─── HTML Templates ──────────────────────────────────────────────────────────
@@ -108,19 +113,25 @@ function baseLayout(body) {
 }
 
 function itemRows(items = []) {
-  return items.map(item => `
+  return items
+    .map(
+      (item) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">
-        ${item.productName || 'Sản phẩm'}${item.variationName ? ` <span style="color:#9ca3af;">(${item.variationName})</span>` : ''}
+        ${item.productName || "Sản phẩm"}${item.variationName ? ` <span style="color:#9ca3af;">(${item.variationName})</span>` : ""}
       </td>
       <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;text-align:center;">x${item.quantity}</td>
       <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;text-align:right;">${formatPrice(item.lineTotal)}</td>
-    </tr>`).join('');
+    </tr>`,
+    )
+    .join("");
 }
 
 function orderSummaryTable(order) {
   const addr = order.addressSnapshot || {};
-  const fullAddr = [addr.addressLine, addr.ward, addr.district, addr.city].filter(Boolean).join(', ');
+  const fullAddr = [addr.addressLine, addr.ward, addr.district, addr.city]
+    .filter(Boolean)
+    .join(", ");
   return `
     <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-top:20px;">
       <thead>
@@ -146,7 +157,7 @@ function orderSummaryTable(order) {
       <tr>
         <td width="50%" valign="top" style="padding-right:10px;">
           <p style="margin:0 0 6px;font-size:13px;font-weight:bold;color:#374151;">Địa chỉ giao hàng</p>
-          <p style="margin:0;font-size:13px;color:#6b7280;">${addr.fullName || ''}<br/>${addr.phone || ''}<br/>${fullAddr}</p>
+          <p style="margin:0;font-size:13px;color:#6b7280;">${addr.fullName || ""}<br/>${addr.phone || ""}<br/>${fullAddr}</p>
         </td>
         <td width="50%" valign="top" style="padding-left:10px;">
           <p style="margin:0 0 6px;font-size:13px;font-weight:bold;color:#374151;">Thanh toán</p>
@@ -169,7 +180,7 @@ exports.sendOrderConfirmation = async (order, toEmail) => {
   const body = `
     <h2 style="margin:0 0 8px;color:#374151;font-size:20px;">Đặt hàng thành công! 🎉</h2>
     <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">
-      Xin chào <strong>${order.addressSnapshot?.fullName || 'bạn'}</strong>,
+      Xin chào <strong>${order.addressSnapshot?.fullName || "bạn"}</strong>,
       đơn hàng của bạn đã được tiếp nhận và đang chờ xác nhận.
     </p>
     <div style="background:#f9f7f5;border-radius:8px;padding:14px 18px;display:inline-block;margin-bottom:20px;">
@@ -180,14 +191,14 @@ exports.sendOrderConfirmation = async (order, toEmail) => {
     </div>
     ${orderSummaryTable(order)}
     <p style="margin:28px 0 0;font-size:14px;color:#6b7280;">
-      Chúng tôi sẽ liên hệ với bạn qua số điện thoại <strong>${order.addressSnapshot?.phone || ''}</strong>
+      Chúng tôi sẽ liên hệ với bạn qua số điện thoại <strong>${order.addressSnapshot?.phone || ""}</strong>
       để xác nhận đơn hàng sớm nhất.
     </p>`;
 
   await sendEmail({
     to: toEmail,
     subject: `[PawCare] Xác nhận đơn hàng #${order.orderCode}`,
-    html: baseLayout(body)
+    html: baseLayout(body),
   });
 };
 
@@ -200,21 +211,27 @@ exports.sendOrderStatusUpdate = async (order, toEmail) => {
   if (!toEmail) return;
 
   const statusLabel = STATUS_LABELS[order.status] || order.status;
-  const statusColor = STATUS_COLORS[order.status] || '#846551';
+  const statusColor = STATUS_COLORS[order.status] || "#846551";
 
   const messages = {
-    confirmed: 'Đơn hàng của bạn đã được xác nhận. Chúng tôi đang chuẩn bị hàng cho bạn.',
-    packing:   'Đơn hàng của bạn đang được đóng gói cẩn thận và sẽ sớm được bàn giao cho đơn vị vận chuyển.',
-    shipping:  'Đơn hàng của bạn đã được bàn giao cho đơn vị vận chuyển và đang trên đường đến bạn. Vui lòng chú ý điện thoại!',
-    completed: 'Đơn hàng của bạn đã được giao thành công. Cảm ơn bạn đã tin tưởng và mua sắm tại PawCare! 🐾',
-    cancelled: 'Đơn hàng của bạn đã bị hủy. Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi để được hỗ trợ.',
-    refunded:  'Chúng tôi đã tiến hành hoàn tiền cho đơn hàng của bạn. Vui lòng kiểm tra tài khoản trong vòng 3–5 ngày làm việc.'
+    confirmed:
+      "Đơn hàng của bạn đã được xác nhận. Chúng tôi đang chuẩn bị hàng cho bạn.",
+    packing:
+      "Đơn hàng của bạn đang được đóng gói cẩn thận và sẽ sớm được bàn giao cho đơn vị vận chuyển.",
+    shipping:
+      "Đơn hàng của bạn đã được bàn giao cho đơn vị vận chuyển và đang trên đường đến bạn. Vui lòng chú ý điện thoại!",
+    completed:
+      "Đơn hàng của bạn đã được giao thành công. Cảm ơn bạn đã tin tưởng và mua sắm tại PawCare! 🐾",
+    cancelled:
+      "Đơn hàng của bạn đã bị hủy. Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi để được hỗ trợ.",
+    refunded:
+      "Chúng tôi đã tiến hành hoàn tiền cho đơn hàng của bạn. Vui lòng kiểm tra tài khoản trong vòng 3–5 ngày làm việc.",
   };
 
   const body = `
     <h2 style="margin:0 0 8px;color:#374151;font-size:20px;">Cập nhật đơn hàng</h2>
     <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">
-      Xin chào <strong>${order.addressSnapshot?.fullName || 'bạn'}</strong>,
+      Xin chào <strong>${order.addressSnapshot?.fullName || "bạn"}</strong>,
       trạng thái đơn hàng của bạn vừa được cập nhật.
     </p>
     <div style="background:#f9f7f5;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
@@ -227,20 +244,21 @@ exports.sendOrderStatusUpdate = async (order, toEmail) => {
         ${statusLabel}
       </span>
     </div>
-    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;">${messages[order.status] || ''}</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b7280;">${messages[order.status] || ""}</p>
     ${orderSummaryTable(order)}`;
 
   await sendEmail({
     to: toEmail,
     subject: `[PawCare] Đơn hàng #${order.orderCode} — ${statusLabel}`,
-    html: baseLayout(body)
+    html: baseLayout(body),
   });
 };
 
 // ─── OTP Functions (from auth-service) ──────────────────────────────────────
 
-function getOtpEmailHtml(otp, type = 'verification') {
-  const title = type === 'verification' ? 'Mã xác thực tài khoản' : 'Mã đặt lại mật khẩu';
+function getOtpEmailHtml(otp, type = "verification") {
+  const title =
+    type === "verification" ? "Mã xác thực tài khoản" : "Mã đặt lại mật khẩu";
   return `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
       <h2 style="color: #f97316;">🐾 PawHouse</h2>
@@ -256,30 +274,33 @@ function getOtpEmailHtml(otp, type = 'verification') {
   `;
 }
 
-exports.sendOtpEmail = async (toEmail, otp, type = 'verification') => {
-  const subject = type === 'verification' ? '[PawHouse] Mã xác thực tài khoản' : '[PawHouse] Đặt lại mật khẩu';
+exports.sendOtpEmail = async (toEmail, otp, type = "verification") => {
+  const subject =
+    type === "verification"
+      ? "[PawHouse] Mã xác thực tài khoản"
+      : "[PawHouse] Đặt lại mật khẩu";
   const html = getOtpEmailHtml(otp, type);
 
   const resend = getResendClient();
   if (resend) {
     try {
       const result = await resend.emails.send({
-        from: config.resend?.fromEmail || 'onboarding@resend.dev',
+        from: config.resend?.fromEmail || "onboarding@resend.dev",
         to: toEmail,
         subject,
-        html
+        html,
       });
       if (!result.error) {
-        console.log('[EMAIL] Sent OTP to', toEmail);
-        return { sent: true, provider: 'resend' };
+        console.log("[EMAIL] Sent OTP to", toEmail);
+        return { sent: true, provider: "resend" };
       }
-      console.error('[EMAIL] Resend error:', result.error.message);
+      console.error("[EMAIL] Resend error:", result.error.message);
     } catch (err) {
-      console.error('[EMAIL] Error:', err.message);
+      console.error("[EMAIL] Error:", err.message);
     }
   }
 
   // Dev mode fallback
-  console.log('[EMAIL-DEV] OTP for', toEmail, ':', otp);
+  console.log("[EMAIL-DEV] OTP for", toEmail, ":", otp);
   return { devMode: true, otp };
 };

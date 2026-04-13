@@ -1,13 +1,65 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  roles: [{ type: String }],
-  profile: {
-    fullName: String,
-    avatarUrl: String
-  }
-}, { timestamps: true });
+const userSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
+    passwordHash: { type: String },
+    status: {
+      type: String,
+      enum: ["active", "banned", "deleted"],
+      default: "active",
+    },
+    isVerified: { type: Boolean, default: false },
+    tokenVersion: { type: Number, default: 0 },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    profile: {
+      fullName: { type: String, trim: true },
+      avatarUrl: { type: String },
+      gender: { type: String, enum: ["male", "female", "other"] },
+      dob: { type: Date },
+      address: {
+        city: String,
+        district: String,
+        ward: String,
+        addressLine: String,
+      },
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin", "staff", "veterinarian"],
+      default: "user",
+    },
+    roles: [
+      {
+        type: String,
+        enum: ["admin", "staff", "customer"],
+        default: "customer",
+      },
+    ],
+    is_banned: { type: Boolean, default: false },
+    is_deleted: { type: Boolean, default: false },
+    settings: {
+      marketingEmail: { type: Boolean, default: true },
+      pushNotification: { type: Boolean, default: true },
+    },
+  },
+  { timestamps: true },
+);
 
-// We only need this for population, so we don't need strict validation or methods
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
