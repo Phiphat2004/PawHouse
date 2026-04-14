@@ -13,6 +13,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
   const [showPreview, setShowPreview] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
 
   useEffect(() => {
     if (post) {
@@ -68,6 +69,53 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
       setImageError(false);
     }
   };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    // create a local preview so user sees the image immediately
+    if (localPreviewUrl) {
+      URL.revokeObjectURL(localPreviewUrl);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreviewUrl(objectUrl);
+    setFormData(prev => ({ ...prev, coverImageUrl: objectUrl }));
+    setImageLoading(true);
+    setImageError(false);
+
+    try {
+      const token = localStorage.getItem('pawhouse_token') || JSON.parse(localStorage.getItem('pawhouse_user') || '{}')?.token || null;
+      const form = new FormData();
+      form.append('file', file);
+
+      const res = await fetch('/api/posts/upload', {
+        method: 'POST',
+        body: form,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Upload thất bại');
+      const data = await res.json();
+      // replace local preview with remote url
+      setFormData(prev => ({ ...prev, coverImageUrl: data.url }));
+      // revoke local preview URL if present
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+        setLocalPreviewUrl(null);
+      }
+    } catch (err) {
+      console.error('Upload error', err);
+      setImageError(true);
+      alert('Tải ảnh lên thất bại');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
+    };
+  }, [localPreviewUrl]);
 
   const renderMarkdownPreview = (text) => {
     if (!text) return <p className="text-gray-400 italic">Nội dung preview sẽ hiển thị ở đây...</p>;
@@ -207,14 +255,14 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
               <span className="text-xl">🖼️</span>
               <span>Ảnh bìa</span>
             </label>
-            <input
-              type="url"
-              name="coverImageUrl"
-              value={formData.coverImageUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-            />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full file:border-0 file:bg-orange-50 file:px-4 file:py-2 file:rounded-full"
+              />
+            </div>
             
             {/* Image Preview */}
             {formData.coverImageUrl && (
