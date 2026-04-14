@@ -178,7 +178,25 @@ async function getAllProducts({
   };
 }
 
+/**
+ * Get product by ID
+ */
+async function getProductById(id) {
+  return Product.findOne({ _id: id, isDeleted: { $ne: true } })
+    .populate("categoryIds", "name slug");
+}
+
+/**
+ * Get product by slug
+ */
+async function getProductBySlug(slug) {
+  return Product.findOne({ slug, isDeleted: { $ne: true } })
+    .populate("categoryIds", "name slug");
+}
+
 module.exports = {
   createProduct,
   getAllProducts,
+  getProductById,
+  getProductBySlug,
 };

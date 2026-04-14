@@ -22,6 +22,34 @@ const productController = {
       res.status(500).json({ error: "Lỗi khi lấy danh sách sản phẩm" });
     }
   },
+
+  // Get product by ID
+  async getById(req, res) {
+    try {
+      const product = await productService.getProductById(req.params.id);
+      if (!product) {
+        return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
+      }
+      res.json({ product });
+    } catch (error) {
+      console.error("Error getting product:", error);
+      res.status(500).json({ error: "Lỗi khi lấy thông tin sản phẩm" });
+    }
+  },
+
+  // Get product by slug
+  async getBySlug(req, res) {
+    try {
+      const product = await productService.getProductBySlug(req.params.slug);
+      if (!product) {
+        return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
+      }
+      res.json({ product });
+    } catch (error) {
+      console.error("Error getting product by slug:", error);
+      res.status(500).json({ error: "Lỗi khi lấy thông tin sản phẩm" });
+    }
+  },
 };
 
 module.exports = productController;
