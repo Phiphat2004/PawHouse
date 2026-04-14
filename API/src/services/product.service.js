@@ -297,10 +297,37 @@ async function updateProduct(id, data, userRoles) {
   return product.populate("categoryIds", "name slug");
 }
 
+/**
+ * Delete a product (Soft delete)
+ */
+async function deleteProduct(id, userRoles) {
+  // Check if user is admin
+  if (!userRoles?.includes("admin")) {
+    const error = new Error("Không có quyền thực hiện");
+    error.status = 403;
+    throw error;
+  }
+
+  const product = await Product.findOneAndUpdate(
+    { _id: id, isDeleted: { $ne: true } },
+    { isDeleted: true },
+    { new: true }
+  );
+
+  if (!product) {
+    const error = new Error("Không tìm thấy sản phẩm");
+    error.status = 404;
+    throw error;
+  }
+
+  return product;
+}
+
 module.exports = {
   createProduct,
   getAllProducts,
   getProductById,
   getProductBySlug,
   updateProduct,
+  deleteProduct,
 };
