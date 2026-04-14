@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
 const categoryController = require('../controllers/category.controller');
 const { protectRoute } = require('../middlewares');
 
@@ -26,6 +26,22 @@ const createCategoryValidation = [
 // GET /categories - Get all categories
 router.get('/', categoryController.getAll);
 
+// GET /categories/:id - Get category by ID
+router.get(
+  '/:id',
+  [param('id').isMongoId().withMessage('Invalid category ID')],
+  handleValidationErrors,
+  categoryController.getById,
+);
+
+// GET /categories/:id - Get category by ID
+router.get(
+  '/:id',
+  [param('id').isMongoId().withMessage('Invalid category ID')],
+  handleValidationErrors,
+  categoryController.getById,
+);
+
 // POST /categories - Create a new category (Admin only)
 router.post(
   '/',
@@ -33,6 +49,27 @@ router.post(
   createCategoryValidation,
   handleValidationErrors,
   categoryController.create,
+);
+
+// PUT /categories/:id - Update category (Admin only)
+router.put(
+  '/:id',
+  ...protectRoute(['admin']),
+  [
+    param('id').isMongoId().withMessage('Invalid category ID'),
+    body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
+  ],
+  handleValidationErrors,
+  categoryController.update,
+);
+
+// DELETE /categories/:id - Delete category (Admin only)
+router.delete(
+  '/:id',
+  ...protectRoute(['admin']),
+  [param('id').isMongoId().withMessage('Invalid category ID')],
+  handleValidationErrors,
+  categoryController.delete,
 );
 
 module.exports = router;

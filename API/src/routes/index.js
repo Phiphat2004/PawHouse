@@ -3,7 +3,10 @@ const router = express.Router();
 
 const authRoutes = require("./auth.routes");
 
-const postRoutes = require("./post.routes");
+const postRoutes = require('./post.routes');
+
+const categoryRoutes = require('./category.routes');
+const productRoutes = require('./product.routes');
 
 const categoryRoutes = require("./category.routes");
 const accountManagementRoutes = require("./accountManagement.routes");
@@ -18,5 +21,8 @@ router.use("/categories", categoryRoutes);
 
 // Admin account management
 router.use("/admin/account-management", accountManagementRoutes);
+
+// Product
+router.use('/products', productRoutes);
 
 module.exports = router;

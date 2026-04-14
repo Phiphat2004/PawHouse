@@ -164,11 +164,10 @@ export default function AdminProductDetailPage() {
           <div className="flex gap-3">
             <button
               onClick={handleToggleStatus}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                product.isActive
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${product.isActive
                   ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                   : "bg-green-100 text-green-700 hover:bg-green-200"
-              }`}
+                }`}
             >
               {product.isActive ? "Tạm ngưng" : "Kích hoạt"}
             </button>
@@ -289,13 +288,12 @@ export default function AdminProductDetailPage() {
                   <span className="text-sm text-gray-600">Tồn kho</span>
                   <div className="mt-1 flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-lg font-bold ${
-                        product.stock === 0
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-lg font-bold ${product.stock === 0
                           ? "bg-red-100 text-red-800"
                           : product.stock < 10
                             ? "bg-yellow-100 text-yellow-800"
                             : "bg-green-100 text-green-800"
-                      }`}
+                        }`}
                     >
                       {product.stock || 0}
                     </span>

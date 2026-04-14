@@ -12,6 +12,59 @@ const categoryController = {
     }
   },
 
+  // Get category by ID
+  async getById(req, res) {
+    try {
+      const category = await categoryService.getCategoryById(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: "Không tìm thấy danh mục" });
+      }
+      res.json({ category });
+    } catch (error) {
+      console.error("Error getting category:", error);
+      res.status(500).json({ error: "Lỗi khi lấy thông tin danh mục" });
+    }
+  },
+
+  // Get category by ID
+  async getById(req, res) {
+    try {
+      const category = await categoryService.getCategoryById(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: "Không tìm thấy danh mục" });
+      }
+      res.json({ category });
+    } catch (error) {
+      console.error("Error getting category:", error);
+      res.status(500).json({ error: "Lỗi khi lấy thông tin danh mục" });
+    }
+  },
+
+  // Update category
+  async update(req, res) {
+    try {
+      const category = await categoryService.updateCategory(req.params.id, req.body, req.user?.roles);
+      res.json({ category });
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(error.status || 500).json({ error: error.message || "Lỗi khi cập nhật danh mục" });
+    }
+  },
+
+  // Delete category
+  async delete(req, res) {
+    try {
+      const deletedCategory = await categoryService.deleteCategory(req.params.id, req.user?.roles);
+      res.json({
+        message: "Xóa danh mục thành công",
+        deletedCategory,
+      });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(error.status || 500).json({ error: error.message || "Lỗi khi xóa danh mục" });
+    }
+  },
+
   // Create new category
   async create(req, res) {
     try {
