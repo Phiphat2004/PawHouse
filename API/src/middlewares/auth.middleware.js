@@ -103,7 +103,7 @@ async function optionalAuth(req, res, next) {
 /**
  * Middleware kiểm tra quyền dựa trên roles.
  * Phải dùng sau authenticate.
- * Usage: router.get('/admin', authenticate, authorize(['admin', 'staff']), handler)
+ * Usage: router.get('/admin', authenticate, authorize(['admin']), handler)
  */
 function authorize(roles = []) {
   return (req, res, next) => {
