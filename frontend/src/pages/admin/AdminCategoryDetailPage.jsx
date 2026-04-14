@@ -184,11 +184,10 @@ export default function AdminCategoryDetailPage() {
           <div className="flex gap-3">
             <button
               onClick={handleToggleStatus}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                category.isActive
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${category.isActive
                   ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                   : "bg-green-100 text-green-700 hover:bg-green-200"
-              }`}
+                }`}
             >
               {category.isActive ? "Tạm ngưng" : "Kích hoạt"}
             </button>
@@ -232,11 +231,10 @@ export default function AdminCategoryDetailPage() {
                   🔗 Danh mục cha
                 </h2>
                 <Link
-                  to={`/quan-tri/danh-muc/${
-                    typeof category.parentId === "string"
+                  to={`/quan-tri/danh-muc/${typeof category.parentId === "string"
                       ? category.parentId
                       : category.parentId._id
-                  }`}
+                    }`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
                 >
                   <span className="text-xl">📂</span>
