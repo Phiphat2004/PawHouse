@@ -449,10 +449,6 @@ export default function AuthPage() {
 
         <div className="mt-8 grid lg:grid-cols-2 gap-10 items-center">
           <div className="hidden lg:block space-y-6 animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200/80 bg-white/70 px-4 py-2 text-sm text-gray-700 shadow-sm backdrop-blur-sm">
-              <span className="text-base">✨</span>
-              Mượt mà • Hiện đại • Tối ưu UX
-            </div>
 
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
               Bắt đầu hành trình chăm sóc
