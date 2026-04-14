@@ -51,6 +51,20 @@ const categoryController = {
     }
   },
 
+  // Delete category
+  async delete(req, res) {
+    try {
+      const deletedCategory = await categoryService.deleteCategory(req.params.id, req.user?.roles);
+      res.json({
+        message: "Xóa danh mục thành công",
+        deletedCategory,
+      });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(error.status || 500).json({ error: error.message || "Lỗi khi xóa danh mục" });
+    }
+  },
+
   // Create new category
   async create(req, res) {
     try {
