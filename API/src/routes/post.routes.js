@@ -43,6 +43,9 @@ const idValidation = [
 ];
 
 // Public route: list published posts
+// Search route: public search for published posts
+router.get('/search', optionalAuth, postController.search);
+
 router.get('/public', postController.getPublicPosts);
 
 // Admin: get all posts

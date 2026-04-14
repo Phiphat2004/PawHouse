@@ -33,6 +33,19 @@ const postController = {
   },
 
   /**
+   * Search posts (public)
+   * GET /api/posts/search?q=...&page=1&limit=20
+   */
+  async search(req, res, next) {
+    try {
+      const { q, page = 1, limit = 20, tagId } = req.query;
+      const status = 'published';
+      const result = await postService.searchPosts({ q, page, limit, tagId, status });
+      res.json(result);
+    } catch (error) { next(error); }
+  },
+
+  /**
    * Get all posts (admin only)
    * GET /api/posts
    */
