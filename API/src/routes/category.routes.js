@@ -34,6 +34,14 @@ router.get(
   categoryController.getById,
 );
 
+// GET /categories/:id - Get category by ID
+router.get(
+  '/:id',
+  [param('id').isMongoId().withMessage('Invalid category ID')],
+  handleValidationErrors,
+  categoryController.getById,
+);
+
 // POST /categories - Create a new category (Admin only)
 router.post(
   '/',
@@ -41,6 +49,18 @@ router.post(
   createCategoryValidation,
   handleValidationErrors,
   categoryController.create,
+);
+
+// PUT /categories/:id - Update category (Admin only)
+router.put(
+  '/:id',
+  ...protectRoute(['admin']),
+  [
+    param('id').isMongoId().withMessage('Invalid category ID'),
+    body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
+  ],
+  handleValidationErrors,
+  categoryController.update,
 );
 
 module.exports = router;
