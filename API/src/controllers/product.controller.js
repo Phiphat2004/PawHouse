@@ -57,6 +57,18 @@ const productController = {
     } catch (error) {
       console.error("Error updating product:", error);
       res.status(error.status || 500).json({ error: error.message || "Lỗi khi cập nhật sản phẩm" });
+    }},
+  // Delete product
+  async delete(req, res) {
+    try {
+      const deletedProduct = await productService.deleteProduct(req.params.id, req.user?.roles);
+      res.json({
+        message: "Xóa sản phẩm thành công",
+        deletedProduct,
+      });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(error.status || 500).json({ error: error.message || "Lỗi khi xóa sản phẩm" });
     }
   },
 };
