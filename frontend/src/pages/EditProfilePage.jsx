@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Header, Footer } from '../components/layout'
+import { AdminLayout } from '../components/admin'
 import { STORAGE_KEYS, ROUTES } from '../utils/constants'
 import { authApi } from '../utils/services/api'
+
+function isAdminUser(user) {
+  if (!user) return false
+  if (user.isAdmin === true) return true
+  return Array.isArray(user.roles) && user.roles.includes('admin')
+}
 
 export default function EditProfilePage() {
   const navigate = useNavigate()
@@ -10,6 +17,7 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const [form, setForm] = useState({
     fullName: '',
@@ -31,14 +39,26 @@ export default function EditProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
+      const storedUser = localStorage.getItem(STORAGE_KEYS.USER)
+
       if (!token) {
         navigate(ROUTES.LOGIN)
         return
       }
 
+      if (storedUser) {
+        try {
+          setIsAdmin(isAdminUser(JSON.parse(storedUser)))
+        } catch {
+          setIsAdmin(false)
+        }
+      }
+
       try {
         const data = await authApi.me()
         const user = data.user
+        const adminFlag = isAdminUser(user)
+        setIsAdmin(adminFlag)
 
         setForm({
           fullName: user.profile?.fullName || '',
@@ -73,7 +93,7 @@ export default function EditProfilePage() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
@@ -83,13 +103,11 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Chỉ chấp nhận file ảnh')
       return
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('File ảnh không được vượt quá 5MB')
       return
@@ -102,17 +120,20 @@ export default function EditProfilePage() {
 
   const handleAvatarUrlChange = (e) => {
     const url = e.target.value
-    setForm(prev => ({ ...prev, avatarUrl: url }))
+    setForm((prev) => ({ ...prev, avatarUrl: url }))
+
     if (url && url.trim()) {
       setAvatarPreview(url)
       setAvatarFile(null)
+    } else {
+      setAvatarPreview('')
     }
   }
 
   const handleRemoveAvatar = () => {
     setAvatarFile(null)
     setAvatarPreview('')
-    setForm(prev => ({ ...prev, avatarUrl: '' }))
+    setForm((prev) => ({ ...prev, avatarUrl: '' }))
   }
 
   const handleSubmit = async (e) => {
@@ -128,30 +149,34 @@ export default function EditProfilePage() {
     }
 
     try {
-      let responseData;
+      let responseData
 
       if (avatarFile) {
-        // Upload avatar file
         const formData = new FormData()
         formData.append('avatar', avatarFile)
         formData.append('fullName', form.fullName)
         if (form.phone) formData.append('phone', form.phone)
         if (form.gender) formData.append('gender', form.gender)
         if (form.dob) formData.append('dob', form.dob)
-        formData.append('address', JSON.stringify({
-          addressLine: form.addressLine,
-          ward: form.ward,
-          district: form.district,
-          city: form.city
-        }))
-        formData.append('settings', JSON.stringify({
-          marketingEmail: form.marketingEmail,
-          pushNotification: form.pushNotification
-        }))
+        formData.append(
+          'address',
+          JSON.stringify({
+            addressLine: form.addressLine,
+            ward: form.ward,
+            district: form.district,
+            city: form.city
+          })
+        )
+        formData.append(
+          'settings',
+          JSON.stringify({
+            marketingEmail: form.marketingEmail,
+            pushNotification: form.pushNotification
+          })
+        )
 
         responseData = await authApi.updateProfile(formData)
       } else {
-        // Update with JSON data 
         responseData = await authApi.updateProfile({
           fullName: form.fullName,
           phone: form.phone || undefined,
@@ -176,14 +201,14 @@ export default function EditProfilePage() {
         const user = JSON.parse(storedUser)
         user.fullName = responseData.user.profile.fullName
         user.avatarUrl = responseData.user.profile.avatarUrl
+        user.isAdmin = isAdmin
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
       }
 
       setSuccess('Cập nhật thông tin thành công!')
-      
-      // Reload trang để cập nhật avatar ở header
+
       setTimeout(() => {
-        window.location.href = ROUTES.PROFILE
+        navigate(isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE, { replace: true })
       }, 1500)
     } catch (err) {
       setError(err.message)
@@ -192,27 +217,15 @@ export default function EditProfilePage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
-  return (
+  const content = (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      {!isAdmin && <Header />}
 
-      <main className="pt-24 pb-16">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className={isAdmin ? 'p-6' : 'pt-24 pb-16'}>
+        <div className={isAdmin ? '' : 'max-w-2xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <div className="flex items-center gap-4 mb-8">
             <Link
-              to={ROUTES.PROFILE}
+              to={isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               ← Quay lại
@@ -233,14 +246,12 @@ export default function EditProfilePage() {
           )}
 
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
-            {/* Avatar Upload Section */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <span>🖼️</span> Ảnh đại diện
               </h3>
 
               <div className="flex flex-col items-center gap-4">
-                {/* Avatar Preview */}
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
                     {avatarPreview ? (
@@ -267,7 +278,6 @@ export default function EditProfilePage() {
                   )}
                 </div>
 
-                {/* Upload from file */}
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tải ảnh từ máy tính (tối đa 5MB)
@@ -280,7 +290,6 @@ export default function EditProfilePage() {
                   />
                 </div>
 
-                {/* Or use URL */}
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Hoặc dán link ảnh
@@ -304,9 +313,7 @@ export default function EditProfilePage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ và tên
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                   <input
                     type="text"
                     name="fullName"
@@ -318,9 +325,7 @@ export default function EditProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
                   <input
                     type="tel"
                     name="phone"
@@ -332,9 +337,7 @@ export default function EditProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giới tính
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
                   <select
                     name="gender"
                     value={form.gender}
@@ -349,9 +352,7 @@ export default function EditProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày sinh
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
                   <input
                     type="date"
                     name="dob"
@@ -370,9 +371,7 @@ export default function EditProfilePage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Địa chỉ chi tiết
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết</label>
                   <input
                     type="text"
                     name="addressLine"
@@ -385,9 +384,7 @@ export default function EditProfilePage() {
 
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phường/Xã
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
                     <input
                       type="text"
                       name="ward"
@@ -399,9 +396,7 @@ export default function EditProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Quận/Huyện
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
                     <input
                       type="text"
                       name="district"
@@ -413,9 +408,7 @@ export default function EditProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tỉnh/Thành phố
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
                     <input
                       type="text"
                       name="city"
@@ -467,7 +460,7 @@ export default function EditProfilePage() {
 
             <div className="flex gap-4 pt-4">
               <Link
-                to={ROUTES.PROFILE}
+                to={isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
                 className="flex-1 px-6 py-3 text-center font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
               >
                 Hủy
@@ -475,7 +468,7 @@ export default function EditProfilePage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 px-6 py-3 font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 font-semibold text-white bg-linear-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
               </button>
@@ -484,7 +477,9 @@ export default function EditProfilePage() {
         </div>
       </main>
 
-      <Footer />
+      {!isAdmin && <Footer />}
     </div>
   )
+
+  return isAdmin ? <AdminLayout>{content}</AdminLayout> : content
 }

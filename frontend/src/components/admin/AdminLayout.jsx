@@ -8,15 +8,17 @@ export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [user, setUser] = useState(null);
   const [stockMenuOpen, setStockMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
+        userData.isAdmin = userData.isAdmin ?? userData.roles?.includes("admin");
         setUser(userData);
         // Check if user is admin
-        if (!userData.roles?.includes("admin")) {
+        if (!userData.isAdmin) {
           navigate(ROUTES.HOME);
         }
       } catch {
@@ -50,6 +52,7 @@ export default function AdminLayout({ children }) {
     }
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
+    setDropdownOpen(false);
     navigate(ROUTES.LOGIN);
   };
 
@@ -92,7 +95,7 @@ export default function AdminLayout({ children }) {
           {sidebarOpen && (
             <div className="flex items-center gap-2">
               <span className="text-2xl">🐾</span>
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
+              <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-amber-500">
                 PawHouse
               </span>
             </div>
@@ -117,7 +120,7 @@ export default function AdminLayout({ children }) {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                 isActive(item)
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md"
+                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                   : "text-gray-700 hover:bg-orange-50"
               }`}
             >
@@ -132,7 +135,7 @@ export default function AdminLayout({ children }) {
               onClick={() => setStockMenuOpen(!stockMenuOpen)}
               className={`flex items-center justify-between w-full gap-3 px-4 py-3 rounded-lg transition-all ${
                 location.pathname.includes('/ton-kho') || location.pathname.includes('/nhap-kho')
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md"
+                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                   : "text-gray-700 hover:bg-orange-50"
               }`}
             >
@@ -186,7 +189,7 @@ export default function AdminLayout({ children }) {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                 isActive(item)
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md"
+                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                   : "text-gray-700 hover:bg-orange-50"
               }`}
             >
@@ -226,21 +229,73 @@ export default function AdminLayout({ children }) {
             </div>
 
             <div className="flex items-center gap-4">
-              <Link
-                to={ROUTES.HOME}
-                className="px-4 py-2 text-gray-600 hover:text-orange-500 transition-colors"
-              >
-                🏠 Trang chủ
-              </Link>
               <div className="relative">
                 <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                   <span className="text-xl">🔔</span>
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center text-white font-semibold">
-                {user?.profile?.fullName?.charAt(0)?.toUpperCase() ||
-                  user?.email?.charAt(0)?.toUpperCase()}
+
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-orange-50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-linear-to-r from-orange-500 to-amber-500 flex items-center justify-center text-white font-semibold overflow-hidden">
+                    {user?.profile?.avatarUrl ? (
+                      <img
+                        src={user.profile.avatarUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>
+                        {user?.profile?.fullName?.charAt(0)?.toUpperCase() ||
+                          user?.email?.charAt(0)?.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="hidden md:block text-sm font-medium text-gray-700 max-w-35 truncate">
+                    {user?.profile?.fullName || user?.email}
+                  </span>
+                  <span
+                    className={`hidden md:inline-block transition-transform ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ▼
+                  </span>
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border py-2 z-50">
+                    <Link
+                      to={ROUTES.ADMIN_PROFILE}
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2 hover:bg-orange-50"
+                    >
+                      👤 Tài khoản
+                    </Link>
+
+                    {user?.isAdmin && (
+                      <Link
+                        to={ROUTES.ADMIN}
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-orange-50"
+                      >
+                        ⚙️ Quản trị
+                      </Link>
+                    )}
+
+                    <hr className="my-2" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                    >
+                      🚪 Đăng xuất
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
