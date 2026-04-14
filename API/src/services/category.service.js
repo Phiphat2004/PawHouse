@@ -11,6 +11,10 @@ async function getAllCategories({ isActive }) {
     .sort({ name: 1 });
 }
 
+async function getCategoryById(id) {
+  return Category.findById(id).populate("parentId", "name slug");
+}
+
 async function createCategory(data, userRoles) {
   const { parentId, name, slug, description, isActive } = data;
 
@@ -47,5 +51,6 @@ async function createCategory(data, userRoles) {
 
 module.exports = {
   getAllCategories,
+  getCategoryById,
   createCategory
 };

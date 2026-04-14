@@ -12,6 +12,20 @@ const categoryController = {
     }
   },
 
+  // Get category by ID
+  async getById(req, res) {
+    try {
+      const category = await categoryService.getCategoryById(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: "Không tìm thấy danh mục" });
+      }
+      res.json({ category });
+    } catch (error) {
+      console.error("Error getting category:", error);
+      res.status(500).json({ error: "Lỗi khi lấy thông tin danh mục" });
+    }
+  },
+
   // Create new category
   async create(req, res) {
     try {
