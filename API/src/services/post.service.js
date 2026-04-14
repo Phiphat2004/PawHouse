@@ -46,4 +46,34 @@ async function getRelatedPosts(postId, tagIds, limit = 5) {
     .populate('tagIds', 'name slug');
 }
 
-module.exports = { slugify, generateUniqueSlug, getTrendingPosts, getRelatedPosts };
+async function searchPosts({ q, page = 1, limit = 20, tagId, authorId, status } = {}) {
+  const query = {};
+  if (status) query.status = status;
+  if (tagId) query.tagIds = tagId;
+  if (authorId) query.authorId = authorId;
+
+  if (q) {
+    // Use text search when available, otherwise fallback to case-insensitive regex across common fields
+    // Prefer $text if MongoDB text index exists; include regex fallback to be robust.
+    query.$or = [
+      { title: { $regex: q, $options: 'i' } },
+      { excerpt: { $regex: q, $options: 'i' } },
+      { content: { $regex: q, $options: 'i' } }
+    ];
+  }
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const [posts, total] = await Promise.all([
+    Post.find(query)
+      .populate('authorId', 'email profile')
+      .populate('tagIds', 'name slug')
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit)),
+    Post.countDocuments(query)
+  ]);
+
+  return { posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } };
+}
+
+module.exports = { slugify, generateUniqueSlug, getTrendingPosts, getRelatedPosts, searchPosts };
