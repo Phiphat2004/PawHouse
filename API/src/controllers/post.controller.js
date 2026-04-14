@@ -7,6 +7,31 @@ const postService = require('../services/post.service');
 
 const postController = {
   /**
+   * Get published posts (public)
+   * GET /api/posts/public
+   */
+  async getPublicPosts(req, res, next) {
+    try {
+      const { page = 1, limit = 20, search, tagId } = req.query;
+      const query = { status: 'published' };
+      if (search) query.$text = { $search: search };
+      if (tagId) query.tagIds = tagId;
+
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const [posts, total] = await Promise.all([
+        Post.find(query)
+          .populate('authorId', 'email profile')
+          .populate('tagIds', 'name slug')
+          .sort({ publishedAt: -1, createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit)),
+        Post.countDocuments(query)
+      ]);
+
+      res.json({ posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } });
+    } catch (error) { next(error); }
+  },
+  /**
    * Create post (authenticated users)
    * POST /api/posts
    */
