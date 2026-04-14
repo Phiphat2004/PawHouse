@@ -1,9 +1,17 @@
 const { Category } = require("../models");
 
-async function getAllCategories({ isActive }) {
+async function getAllCategories({ isActive, search }) {
   const query = {};
   if (isActive !== undefined) {
     query.isActive = isActive === "true"; 
+  }
+
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+      { slug: { $regex: search, $options: "i" } }
+    ];
   }
 
   return Category.find(query) 
