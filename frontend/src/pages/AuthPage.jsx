@@ -5,6 +5,17 @@ import { GoogleLoginButton } from '../components/auth'
 const EMAIL_RE = /^\S+@\S+\.\S+$/
 const API_BASE = '/api/auth'
 
+function hasAdminRole(user) {
+  if (!user) return false
+  if (user.isAdmin === true) return true
+
+  if (Array.isArray(user.roles) && user.roles.includes('admin')) {
+    return true
+  }
+
+  return user.role === 'admin'
+}
+
 function getModeFromPath(pathname) {
   return pathname.startsWith('/register') ? 'register' : 'login'
 }
@@ -46,6 +57,22 @@ export default function AuthPage() {
     setMode(modeFromRoute)
     setStep('form')
   }, [modeFromRoute])
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('pawhouse_token')
+    const storedUser = localStorage.getItem('pawhouse_user')
+
+    if (!storedToken || !storedUser) return
+
+    try {
+      const parsedUser = JSON.parse(storedUser)
+      if (hasAdminRole(parsedUser)) {
+        navigate('/quan-tri', { replace: true })
+      }
+    } catch {
+      // Ignore invalid stored user payload
+    }
+  }, [navigate])
 
   useEffect(() => {
     setErrors({})
@@ -359,7 +386,7 @@ export default function AuthPage() {
 
       // Redirect based on role
       setTimeout(() => {
-        if (data.user.isAdmin) {
+        if (hasAdminRole(data.user)) {
           navigate('/quan-tri')
         } else {
           navigate('/')
@@ -968,7 +995,7 @@ export default function AuthPage() {
                       
                       showToast(message, 'success')
                       setTimeout(() => {
-                        if (user.isAdmin) { 
+                        if (hasAdminRole(user)) { 
                           navigate('/quan-tri')
                         } else {
                           navigate('/')

@@ -32,6 +32,7 @@ import {
   StockDetailPage,
   StockMovementHistoryPage,
   AccountManagementPage,
+  AdminProfilePage,
 } from "./pages";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 
@@ -98,6 +99,7 @@ export default function App() {
         <Route path="/quan-tri/lich-su-xuat-nhap-kho" element={<StockMovementHistoryPage />} />
         <Route path="/quan-tri/nhap-kho" element={<CreateStockEntryPage />} />
         <Route path="/quan-tri/khach-hang" element={<AccountManagementPage />} />
+        <Route path="/quan-tri/tai-khoan" element={<AdminProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
