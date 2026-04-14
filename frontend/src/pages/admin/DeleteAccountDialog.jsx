@@ -28,13 +28,13 @@ const DeleteAccountDialog = ({ account, onClose, onConfirm }) => {
                             <Trash2 className="w-6 h-6 text-red-600" />
                         </div>
                         <AlertDialogTitle>
-                            Xóa tài khoản
+                            Vô hiệu hoá tài khoản
                         </AlertDialogTitle>
                     </div>
                     <AlertDialogDescription>
-                        Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản của{' '}
+                        Bạn có chắc chắn muốn vô hiệu hoá tài khoản của{' '}
                         <span className="font-medium text-gray-900">{account.name}</span> (
-                        {account.email})? Hành động này không thể hoàn tác và toàn bộ dữ liệu liên quan sẽ bị xóa.
+                        {account.email})? Tài khoản sẽ không thể đăng nhập cho đến khi được kích hoạt lại bởi quản trị viên.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -43,7 +43,7 @@ const DeleteAccountDialog = ({ account, onClose, onConfirm }) => {
                         onClick={onConfirm}
                         className='bg-red-600 hover:bg-red-700'
                     >
-                        Xóa tài khoản
+                        Xác nhận vô hiệu hoá
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

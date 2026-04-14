@@ -50,7 +50,7 @@ const BanConfirmationDialog = ({ account, onClose, onConfirm }) => {
                             <>
                                 Bạn có chắc chắn muốn mở khoá{' '}
                                 <span className="font-medium text-gray-900">{account.name}</span> (
-                                {account.email})? Người dùng này sẽ được trậy lại quyền truy cập hệ thống.
+                                {account.email})? Người dùng này sẽ được cấp lại quyền truy cập hệ thống.
                             </>
                         )}
                     </AlertDialogDescription>

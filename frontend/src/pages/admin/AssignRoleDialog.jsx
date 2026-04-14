@@ -11,14 +11,15 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AccountRole } from './types/account';
-import { User, Users, Stethoscope, Crown } from 'lucide-react';
+import { User, Crown } from 'lucide-react';
 
 const AssignRoleDialog = ({ account, onClose, onAssign }) => {
     const [selectedRole, setSelectedRole] = useState(AccountRole.USER);
 
     useEffect(() => {
         if (account) {
-            setSelectedRole(account.role);
+            const supportedRoles = Object.values(AccountRole);
+            setSelectedRole(supportedRoles.includes(account.role) ? account.role : AccountRole.USER);
         }
     }, [account]);
 
@@ -45,7 +46,7 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
 
     return (
         <Dialog open={!!account} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <DialogTitle>Phân công vai trò</DialogTitle>
                     <DialogDescription>

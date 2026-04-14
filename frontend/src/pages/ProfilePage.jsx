@@ -102,7 +102,7 @@ export default function ProfilePage() {
               </Link>
               <Link
                 to={ROUTES.EDIT_PROFILE}
-                className="px-5 py-2.5 font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+                className="px-5 py-2.5 font-semibold text-white bg-linear-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all"
               >
                 ✏️ Chỉnh sửa
               </Link>
@@ -111,7 +111,7 @@ export default function ProfilePage() {
 
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             {/* Avatar & Basic Info */}
-            <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-8">
+            <div className="bg-linear-to-r from-orange-500 to-amber-500 px-6 py-8">
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur flex items-center justify-center overflow-hidden border-4 border-white/30">
                   {user?.profile?.avatarUrl ? (
@@ -135,7 +135,7 @@ export default function ProfilePage() {
                         key={role}
                         className="px-3 py-1 bg-white/20 backdrop-blur rounded-full text-sm capitalize"
                       >
-                        {role === 'admin' ? 'Quản trị viên' : role === 'staff' ? 'Nhân viên' : 'Khách hàng'}
+                        {role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}
                       </span>
                     ))}
                   </div>

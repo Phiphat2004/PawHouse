@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
           })
         }
         if (accountRes.status === 'fulfilled') {
-          setCustomerCount(accountRes.value.total || accountRes.value.accounts?.length || 0)
+          setCustomerCount(accountRes.value.pagination?.totalItems || accountRes.value.accounts?.length || 0)
         }
       } catch (err) {
         console.error('Dashboard fetch error:', err)
