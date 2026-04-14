@@ -74,6 +74,15 @@ router.put(
   postController.updateMyPost
 );
 
+// Authenticated user delete own post
+router.delete(
+  '/my-posts/:id',
+  authenticate,
+  idValidation,
+  handleValidationErrors,
+  postController.deleteMyPost
+);
+
 // Get by ID (public)
 router.get('/:id', idValidation, handleValidationErrors, postController.getById);
 
@@ -84,6 +93,15 @@ router.put(
   updatePostValidation,
   handleValidationErrors,
   postController.update
+);
+
+// Admin delete post
+router.delete(
+  '/:id',
+  ...protectRoute(['admin']),
+  idValidation,
+  handleValidationErrors,
+  postController.delete
 );
 
 module.exports = router;

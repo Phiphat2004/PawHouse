@@ -225,6 +225,36 @@ const postController = {
       res.json({ post });
     } catch (error) { next(error); }
   }
+,
+
+  /**
+   * Delete own post (user)
+   * DELETE /api/posts/my-posts/:id
+   */
+  async deleteMyPost(req, res, next) {
+    try {
+      const userId = req.user.userId || req.user._id;
+      const post = await Post.findById(req.params.id);
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (post.authorId.toString() !== userId.toString()) {
+        return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này' });
+      }
+      await Post.findByIdAndDelete(req.params.id);
+      res.json({ message: 'Xóa bài viết thành công' });
+    } catch (error) { next(error); }
+  },
+
+  /**
+   * Delete post (admin only)
+   * DELETE /api/posts/:id
+   */
+  async delete(req, res, next) {
+    try {
+      const post = await Post.findByIdAndDelete(req.params.id);
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      res.json({ message: 'Xóa bài viết thành công' });
+    } catch (error) { next(error); }
+  }
 };
 
 module.exports = postController;
