@@ -63,4 +63,13 @@ router.put(
   categoryController.update,
 );
 
+// DELETE /categories/:id - Delete category (Admin only)
+router.delete(
+  '/:id',
+  ...protectRoute(['admin']),
+  [param('id').isMongoId().withMessage('Invalid category ID')],
+  handleValidationErrors,
+  categoryController.delete,
+);
+
 module.exports = router;
