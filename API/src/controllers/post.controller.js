@@ -95,6 +95,42 @@ const postController = {
       res.status(201).json({ post: populatedPost });
     } catch (error) { next(error); }
   }
+  ,
+
+  /**
+   * Get post by ID
+   * GET /api/posts/:id
+   */
+  async getById(req, res, next) {
+    try {
+      const post = await Post.findById(req.params.id)
+        .populate('authorId', 'email profile')
+        .populate('tagIds', 'name slug');
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      post.viewCount = (post.viewCount || 0) + 1;
+      await post.save();
+      res.json({ post });
+    } catch (error) { next(error); }
+  },
+
+  /**
+   * Get post by slug (public with optional auth)
+   * GET /api/posts/slug/:slug
+   */
+  async getBySlug(req, res, next) {
+    try {
+      const post = await Post.findOne({ slug: req.params.slug })
+        .populate('authorId', 'email profile')
+        .populate('tagIds', 'name slug');
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (post.status !== 'published' && (!req.user || !req.user.roles?.includes('admin'))) {
+        return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      }
+      post.viewCount = (post.viewCount || 0) + 1;
+      await post.save();
+      res.json({ post });
+    } catch (error) { next(error); }
+  }
 };
 
 module.exports = postController;

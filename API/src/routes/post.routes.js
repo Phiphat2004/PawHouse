@@ -59,4 +59,10 @@ router.post(
   postController.create
 );
 
+// Public detail routes
+router.get('/slug/:slug', optionalAuth, postController.getBySlug);
+
+// Get by ID (public)
+router.get('/:id', idValidation, handleValidationErrors, postController.getById);
+
 module.exports = router;
