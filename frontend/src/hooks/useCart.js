@@ -51,7 +51,7 @@ export const updateCartCount = async (forceRefresh = false) => {
 
   try {
     const response = await cartApi.getCart();
-    const cart = response.data;
+    const cart = response.cart;
     
     // Cache the cart data
     cachedCartData = cart;
