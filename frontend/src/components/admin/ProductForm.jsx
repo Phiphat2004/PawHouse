@@ -19,7 +19,7 @@ export default function ProductForm({
     stock: 0,
     sku: "",
   });
-  const [imageUrl, setImageUrl] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -47,12 +47,12 @@ export default function ProductForm({
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let processedValue = type === "checkbox" ? checked : value;
-    
+
     // Tự động chuyển SKU thành uppercase
     if (name === "sku") {
       processedValue = value.toUpperCase();
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: processedValue,
@@ -81,17 +81,23 @@ export default function ProductForm({
     }));
   };
 
-  const handleAddImage = () => {
-    if (!imageUrl.trim()) return;
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(prev => {
+      const totalExising = formData.images.length;
+      const totalNew = prev.length + files.length;
+      if (totalExising + totalNew > 5) {
+        alert("Bạn chỉ có thể có tối đa 5 ảnh cho mỗi sản phẩm");
+        const remainingSlots = 5 - totalExising - prev.length;
+        if (remainingSlots <= 0) return prev;
+        return [...prev, ...files.slice(0, remainingSlots)];
+      }
+      return [...prev, ...files];
+    });
+  };
 
-    setFormData((prev) => ({
-      ...prev,
-      images: [
-        ...prev.images,
-        { url: imageUrl.trim(), sortOrder: prev.images.length },
-      ],
-    }));
-    setImageUrl("");
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleRemoveImage = (index) => {
@@ -147,34 +153,35 @@ export default function ProductForm({
       newErrors.compareAtPrice = "Giá so sánh phải lớn hơn giá bán";
     }
 
+    if (formData.images.length + selectedFiles.length === 0) {
+      newErrors.images = "Vui lòng chọn ít nhất một ảnh sản phẩm";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validate()) {
-      console.log('Validation failed:', errors);
-      return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
     try {
-      // Đảm bảo SKU viết hoa trước khi submit
-      const submitData = {
-        ...formData,
-        sku: formData.sku.toUpperCase(),
-      };
+      const data = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key === 'categoryIds') {
+          formData.categoryIds.forEach(id => data.append('categoryIds[]', id));
+        } else if (key === 'images') {
+          data.append('images', JSON.stringify(formData.images));
+        } else {
+          data.append(key, formData[key]);
+        }
+      });
       
-      console.log('Submitting product data:', submitData);
-      console.log('Is editing?', !!product);
-      
-      await onSubmit(submitData);
-      
-      console.log('Product submitted successfully');
+      selectedFiles.forEach(file => data.append('images', file));
+
+      await onSubmit(data);
     } catch (err) {
-      console.error('Submit error:', err);
       alert("Lỗi: " + err.message);
     } finally {
       setLoading(false);
@@ -233,11 +240,10 @@ export default function ProductForm({
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
-                        errors.name
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-300 bg-white"
-                      }`}
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.name
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 bg-white"
+                        }`}
                       placeholder="Ví dụ: Thức ăn cho chó vị gà"
                     />
                     <span className="absolute left-3 top-3.5 text-gray-400">
@@ -265,11 +271,10 @@ export default function ProductForm({
                       name="slug"
                       value={formData.slug}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all font-mono text-sm ${
-                        errors.slug
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-300 bg-white"
-                      }`}
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all font-mono text-sm ${errors.slug
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 bg-white"
+                        }`}
                       placeholder="thuc-an-cho-cho-vi-ga"
                     />
                     <span className="absolute left-3 top-3.5 text-gray-400">
@@ -322,9 +327,8 @@ export default function ProductForm({
                     name="sku"
                     value={formData.sku}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
-                      errors.sku ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.sku ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="Ví dụ: RPET001"
                   />
                   {errors.sku && (
@@ -343,9 +347,8 @@ export default function ProductForm({
                     value={formData.stock}
                     onChange={handleChange}
                     min="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
-                      errors.stock ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.stock ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="0"
                   />
                   {errors.stock && (
@@ -364,9 +367,8 @@ export default function ProductForm({
                     value={formData.price}
                     onChange={handleChange}
                     min="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
-                      errors.price ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.price ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="0"
                   />
                   {errors.price && (
@@ -385,9 +387,8 @@ export default function ProductForm({
                     value={formData.compareAtPrice}
                     onChange={handleChange}
                     min="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
-                      errors.compareAtPrice ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.compareAtPrice ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="0"
                   />
                   {errors.compareAtPrice && (
@@ -437,11 +438,10 @@ export default function ProductForm({
                     {categories.map((category) => (
                       <label
                         key={category._id}
-                        className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 transition-all ${
-                          formData.categoryIds.includes(category._id)
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200 hover:border-orange-200 hover:bg-gray-50"
-                        }`}
+                        className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 transition-all ${formData.categoryIds.includes(category._id)
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200 hover:border-orange-200 hover:bg-gray-50"
+                          }`}
                       >
                         <input
                           type="checkbox"
@@ -450,11 +450,10 @@ export default function ProductForm({
                           className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
                         />
                         <span
-                          className={`text-sm font-medium ${
-                            formData.categoryIds.includes(category._id)
-                              ? "text-orange-700"
-                              : "text-gray-700"
-                          }`}
+                          className={`text-sm font-medium ${formData.categoryIds.includes(category._id)
+                            ? "text-orange-700"
+                            : "text-gray-700"
+                            }`}
                         >
                           {category.name}
                         </span>
@@ -483,110 +482,103 @@ export default function ProductForm({
               </h3>
 
               <div className="space-y-4">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="url"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      onKeyPress={(e) =>
-                        e.key === "Enter" &&
-                        (e.preventDefault(), handleAddImage())
-                      }
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white"
-                    />
-                    <span className="absolute left-3 top-3.5 text-gray-400">
-                      🔗
-                    </span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Thêm ảnh sản phẩm (Tối đa 5 ảnh) <span className="text-red-500">*</span>
+                    </label>
+                    <label className="relative cursor-pointer group">
+                      <div className="w-full h-16 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all flex items-center justify-center bg-gray-50 shadow-sm font-medium text-gray-600">
+                        Chọn ảnh
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddImage}
-                    disabled={!imageUrl.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                  >
-                    + Thêm
-                  </button>
+                  
+                  {selectedFiles.length > 0 && (
+                    <div className="bg-white p-3 rounded-lg border border-gray-200">
+                      <p className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wider">Ảnh chuẩn bị tải lên ({selectedFiles.length}/5):</p>
+                      <div className="flex flex-wrap gap-4">
+                        {selectedFiles.map((file, idx) => (
+                          <div key={idx} className="relative w-36 h-36 rounded-xl overflow-hidden border-2 border-orange-50 group shadow-sm transition-transform hover:scale-105">
+                            <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Preview" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Gỡ ảnh này"
+                            >
+                              <span className="text-lg font-bold leading-none">×</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {errors.images && (
+                    <p className="text-[11px] text-red-500 font-medium">⚠️ {errors.images}</p>
+                  )}
                 </div>
 
                 {formData.images.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-3 flex items-center gap-2">
-                      <span>📸</span>
-                      {formData.images.length} hình ảnh
+                  <div className="bg-white p-3 rounded-lg border border-gray-100">
+                    <p className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wider">
+                      Ảnh đang hiển thị ({formData.images.length})
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="flex flex-wrap gap-4">
                       {formData.images.map((image, index) => (
-                        <div key={index} className="relative group">
-                          <div className="relative overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100 aspect-square">
-                            <img
-                              src={image.url}
-                              alt={`Product ${index + 1}`}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                                e.target.nextElementSibling.style.display =
-                                  "flex";
-                              }}
-                            />
-                            <div
-                              className="w-full h-full items-center justify-center p-3"
-                              style={{ display: "none" }}
-                            >
-                              <div className="text-center">
-                                <span className="text-4xl">🖼️</span>
-                                <p className="text-xs text-gray-500 mt-2 break-all line-clamp-3">
-                                  {image.url}
-                                </p>
-                              </div>
+                        <div key={index} className="relative w-36 h-36 rounded-xl overflow-hidden border-2 border-gray-100 group shadow-sm transition-transform hover:scale-105">
+                          <img
+                            src={image.url}
+                            alt={`Product ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Label for main image */}
+                          {index === 0 && (
+                            <div className="absolute top-2 left-2 bg-orange-500 text-white text-[9px] font-bold px-2 py-1 rounded shadow-md flex items-center gap-1">
+                              ⭐ Chính
                             </div>
+                          )}
 
-                            {/* Overlay with controls */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                              <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between">
-                                <div className="flex gap-2">
-                                  {index > 0 && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleMoveImage(index, "up")
-                                      }
-                                      className="p-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg hover:bg-opacity-100 transition-all shadow-lg"
-                                      title="Di chuyển lên"
-                                    >
-                                      <span className="text-sm">⬆️</span>
-                                    </button>
-                                  )}
-                                  {index < formData.images.length - 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleMoveImage(index, "down")
-                                      }
-                                      className="p-2 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg hover:bg-opacity-100 transition-all shadow-lg"
-                                      title="Di chuyển xuống"
-                                    >
-                                      <span className="text-sm">⬇️</span>
-                                    </button>
-                                  )}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveImage(index)}
-                                  className="p-2 bg-red-500 bg-opacity-90 backdrop-blur-sm text-white rounded-lg hover:bg-opacity-100 transition-all shadow-lg"
-                                  title="Xóa"
-                                >
-                                  <span className="text-sm">🗑️</span>
-                                </button>
-                              </div>
-                            </div>
+                          {/* Removal button */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Xóa ảnh này"
+                          >
+                            <span className="text-lg font-bold leading-none">×</span>
+                          </button>
 
-                            {/* Label for main image */}
-                            {index === 0 && (
-                              <div className="absolute top-2 left-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1">
-                                <span>⭐</span> Ảnh chính
-                              </div>
+                          {/* Sorting controls */}
+                          <div className="absolute bottom-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {index > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleMoveImage(index, "up")}
+                                className="w-6 h-6 bg-white/90 rounded border border-gray-200 flex items-center justify-center hover:bg-white text-[10px]"
+                                title="Lên đầu"
+                              >
+                                ⬆️
+                              </button>
+                            )}
+                            {index < formData.images.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleMoveImage(index, "down")}
+                                className="w-6 h-6 bg-white/90 rounded border border-gray-200 flex items-center justify-center hover:bg-white text-[10px]"
+                                title="Xuống dưới"
+                              >
+                                ⬇️
+                              </button>
                             )}
                           </div>
                         </div>
