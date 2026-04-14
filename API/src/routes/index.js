@@ -8,7 +8,6 @@ const postRoutes = require('./post.routes');
 const categoryRoutes = require('./category.routes');
 const productRoutes = require('./product.routes');
 
-const categoryRoutes = require("./category.routes");
 const accountManagementRoutes = require("./accountManagement.routes");
 
 // Auth

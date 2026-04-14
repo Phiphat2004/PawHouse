@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Users, Loader2 } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AccountTable } from './AccountTable';
 import { AccountDetailDialog } from './AccountDetailDialog';
 import { AssignRoleDialog } from './AssignRoleDialog';
 import { BanConfirmationDialog } from './BanConfirmationDialog';
-import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { AccountRole, AccountStatus } from './types/account';
-import { getAccounts, assignRole, banUnbanAccount, deleteAccount } from '@/services/accountManagementService';
+import { getAccounts, assignRole, banUnbanAccount, restoreAccount } from '@/services/accountManagementService';
 import { toast } from "react-toastify";
 import Pagination from '@/components/layout/Pagination';
 import { debounce } from 'lodash';
@@ -23,7 +22,6 @@ const AccountManagement = () => {
     const [selectedAccount, setSelectedAccount] = useState(null);
     const [accountToAssignRole, setAccountToAssignRole] = useState(null);
     const [accountToBanUnban, setAccountToBanUnban] = useState(null);
-    const [accountToDelete, setAccountToDelete] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchAccounts = async () => {
@@ -91,13 +89,34 @@ const AccountManagement = () => {
     };
 
     const handleBanUnbanRequest = (account) => {
+        if (account?.role === AccountRole.ADMIN) {
+            toast.warning('Không thể khoá tài khoản quản trị viên');
+            return;
+        }
+
+        if (account?.status === AccountStatus.INACTIVE || account?.is_deleted) {
+            toast.warning('Không thể khoá/mở khoá tài khoản đã bị xoá');
+            return;
+        }
         setAccountToBanUnban(account);
     };
 
     const handleBanUnbanConfirm = async () => {
         if (accountToBanUnban) {
             try {
-                const newStatus = accountToBanUnban.status === AccountStatus.ACTIVE ? AccountStatus.BANNED : AccountStatus.ACTIVE;
+                let newStatus = null;
+                if (accountToBanUnban.status === AccountStatus.ACTIVE) {
+                    newStatus = AccountStatus.BANNED;
+                } else if (accountToBanUnban.status === AccountStatus.BANNED) {
+                    newStatus = AccountStatus.ACTIVE;
+                }
+
+                if (!newStatus) {
+                    toast.warning('Chỉ có thể khoá/mở khoá tài khoản đang hoạt động hoặc bị khoá');
+                    setAccountToBanUnban(null);
+                    return;
+                }
+
                 await banUnbanAccount(accountToBanUnban.id, newStatus);
                 toast.success(`Tài khoản đã được ${newStatus === AccountStatus.ACTIVE ? 'mở khoá' : 'khoá'} thành công!`);
                 setAccountToBanUnban(null);
@@ -108,45 +127,13 @@ const AccountManagement = () => {
         }
     };
 
-    const handleDeleteRequest = (account) => {
-        setAccountToDelete(account);
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (accountToDelete) {
-            const deletedId = accountToDelete.id;
-            try {
-                await deleteAccount(deletedId);
-                toast.success("Đã xóa tài khoản thành công!");
-                setAccountToDelete(null);
-                setAccountsData((prev) => {
-                    const nextAccounts = prev.accounts.filter((item) => item.id !== deletedId);
-                    const totalItems = Math.max((prev.pagination?.totalItems || 0) - 1, 0);
-                    const totalPages = Math.max(Math.ceil(totalItems / 8), 1);
-
-                    return {
-                        accounts: nextAccounts,
-                        pagination: {
-                            ...prev.pagination,
-                            totalItems,
-                            totalPages,
-                        },
-                    };
-                });
-                fetchAccounts();  // Refresh list from server
-            } catch (error) {
-                if (error.status === 404) {
-                    toast.info("Tài khoản đã bị xóa hoặc không tồn tại");
-                    setAccountToDelete(null);
-                    setAccountsData((prev) => ({
-                        ...prev,
-                        accounts: prev.accounts.filter((item) => item.id !== deletedId),
-                    }));
-                    fetchAccounts();
-                    return;
-                }
-                toast.error(error.message || "Xóa tài khoản thất bại");
-            }
+    const handleRestoreRequest = async (account) => {
+        try {
+            await restoreAccount(account.id);
+            toast.success('Đã khôi phục tài khoản thành công!');
+            fetchAccounts();
+        } catch (error) {
+            toast.error(error.message || 'Khôi phục tài khoản thất bại');
         }
     };
 
@@ -178,7 +165,7 @@ const AccountManagement = () => {
                         </div>
                         <div className="flex gap-4">
                             <Select value={statusFilter} onValueChange={setStatusFilter} disabled={isLoading}>
-                                <SelectTrigger className="w-[180px] bg-white border-gray-200">
+                                <SelectTrigger className="w-45 bg-white border-gray-200">
                                     <SelectValue placeholder="Tất cả trạng thái" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -189,7 +176,7 @@ const AccountManagement = () => {
                                 </SelectContent>
                             </Select>
                             <Select value={roleFilter} onValueChange={setRoleFilter} disabled={isLoading}>
-                                <SelectTrigger className="w-[180px] bg-white border-gray-200">
+                                <SelectTrigger className="w-45 bg-white border-gray-200">
                                     <SelectValue placeholder="Tất cả vai trò" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -215,7 +202,7 @@ const AccountManagement = () => {
                             onViewDetail={setSelectedAccount}
                             onAssignRole={setAccountToAssignRole}
                             onBanUnban={handleBanUnbanRequest}
-                            onDelete={handleDeleteRequest}
+                            onRestore={handleRestoreRequest}
                         />
                     )}
                 </div>
@@ -236,6 +223,7 @@ const AccountManagement = () => {
                     account={selectedAccount}
                     onClose={() => setSelectedAccount(null)}
                     onBanUnban={handleBanUnbanRequest}
+                    onRestore={handleRestoreRequest}
                 />
                 <AssignRoleDialog
                     account={accountToAssignRole}
@@ -246,11 +234,6 @@ const AccountManagement = () => {
                     account={accountToBanUnban}
                     onClose={() => setAccountToBanUnban(null)}
                     onConfirm={handleBanUnbanConfirm}
-                />
-                <DeleteAccountDialog
-                    account={accountToDelete}
-                    onClose={() => setAccountToDelete(null)}
-                    onConfirm={handleDeleteConfirm}
                 />
             </div>
         </AdminLayout>
