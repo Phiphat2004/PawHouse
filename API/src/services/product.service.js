@@ -194,9 +194,113 @@ async function getProductBySlug(slug) {
     .populate("categoryIds", "name slug");
 }
 
+/**
+ * Update a product
+ */
+async function updateProduct(id, data, userRoles) {
+  const {
+    name,
+    slug,
+    description,
+    brand,
+    categoryIds,
+    images,
+    isActive,
+    price,
+    stock,
+    sku,
+    compareAtPrice,
+  } = data;
+
+  // Check if user is admin
+  if (!userRoles?.includes("admin")) {
+    const error = new Error("Không có quyền thực hiện");
+    error.status = 403;
+    throw error;
+  }
+
+  const product = await Product.findOne({
+    _id: id,
+    isDeleted: { $ne: true },
+  });
+  if (!product) {
+    const error = new Error("Không tìm thấy sản phẩm");
+    error.status = 404;
+    throw error;
+  }
+
+  // Validation if provided
+  if (price !== undefined && price <= 0) {
+    const error = new Error("Giá sản phẩm phải lớn hơn 0");
+    error.status = 400;
+    throw error;
+  }
+  if (stock !== undefined && stock < 0) {
+    const error = new Error("Số lượng tồn kho không được âm");
+    error.status = 400;
+    throw error;
+  }
+  if (sku !== undefined) {
+    if (!sku.trim()) {
+      const error = new Error("Mã SKU không được để trống");
+      error.status = 400;
+      throw error;
+    }
+    const existingSKU = await Product.findOne({
+      sku: sku.toUpperCase(),
+      isDeleted: { $ne: true },
+      _id: { $ne: id },
+    });
+    if (existingSKU) {
+      const error = new Error("Mã SKU đã tồn tại");
+      error.status = 400;
+      throw error;
+    }
+  }
+  if (compareAtPrice !== undefined) {
+    const finalPrice = price !== undefined ? price : product.price;
+    if (compareAtPrice > 0 && compareAtPrice <= finalPrice) {
+      const error = new Error("Giá so sánh phải lớn hơn giá bán");
+      error.status = 400;
+      throw error;
+    }
+  }
+
+  // Slug check
+  if (slug && slug !== product.slug) {
+    const existingProduct = await Product.findOne({
+      slug,
+      isDeleted: { $ne: true },
+      _id: { $ne: id },
+    });
+    if (existingProduct) {
+      const error = new Error("Slug đã tồn tại");
+      error.status = 400;
+      throw error;
+    }
+  }
+
+  // Update fields
+  if (name !== undefined) product.name = name;
+  if (slug !== undefined) product.slug = slug;
+  if (description !== undefined) product.description = description;
+  if (brand !== undefined) product.brand = brand;
+  if (categoryIds !== undefined) product.categoryIds = categoryIds;
+  if (images !== undefined) product.images = images;
+  if (isActive !== undefined) product.isActive = isActive;
+  if (price !== undefined) product.price = price;
+  if (stock !== undefined) product.stock = stock;
+  if (sku !== undefined) product.sku = sku.toUpperCase();
+  if (compareAtPrice !== undefined) product.compareAtPrice = compareAtPrice;
+
+  await product.save();
+  return product.populate("categoryIds", "name slug");
+}
+
 module.exports = {
   createProduct,
   getAllProducts,
   getProductById,
   getProductBySlug,
+  updateProduct,
 };

@@ -9,6 +9,6 @@ router.get('/slug/:slug', productController.getBySlug);
 
 // Admin routes
 router.post('/', ...protectRoute(['admin']), productController.create);
-// router.put('/:id', ...protectRoute(['admin']), productController.update);
+router.put('/:id', ...protectRoute(['admin']), productController.update);
 
 module.exports = router;

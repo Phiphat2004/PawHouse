@@ -48,6 +48,15 @@ const productController = {
     } catch (error) {
       console.error("Error getting product by slug:", error);
       res.status(500).json({ error: "Lỗi khi lấy thông tin sản phẩm" });
+    }},
+  // Update product
+  async update(req, res) {
+    try {
+      const product = await productService.updateProduct(req.params.id, req.body, req.user?.roles);
+      res.json({ product });
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(error.status || 500).json({ error: error.message || "Lỗi khi cập nhật sản phẩm" });
     }
   },
 };
