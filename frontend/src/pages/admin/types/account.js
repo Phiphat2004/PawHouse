@@ -1,13 +1,10 @@
 export const AccountRole = {
-    USER: 'user',
-    ADMIN: 'admin',
-    STAFF: 'staff',
-    VETERINARIAN: 'veterinarian',
+  USER: "user",
+  ADMIN: "admin",
 };
 
 export const AccountStatus = {
-    ACTIVE: 'active',
-    BANNED: 'banned',
-    INACTIVE: 'inactive',
+  ACTIVE: "active",
+  BANNED: "banned",
+  INACTIVE: "inactive",
 };
-

@@ -1,4 +1,4 @@
-import { Eye, UserCog, Trash2 } from 'lucide-react';
+import { Eye, UserCog, Lock, LockOpen, Undo2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -17,7 +17,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onDelete }) => {
+const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRestore }) => {
     if (accounts.length === 0) {
         return (
             <div className="py-20 text-center text-gray-400">
@@ -37,15 +37,21 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onDele
     const getRoleBadgeColor = (role) => {
         switch (role) {
             case 'admin':
-                return 'bg-purple-100 text-purple-700 hover:bg-purple-100';
-            case 'veterinarian':
-                return 'bg-blue-100 text-blue-700 hover:bg-blue-100';
-            case 'staff':
-                return 'bg-green-100 text-green-700 hover:bg-green-100';
+                return 'bg-purple-600 text-white font-semibold';
             case 'user':
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
             default:
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
+        }
+    };
+
+    const getRoleLabel = (role) => {
+        switch (role) {
+            case 'admin':
+                return 'Quản trị viên';
+            case 'user':
+            default:
+                return 'Người dùng';
         }
     };
 
@@ -53,13 +59,13 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onDele
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case AccountStatus.ACTIVE:
-                return 'bg-green-100 text-green-700 hover:bg-green-100';
+                return 'bg-green-600 text-white font-semibold';
             case AccountStatus.BANNED:
-                return 'bg-red-100 text-red-700 hover:bg-red-100';
+                return 'bg-red-600 text-white font-semibold';
             case AccountStatus.INACTIVE:
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';  // NEW: Gray for inactive
+                return 'bg-slate-600 text-white font-semibold';
             default:
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
         }
     };
 
@@ -80,7 +86,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onDele
         <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
-                    <TableRow className="bg-gray-50 hover:bg-gray-50">
+                    <TableRow className="bg-gray-50">
                         <TableHead className="text-gray-700 font-semibold">HỌ TÊN</TableHead>
                         <TableHead className="text-gray-700 font-semibold">EMAIL</TableHead>
                         <TableHead className="text-gray-700 font-semibold">VAI TRÒ</TableHead>
@@ -91,12 +97,12 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onDele
                 </TableHeader>
                 <TableBody>
                     {accounts.map((account, index) => (
-                        <TableRow key={account.id} className={`hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                        <TableRow key={account.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                             <TableCell className="font-medium">{account.name}</TableCell>
                             <TableCell className="text-gray-600">{account.email}</TableCell>
                             <TableCell>
                                 <Badge className={getRoleBadgeColor(account.role)}>
-                                    {account.role.charAt(0).toUpperCase() + account.role.slice(1)}
+                                    {getRoleLabel(account.role)}
                                 </Badge>
                             </TableCell>
                             <TableCell>
@@ -141,20 +147,44 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onDele
                                                 <p>{account.is_deleted ? 'Không thể phân công vai trò cho tài khoản đã bị xóa' : 'Phân công vai trò'}</p>
                                             </TooltipContent>
                                         </Tooltip>
-                                        {/* Delete Button */}
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => onDelete(account)}
-                                                    className="text-red-600 hover:text-red-700"
+                                                    onClick={() => account.status === AccountStatus.INACTIVE ? onRestore(account) : onBanUnban(account)}
+                                                    disabled={account.role === 'admin'}
+                                                    className={
+                                                        account.role === 'admin'
+                                                            ? 'opacity-50 cursor-not-allowed'
+                                                            : account.status === AccountStatus.INACTIVE
+                                                                ? 'text-sky-600'
+                                                                : account.status === AccountStatus.BANNED
+                                                                ? 'text-green-600'
+                                                                : 'text-amber-600'
+                                                    }
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    {account.status === AccountStatus.INACTIVE ? (
+                                                        <Undo2 className="w-4 h-4" />
+                                                    ) : account.status === AccountStatus.BANNED ? (
+                                                        <LockOpen className="w-4 h-4" />
+                                                    ) : (
+                                                        <Lock className="w-4 h-4" />
+                                                    )}
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>Xóa tài khoản</p>
+                                                <p>
+                                                    {account.role === 'admin'
+                                                        ? 'Không thể khoá quản trị viên'
+                                                        : account.status === AccountStatus.INACTIVE
+                                                            ? 'Khôi phục tài khoản đã xoá'
+                                                            : account.is_deleted
+                                                                ? 'Không thể khoá/mở khoá tài khoản đã xoá'
+                                                            : account.status === AccountStatus.BANNED
+                                                                ? 'Mở khoá tài khoản'
+                                                                : 'Khoá tài khoản'}
+                                                </p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </div>

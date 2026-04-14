@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AccountStatus } from './types/account';
-import { Mail, User, Shield, Calendar, AlertCircle } from 'lucide-react';
+import { AccountRole, AccountStatus } from './types/account';
+import { Mail, User, Shield, Calendar, AlertCircle, Undo2 } from 'lucide-react';
 
-const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
+const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
     if (!account) return null;
 
     const formatDate = (date) => {
@@ -25,15 +25,21 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
     const getRoleBadgeColor = (role) => {
         switch (role) {
             case 'admin':
-                return 'bg-purple-100 text-purple-700 hover:bg-purple-100';
-            case 'veterinarian':
-                return 'bg-blue-100 text-blue-700 hover:bg-blue-100';
-            case 'staff':
-                return 'bg-green-100 text-green-700 hover:bg-green-100';
+                return 'bg-purple-600 text-white font-semibold';
             case 'user':
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
             default:
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
+        }
+    };
+
+    const getRoleLabel = (role) => {
+        switch (role) {
+            case 'admin':
+                return 'Quản trị viên';
+            case 'user':
+            default:
+                return 'Người dùng';
         }
     };
 
@@ -41,13 +47,13 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case AccountStatus.ACTIVE:
-                return 'bg-green-100 text-green-700 hover:bg-green-100';
+                return 'bg-green-600 text-white font-semibold';
             case AccountStatus.BANNED:
-                return 'bg-red-100 text-red-700 hover:bg-red-100';
+                return 'bg-red-600 text-white font-semibold';
             case AccountStatus.INACTIVE:  // NEW: Gray for inactive/deleted
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
             default:
-                return 'bg-gray-100 text-gray-700 hover:bg-gray-100';
+                return 'bg-slate-600 text-white font-semibold';
         }
     };
 
@@ -66,7 +72,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
 
     return (
         <Dialog open={!!account} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Chi tiết tài khoản</DialogTitle>
                     <DialogDescription>
@@ -81,7 +87,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
                 <div className="space-y-6 py-4">
                     {/* Name */}
                     <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                             <User className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="flex-1">
@@ -92,7 +98,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
 
                     {/* Email */}
                     <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
                             <Mail className="w-5 h-5 text-green-600" />
                         </div>
                         <div className="flex-1">
@@ -103,13 +109,13 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
 
                     {/* Role */}
                     <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
                             <Shield className="w-5 h-5 text-purple-600" />
                         </div>
                         <div className="flex-1">
                             <p className="text-sm text-gray-500 mb-1">Vai trò</p>
                             <Badge className={getRoleBadgeColor(account.role)}>
-                                {account.role.charAt(0).toUpperCase() + account.role.slice(1)}
+                                {getRoleLabel(account.role)}
                             </Badge>
                         </div>
                     </div>
@@ -117,7 +123,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
                     {/* Status */}
                     <div className="flex items-start gap-3">
                         <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${account.status === AccountStatus.ACTIVE ? 'bg-green-100' :
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${account.status === AccountStatus.ACTIVE ? 'bg-green-100' :
                                 account.status === AccountStatus.BANNED ? 'bg-red-100' : 'bg-gray-100'  // NEW: Gray for inactive
                                 }`}
                         >
@@ -137,7 +143,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
 
                     {/* Created At */}
                     <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
                             <Calendar className="w-5 h-5 text-orange-600" />
                         </div>
                         <div className="flex-1">
@@ -152,7 +158,16 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban }) => {
                     <Button variant="outline" onClick={onClose}>
                         Đóng
                     </Button>
-                    {!account.is_deleted && (
+                    {account.is_deleted && (
+                        <Button
+                            onClick={() => onRestore && onRestore(account)}
+                            className="bg-sky-600 hover:bg-sky-700"
+                        >
+                            <Undo2 className="w-4 h-4 mr-2" />
+                            Khôi phục tài khoản
+                        </Button>
+                    )}
+                    {!account.is_deleted && account.role !== AccountRole.ADMIN && (
                         <Button
                             onClick={() => onBanUnban(account)}
                             className={
