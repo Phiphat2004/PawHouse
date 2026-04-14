@@ -98,6 +98,100 @@ const postController = {
   ,
 
   /**
+   * Update post (admin only)
+   * PUT /api/posts/:id
+   */
+  async update(req, res, next) {
+    try {
+      const { title, slug, excerpt, content, coverImageUrl, status, tagIds } = req.body;
+      const post = await Post.findById(req.params.id);
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+
+      if (slug && slug !== post.slug) {
+        const existingPost = await Post.findOne({ slug });
+        if (existingPost) return res.status(400).json({ error: 'Slug đã tồn tại' });
+      }
+
+      if (title !== undefined) post.title = title;
+      if (slug !== undefined) post.slug = slug;
+      if (excerpt !== undefined) post.excerpt = excerpt;
+      if (content !== undefined) post.content = content;
+      if (coverImageUrl !== undefined) post.coverImageUrl = coverImageUrl;
+      if (tagIds !== undefined) post.tagIds = tagIds;
+      if (status !== undefined) {
+        post.status = status;
+        if (status === 'published' && !post.publishedAt) post.publishedAt = new Date();
+      }
+
+      await post.save();
+      const updatedPost = await Post.findById(post._id)
+        .populate('authorId', 'email profile')
+        .populate('tagIds', 'name slug');
+      res.json({ post: updatedPost });
+    } catch (error) { next(error); }
+  }
+  ,
+
+  /**
+   * Update own post (user)
+   * PUT /api/posts/my-posts/:id
+   */
+  async updateMyPost(req, res, next) {
+    try {
+      const { title, excerpt, content, coverImageUrl, tagIds } = req.body;
+      const userId = req.user.userId || req.user._id;
+      const post = await Post.findById(req.params.id);
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (post.authorId.toString() !== userId.toString()) {
+        return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa bài viết này' });
+      }
+
+      if (title !== undefined) {
+        post.title = title;
+        post.slug = await postService.generateUniqueSlug(title, post._id);
+      }
+      if (excerpt !== undefined) post.excerpt = excerpt;
+      if (content !== undefined) post.content = content;
+      if (coverImageUrl !== undefined) post.coverImageUrl = coverImageUrl;
+      if (tagIds !== undefined) post.tagIds = tagIds;
+      post.status = 'draft'; // Reset to draft for admin review
+
+      await post.save();
+      const updatedPost = await Post.findById(post._id)
+        .populate('authorId', 'email profile')
+        .populate('tagIds', 'name slug');
+      res.json({ post: updatedPost });
+    } catch (error) { next(error); }
+  }
+  ,
+
+  /**
+   * Get current user's posts
+   * GET /api/posts/my-posts
+   */
+  async getMyPosts(req, res, next) {
+    try {
+      const { page = 1, limit = 20, status } = req.query;
+      const userId = req.user.userId || req.user._id;
+      const query = { authorId: userId };
+      if (status) query.status = status;
+
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const [posts, total] = await Promise.all([
+        Post.find(query)
+          .populate('authorId', 'email profile')
+          .populate('tagIds', 'name slug')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(parseInt(limit)),
+        Post.countDocuments(query)
+      ]);
+
+      res.json({ posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } });
+    } catch (error) { next(error); }
+  },
+
+  /**
    * Get post by ID
    * GET /api/posts/:id
    */
