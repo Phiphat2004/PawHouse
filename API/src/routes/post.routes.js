@@ -42,6 +42,12 @@ const idValidation = [
   param('id').isMongoId().withMessage('Post ID không hợp lệ'),
 ];
 
+// Public route: list published posts
+router.get('/public', postController.getPublicPosts);
+
+// Admin: get all posts
+router.get('/', ...protectRoute(['admin']), postController.getAll);
+
 // Only keep create post route for now. All other post routes are intentionally
 // removed so this branch can be pushed incrementally. Frontend can still call
 // create and will receive normal responses.
