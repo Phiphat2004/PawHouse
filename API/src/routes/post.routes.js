@@ -2,6 +2,11 @@ const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const postController = require('../controllers/post.controller');
 const { authenticate, optionalAuth, protectRoute } = require('../middlewares/auth.middleware');
+const multer = require('multer');
+
+// Use memory storage so we can upload buffer to Cloudinary
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 const router = express.Router();
 
@@ -62,6 +67,9 @@ router.post(
   postController.create
 );
 
+// Image upload endpoint used by Create Post page
+router.post('/upload', authenticate, upload.single('file'), postController.uploadImage);
+
 // Public detail routes
 router.get('/slug/:slug', optionalAuth, postController.getBySlug);
 
@@ -88,6 +96,15 @@ router.delete(
 
 // Get by ID (public)
 router.get('/:id', idValidation, handleValidationErrors, postController.getById);
+
+// Admin toggle status (admin only)
+router.put(
+  '/:id/toggle-status',
+  ...protectRoute(['admin']),
+  idValidation,
+  handleValidationErrors,
+  postController.toggleStatus
+);
 
 // Admin update post
 router.put(

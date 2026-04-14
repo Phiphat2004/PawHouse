@@ -1,5 +1,14 @@
 const { Post } = require('../models');
 const postService = require('../services/post.service');
+const cloudinary = require('cloudinary').v2;
+const config = require('../config');
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: config.cloudinary.cloudName,
+  api_key: config.cloudinary.apiKey,
+  api_secret: config.cloudinary.apiSecret,
+});
 
 // Keep only the create handler for now. Other handlers removed intentionally
 // so frontend can be deployed incrementally. If you want to re-enable any
@@ -13,8 +22,14 @@ const postController = {
   async getPublicPosts(req, res, next) {
     try {
       const { page = 1, limit = 20, search, tagId } = req.query;
+      // If a non-empty search string is provided, delegate to searchPosts to
+      // use the robust search fallback (regex) implemented in service.
+      if (search && String(search).trim()) {
+        const result = await postService.searchPosts({ q: search, page, limit, tagId, status: 'published' });
+        return res.json(result);
+      }
+
       const query = { status: 'published' };
-      if (search) query.$text = { $search: search };
       if (tagId) query.tagIds = tagId;
 
       const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -29,6 +44,28 @@ const postController = {
       ]);
 
       res.json({ posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } });
+    } catch (error) { next(error); }
+  },
+
+  /**
+   * Upload image (authenticated users)
+   * POST /api/posts/upload
+   * multipart/form-data, field name: file
+   */
+  async uploadImage(req, res, next) {
+    try {
+      if (!req.file || !req.file.buffer) return res.status(400).json({ error: 'No file uploaded' });
+
+      const streamUpload = (buffer) => new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({ resource_type: 'image', folder: 'pawhouse/posts' }, (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        });
+        stream.end(buffer);
+      });
+
+      const result = await streamUpload(req.file.buffer);
+      return res.json({ url: result.secure_url, public_id: result.public_id });
     } catch (error) { next(error); }
   },
 
@@ -145,6 +182,31 @@ const postController = {
   }
   ,
 
+  /**
+   * Toggle post status (admin only)
+   * PUT /api/posts/:id/toggle-status
+   */
+  async toggleStatus(req, res, next) {
+    try {
+      const post = await Post.findById(req.params.id);
+      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+
+      // Toggle between 'published' and 'draft'
+      if (post.status === 'published') {
+        post.status = 'draft';
+      } else {
+        post.status = 'published';
+        if (!post.publishedAt) post.publishedAt = new Date();
+      }
+
+      await post.save();
+      const updatedPost = await Post.findById(post._id)
+        .populate('authorId', 'email profile')
+        .populate('tagIds', 'name slug');
+      res.json({ post: updatedPost });
+    } catch (error) { next(error); }
+  }
+,
   /**
    * Update own post (user)
    * PUT /api/posts/my-posts/:id
