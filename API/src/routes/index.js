@@ -30,4 +30,7 @@ router.use("/cart", cartRoutes);
 // Orders
 router.use("/orders", orderRoutes);
 
+// Orders
+router.use('/orders', orderRoutes);
+
 module.exports = router;
