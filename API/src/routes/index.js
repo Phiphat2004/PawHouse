@@ -8,6 +8,7 @@ const productRoutes = require("./product.routes");
 const accountManagementRoutes = require("./accountManagement.routes");
 const cartRoutes = require("./cart.routes");
 const orderRoutes = require("./order.routes");
+const stockRoutes = require("./stock.routes");
 
 // Auth
 router.use("/auth", authRoutes);
@@ -23,6 +24,9 @@ router.use("/admin/account-management", accountManagementRoutes);
 
 // Product
 router.use("/products", productRoutes);
+
+// Stock (warehouses, entries, levels, movements)
+router.use("/stock", stockRoutes);
 
 // Cart
 router.use("/cart", cartRoutes);
