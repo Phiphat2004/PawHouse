@@ -8,6 +8,7 @@ const productRoutes = require("./product.routes");
 const accountManagementRoutes = require("./accountManagement.routes");
 const cartRoutes = require("./cart.routes");
 const orderRoutes = require("./order.routes");
+const careAppointmentRoutes = require("./careAppointment.routes");
 
 // Auth
 router.use("/auth", authRoutes);
@@ -29,5 +30,8 @@ router.use("/cart", cartRoutes);
 
 // Orders
 router.use("/orders", orderRoutes);
+
+// Care appointments
+router.use("/care-appointments", careAppointmentRoutes);
 
 module.exports = router;

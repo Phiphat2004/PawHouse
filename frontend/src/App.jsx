@@ -17,6 +17,7 @@ import {
   CheckoutPage,
   OrderPage,
   OrderDetailPage,
+  CareAppointmentsPage,
   AboutPage,
   ContactPage,
   AdminDashboardPage,
@@ -33,6 +34,7 @@ import {
   StockMovementHistoryPage,
   AccountManagementPage,
   AdminProfilePage,
+  AdminCareAppointmentsPage,
 } from "./pages";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 
@@ -80,6 +82,7 @@ export default function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/don-hang" element={<OrderPage />} />
         <Route path="/don-hang/:id" element={<OrderDetailPage />} />
+        <Route path="/lich-cham-soc" element={<CareAppointmentsPage />} />
         <Route path="/quan-tri" element={<AdminDashboardPage />} />
         <Route path="/quan-tri/san-pham" element={<AdminProductsPage />} />
         <Route
@@ -99,6 +102,7 @@ export default function App() {
         <Route path="/quan-tri/lich-su-xuat-nhap-kho" element={<StockMovementHistoryPage />} />
         <Route path="/quan-tri/nhap-kho" element={<CreateStockEntryPage />} />
         <Route path="/quan-tri/khach-hang" element={<AccountManagementPage />} />
+        <Route path="/quan-tri/lich-cham-soc" element={<AdminCareAppointmentsPage />} />
         <Route path="/quan-tri/tai-khoan" element={<AdminProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

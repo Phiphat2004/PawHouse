@@ -4,6 +4,7 @@ const Product = require("./Product");
 const Category = require("./Category");
 const Post = require("./Post");
 const Order = require("./Order");
+const CareAppointment = require("./CareAppointment");
 
 // Auth models
 const EmailVerificationOtp = require("./EmailVerificationOtp");
@@ -33,6 +34,7 @@ module.exports = {
   Category,
   Post,
   Order,
+  CareAppointment,
   // Auth
   EmailVerificationOtp,
   PasswordResetOtp,

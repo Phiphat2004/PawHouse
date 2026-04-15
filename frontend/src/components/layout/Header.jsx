@@ -27,6 +27,7 @@ export default function Header() {
         try {
           const userData = JSON.parse(storedUser);
           userData.isAdmin = userData.roles?.includes("admin");
+          userData.isStaff = userData.roles?.includes("staff");
           
           // If avatarUrl is missing and token exists, fetch from API
           if (!userData.avatarUrl && token) {
@@ -134,6 +135,14 @@ export default function Header() {
             >
               Liên hệ
             </Link>
+            {user && (
+              <Link
+                to="/lich-cham-soc"
+                className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
+              >
+                Lịch chăm sóc
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-4">
@@ -174,7 +183,7 @@ export default function Header() {
                         </span>
                       )}
                     </div>
-                    <span className="font-medium text-gray-700 max-w-[120px] truncate">
+                    <span className="font-medium text-gray-700 max-w-30 truncate">
                       {user.fullName || user.email}
                     </span>
                     <span
@@ -205,6 +214,14 @@ export default function Header() {
                       </Link>
 
                       <Link
+                        to="/lich-cham-soc"
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 hover:bg-orange-50"
+                      >
+                        🗓️ Lịch chăm sóc
+                      </Link>
+
+                      <Link
                         to="/cong-dong/bai-viet-cua-toi"
                         onClick={() => setDropdownOpen(false)}
                         className="block px-4 py-2 hover:bg-orange-50"
@@ -212,7 +229,7 @@ export default function Header() {
                         📝 Bài viết của tôi
                       </Link>
 
-                      {user.isAdmin && (
+                      {(user.isAdmin || user.isStaff) && (
                         <Link
                           to={ROUTES.ADMIN}
                           onClick={() => setDropdownOpen(false)}
@@ -242,7 +259,7 @@ export default function Header() {
                   </Link>
                   <Link
                     to="/register"
-                    className="px-5 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500"
+                    className="px-5 py-2 rounded-full font-semibold text-white bg-linear-to-r from-orange-500 to-amber-500"
                   >
                     Đăng ký
                   </Link>

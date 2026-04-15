@@ -261,6 +261,89 @@ exports.sendOrderStatusUpdate = async (order, toEmail) => {
   });
 };
 
+/**
+ * Send care appointment approved email.
+ * @param {object} appointment
+ * @param {string} toEmail
+ * @param {string} customerName
+ */
+exports.sendCareAppointmentApproved = async (
+  appointment,
+  toEmail,
+  customerName = "",
+) => {
+  if (!toEmail) return;
+
+  const dateText = new Date(appointment.appointmentDate).toLocaleDateString(
+    "vi-VN",
+  );
+  const body = `
+    <h2 style="margin:0 0 8px;color:#374151;font-size:20px;">Lịch chăm sóc đã được duyệt ✅</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">
+      Xin chào <strong>${customerName || "bạn"}</strong>,
+      lịch đưa thú cưng đến spa của bạn đã được nhân viên xác nhận.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+      <tbody>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Tên thú cưng</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.petName}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Loại thú cưng</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.petType}</td></tr>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Dịch vụ</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.serviceType}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Ngày</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${dateText}</td></tr>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Giờ hẹn</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.startTime}</td></tr>
+      </tbody>
+    </table>
+    <p style="margin:20px 0 0;font-size:14px;color:#6b7280;">Vui lòng đến shop đúng giờ để được phục vụ tốt nhất. Hẹn gặp bạn và bé cưng tại PawCare.</p>
+  `;
+
+  await sendEmail({
+    to: toEmail,
+    subject: `[PawCare] Lịch chăm sóc ${appointment.petName} đã được duyệt`,
+    html: baseLayout(body),
+  });
+};
+
+/**
+ * Send care appointment received email (pending approval).
+ * @param {object} appointment
+ * @param {string} toEmail
+ * @param {string} customerName
+ */
+exports.sendCareAppointmentReceived = async (
+  appointment,
+  toEmail,
+  customerName = "",
+) => {
+  if (!toEmail) return;
+
+  const dateText = new Date(appointment.appointmentDate).toLocaleDateString(
+    "vi-VN",
+  );
+  const body = `
+    <h2 style="margin:0 0 8px;color:#374151;font-size:20px;">Đã nhận lịch chăm sóc của bạn 🐾</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">
+      Xin chào <strong>${customerName || "bạn"}</strong>,
+      PawCare đã nhận được yêu cầu đặt lịch của bạn và đang chờ nhân viên duyệt.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+      <tbody>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Tên thú cưng</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.petName}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Loại thú cưng</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.petType}</td></tr>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Dịch vụ</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.serviceType}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Ngày</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${dateText}</td></tr>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Giờ hẹn</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${appointment.startTime}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Trạng thái</td><td style="padding:12px 14px;color:#f59e0b;font-size:14px;font-weight:700;">Chờ duyệt</td></tr>
+      </tbody>
+    </table>
+    <p style="margin:20px 0 0;font-size:14px;color:#6b7280;">Chúng tôi sẽ gửi email xác nhận ngay khi lịch của bạn được duyệt.</p>
+  `;
+
+  await sendEmail({
+    to: toEmail,
+    subject: `[PawCare] Đã nhận lịch chăm sóc cho ${appointment.petName}`,
+    html: baseLayout(body),
+  });
+};
+
 // ─── OTP Functions (from auth-service) ──────────────────────────────────────
 
 function getOtpEmailHtml(otp, type = "verification") {

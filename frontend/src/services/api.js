@@ -20,7 +20,12 @@ async function request(endpoint, options = {}) {
   // Handle query params
   let fullUrl = url;
   if (options.params) {
-    const searchParams = new URLSearchParams(options.params);
+    const filteredParams = Object.fromEntries(
+      Object.entries(options.params).filter(
+        ([, value]) => value !== undefined && value !== null && value !== "",
+      ),
+    );
+    const searchParams = new URLSearchParams(filteredParams);
     fullUrl = `${url}?${searchParams.toString()}`;
   }
 
@@ -182,6 +187,16 @@ export const stockApi = {
   getWarehouses: () => api.get("/stock/warehouses"),
   createWarehouse: (data) => api.post("/stock/warehouses", data),
   deleteWarehouse: (id) => api.delete(`/stock/warehouses/${id}`),
+};
+
+export const careAppointmentApi = {
+  createAppointment: (data) => api.post("/care-appointments", data),
+  getMyAppointments: (params = {}) =>
+    api.get("/care-appointments/my", { params }),
+  updateAppointment: (id, data) => api.patch(`/care-appointments/${id}`, data),
+  getAllAppointments: (params = {}) =>
+    api.get("/care-appointments", { params }),
+  approveAppointment: (id) => api.patch(`/care-appointments/${id}/approve`),
 };
 
 export default api;

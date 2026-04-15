@@ -15,10 +15,11 @@ export default function AdminLayout({ children }) {
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
-        userData.isAdmin = userData.isAdmin ?? userData.roles?.includes("admin");
+        userData.isAdmin = Array.isArray(userData.roles) && userData.roles.includes("admin");
+        userData.isStaff = Array.isArray(userData.roles) && userData.roles.includes("staff");
         setUser(userData);
-        // Check if user is admin
-        if (!userData.isAdmin) {
+        // Check if user is admin or staff
+        if (!userData.isAdmin && !userData.isStaff) {
           navigate(ROUTES.HOME);
         }
       } catch {
@@ -60,6 +61,7 @@ export default function AdminLayout({ children }) {
     { icon: "📊", label: "Tổng quan", path: "/quan-tri", exact: true },
     { icon: "📦", label: "Sản phẩm", path: "/quan-tri/san-pham" },
     { icon: "🛍️", label: "Đơn hàng", path: "/quan-tri/don-hang" },
+    { icon: "🗓️", label: "Lịch chăm sóc", path: "/quan-tri/lich-cham-soc" },
     { icon: "👥", label: "Khách hàng", path: "/quan-tri/khach-hang" },
     { icon: "📂", label: "Danh mục", path: "/quan-tri/danh-muc" },
   ];
@@ -113,7 +115,7 @@ export default function AdminLayout({ children }) {
           </button>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 pb-24 space-y-2 h-[calc(100vh-80px)] overflow-y-auto">
           {menuItems.map((item) => (
             <Link
               key={item.path}

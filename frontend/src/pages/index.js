@@ -14,6 +14,7 @@ export { default as AboutPage } from "./AboutPage";
 export { default as ContactPage } from "./ContactPage";
 export { default as OrderPage } from "./OrderPage";
 export { default as OrderDetailPage } from "./OrderDetailPage";
+export { default as CareAppointmentsPage } from "./CareAppointmentsPage";
 
 // Admin pages
 export * from "./admin";
