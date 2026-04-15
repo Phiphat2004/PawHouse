@@ -20,39 +20,33 @@ export default function Header() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-      
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          userData.isAdmin = userData.roles?.includes("admin");
-          userData.isStaff = userData.roles?.includes("staff");
-          
-          // If avatarUrl is missing and token exists, fetch from API
-          if (!userData.avatarUrl && token) {
-            try {
-              const response = await authApi.me();
-              if (response?.user) {
-                const updatedUser = {
-                  ...userData,
-                  avatarUrl: response.user.profile?.avatarUrl || '',
-                  fullName: response.user.profile?.fullName || userData.fullName
-                };
-                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
-                setUser(updatedUser);
-                return;
-              }
-            } catch (err) {
-              console.error('Failed to fetch user profile:', err);
-              // Continue with stored user data
-            }
-          }
-          setUser(userData);
-        } catch (err) {
-          console.error('Failed to parse user data:', err);
-          setUser(null);
+
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      try {
+        const response = await authApi.me();
+        if (response?.user) {
+          const updatedUser = {
+            id: response.user.id,
+            email: response.user.email,
+            fullName: response.user.profile?.fullName || '',
+            avatarUrl: response.user.profile?.avatarUrl || '',
+            roles: response.user.roles || [],
+            isAdmin: Array.isArray(response.user.roles) && response.user.roles.includes('admin'),
+            isStaff: Array.isArray(response.user.roles) && response.user.roles.includes('staff'),
+          };
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
+          setUser(updatedUser);
+          return;
         }
+        setUser(null);
+      } catch (err) {
+        console.error('Failed to sync current user:', err);
+        setUser(null);
       }
     };
     

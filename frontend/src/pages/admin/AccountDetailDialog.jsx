@@ -26,6 +26,8 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
         switch (role) {
             case 'admin':
                 return 'bg-purple-600 text-white font-semibold';
+            case 'staff':
+                return 'bg-blue-600 text-white font-semibold';
             case 'user':
                 return 'bg-slate-600 text-white font-semibold';
             default:
@@ -37,6 +39,8 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
         switch (role) {
             case 'admin':
                 return 'Quản trị viên';
+            case 'staff':
+                return 'Nhân viên';
             case 'user':
             default:
                 return 'Người dùng';

@@ -38,10 +38,10 @@ export default function Hero() {
                 <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
               </Link>
               <Link
-                to="/cong-dong"
+                to="/lich-cham-soc"
                 className="px-8 py-4 border-2 border-orange-500 text-orange-500 font-semibold rounded-full hover:bg-orange-500 hover:text-white transition-all duration-300 text-center"
               >
-                Cộng Đồng
+                Đặt lịch chăm sóc
               </Link>
             </div>
 

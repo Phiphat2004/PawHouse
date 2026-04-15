@@ -5,8 +5,10 @@ import CategoryForm from "../../components/admin/CategoryForm";
 import DeleteCategoryModal from "../../components/admin/DeleteCategoryModal";
 import Toast from "../../components/layout/Toast";
 import { categoryApi } from "../../services/api";
+import { hasWriteAccessForCatalog } from "../../utils/role";
 
 export default function AdminCategoriesPage() {
+  const canManage = hasWriteAccessForCatalog();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -44,16 +46,19 @@ export default function AdminCategoriesPage() {
   };
 
   const handleCreate = () => { 
+    if (!canManage) return;
     setEditingCategory(null);
     setShowForm(true);
   };
 
   const handleEdit = (category) => {
+    if (!canManage) return;
     setEditingCategory(category);
     setShowForm(true);
   };
 
   const handleDeleteClick = (category) => {
+    if (!canManage) return;
     setCategoryToDelete(category);
     setShowDeleteModal(true);
   };
@@ -105,6 +110,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleToggleStatus = async (categoryId, currentStatus) => {
+    if (!canManage) return;
     try {
       const category = categories.find((c) => c._id === categoryId);
       if (!category) return;
@@ -184,12 +190,18 @@ export default function AdminCategoriesPage() {
             </h1>
             <p className="text-gray-600 mt-1">Quản lý các danh mục sản phẩm</p>
           </div>
-          <button
-            onClick={handleCreate}
-            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-amber-600 transition shadow-lg hover:shadow-xl"
-          >
-            ➕ Thêm danh mục
-          </button>
+          {canManage ? (
+            <button
+              onClick={handleCreate}
+              className="px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-amber-600 transition shadow-lg hover:shadow-xl"
+            >
+              ➕ Thêm danh mục
+            </button>
+          ) : (
+            <span className="rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-500">
+              Chế độ chỉ xem
+            </span>
+          )}
         </div>
 
         {/* Filters */}
@@ -318,6 +330,7 @@ export default function AdminCategoriesPage() {
         ) : (
           <CategoryTable
             categories={filteredCategories}
+            canManage={canManage}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
             onToggleStatus={handleToggleStatus}
@@ -325,7 +338,7 @@ export default function AdminCategoriesPage() {
         )}
 
         {/* Form Modal */}
-        {showForm && (
+        {showForm && canManage && (
           <CategoryForm
             category={editingCategory}
             categories={categories}
@@ -335,7 +348,7 @@ export default function AdminCategoriesPage() {
         )}
 
         {/* Delete Modal */}
-        {showDeleteModal && categoryToDelete && (
+        {showDeleteModal && canManage && categoryToDelete && (
           <DeleteCategoryModal
             category={categoryToDelete}
             onConfirm={handleDeleteConfirm}

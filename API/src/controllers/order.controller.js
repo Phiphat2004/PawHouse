@@ -28,9 +28,12 @@ exports.createOrder = async (req, res, next) => {
 exports.searchOrders = async (req, res, next) => {
   try {
     const { status, page = 1, limit = 10, search, all } = req.query;
+    const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [];
+    const canViewAll =
+      userRoles.includes("admin") || userRoles.includes("staff");
 
     let userId = req.user._id;
-    if (all === 'true' && req.user.roles?.includes('admin')) {
+    if (all === "true" && canViewAll) {
       userId = null;
     }
 
@@ -67,8 +70,11 @@ exports.getDashboardStats = async (req, res, next) => {
  */
 exports.getOrderById = async (req, res, next) => {
   try {
+    const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [];
+    const canViewAnyOrder =
+      userRoles.includes("admin") || userRoles.includes("staff");
     let userId = req.user._id;
-    if (req.user.roles?.includes('admin')) {
+    if (canViewAnyOrder) {
       userId = null;
     }
     const order = await orderService.getOrderById(req.params.id, userId);
