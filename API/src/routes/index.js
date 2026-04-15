@@ -9,6 +9,7 @@ const accountManagementRoutes = require("./accountManagement.routes");
 const cartRoutes = require("./cart.routes");
 const orderRoutes = require("./order.routes");
 const careAppointmentRoutes = require("./careAppointment.routes");
+const stockRoutes = require("./stock.routes");
 
 // Auth
 router.use("/auth", authRoutes);
@@ -25,6 +26,9 @@ router.use("/admin/account-management", accountManagementRoutes);
 // Product
 router.use("/products", productRoutes);
 
+// Stock (warehouses, entries, levels, movements)
+router.use("/stock", stockRoutes);
+
 // Cart
 router.use("/cart", cartRoutes);
 
@@ -33,5 +37,8 @@ router.use("/orders", orderRoutes);
 
 // Care appointments
 router.use("/care-appointments", careAppointmentRoutes);
+
+// Orders
+router.use('/orders', orderRoutes);
 
 module.exports = router;

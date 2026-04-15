@@ -201,7 +201,10 @@ async function createOrder(userId, orderData) {
 async function searchOrders(userId, filters = {}) {
   const { status, page = 1, limit = 10, search } = filters;
 
-  const query = { userId };
+  const query = {};
+  if (userId) {
+    query.userId = userId;
+  }
 
   if (status) {
     query.status = status;
@@ -249,10 +252,12 @@ async function getOrderById(orderId, userId) {
     throw error;
   }
 
-  const order = await Order.findOne({
-    _id: orderId,
-    userId,
-  })
+  const query = { _id: orderId };
+  if (userId) {
+    query.userId = userId;
+  }
+
+  const order = await Order.findOne(query)
     .populate("userId", "name email phone")
     .populate("deliveryZoneId", "name fee")
     .populate("items.variationId")
