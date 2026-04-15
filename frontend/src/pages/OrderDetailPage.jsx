@@ -29,10 +29,10 @@ export default function OrderDetailPage() {
       setError(null);
       const response = await orderApi.getOrderDetail(id);
 
-      if (response.success) {
-        setOrder(response.data);
+      if (response.order) {
+        setOrder(response.order);
         // Fetch product images from product-service (order-service can't join across services)
-        const items = response.data?.items || [];
+        const items = response.order?.items || [];
         const idsToFetch = [...new Set(
           items
             .filter(item => !item.image)
@@ -78,33 +78,6 @@ export default function OrderDetailPage() {
     } catch (err) {
       console.error("Failed to cancel order:", err);
       alert(err.data?.message || "Không thể hủy đơn hàng");
-    }
-  };
-
-  const handleExportBill = async () => {
-    try {
-      const response = await fetch(`/api/orders/${id}/export`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.TOKEN)}`,
-        },
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `order_${id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        alert("Không thể xuất hóa đơn");
-      }
-    } catch (err) {
-      console.error("Failed to export bill:", err);
-      alert("Không thể xuất hóa đơn");
     }
   };
 
@@ -199,12 +172,6 @@ export default function OrderDetailPage() {
                   Hủy đơn
                 </button>
               )}
-              <button
-                onClick={handleExportBill}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
-              >
-                Xuất hóa đơn
-              </button>
             </div>
           </div>
         </div>

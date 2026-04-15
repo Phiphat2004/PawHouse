@@ -26,8 +26,15 @@ async function sendEmail({ to, subject, html }) {
   const resend = getResendClient();
   if (resend) {
     try {
+      const fromAddress =
+        config.resend?.emailFrom ||
+        config.resend?.fromEmail ||
+        process.env.EMAIL_FROM ||
+        process.env.RESEND_FROM_EMAIL ||
+        "PawCare <onboarding@resend.dev>";
+
       const result = await resend.emails.send({
-        from: config.email.from,
+        from: fromAddress,
         to,
         subject,
         html,
@@ -300,7 +307,5 @@ exports.sendOtpEmail = async (toEmail, otp, type = "verification") => {
     }
   }
 
-  // Dev mode fallback
-  console.log("[EMAIL-DEV] OTP for", toEmail, ":", otp);
   return { devMode: true, otp };
 };

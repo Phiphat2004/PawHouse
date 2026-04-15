@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Package, ArrowLeft } from "lucide-react";
 import { AdminLayout } from "../../components/admin";
@@ -22,19 +22,15 @@ export default function AdminOrderDetailPage() {
   const [error, setError] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  useEffect(() => {
-    fetchOrderDetail();
-  }, [id]);
-
-  const fetchOrderDetail = async () => {
+  const fetchOrderDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await orderApi.getOrderDetail(id);
       console.log("Order detail response:", response);
 
-      if (response.success || response.data) {
-        setOrder(response.data || response);
+      if (response.order) {
+        setOrder(response.order);
       } else {
         setError("Không tìm thấy đơn hàng");
       }
@@ -44,14 +40,18 @@ export default function AdminOrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchOrderDetail();
+  }, [fetchOrderDetail]);
 
   const handleStatusChange = async (newStatus) => {
     if (!order) return;
 
     try {
       setUpdatingStatus(true);
-      await orderApi.updateOrderStatus(id, newStatus);
+      await orderApi.updateOrderStatus(id, newStatus, "Cập nhật từ trang quản trị");
       toast.success("Cập nhật trạng thái đơn hàng thành công");
       // Refresh toàn bộ order để statusHistory được cập nhật
       await fetchOrderDetail();
@@ -94,7 +94,7 @@ export default function AdminOrderDetailPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-100">
           <p className="text-gray-500">Đang tải chi tiết đơn hàng...</p>
         </div>
       </AdminLayout>
@@ -180,7 +180,7 @@ export default function AdminOrderDetailPage() {
                 onValueChange={handleStatusChange}
                 disabled={updatingStatus || ['cancelled', 'refunded'].includes(order.status)}
               >
-                <SelectTrigger className="w-[200px] bg-white border-gray-200">
+                <SelectTrigger className="w-50 bg-white border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

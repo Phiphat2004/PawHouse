@@ -59,11 +59,12 @@ export default function AdminOrdersPage() {
       const response = await orderApi.getAllOrders(params);
       console.log("Orders response:", response);
 
-      setOrders(response.data?.orders || response.orders || []);
-      if (response.data?.pagination) {
-        setPagination(response.data.pagination);
-      } else if (response.pagination) {
-        setPagination(response.pagination);
+      setOrders(response.orders || []);
+      if (response.pagination) {
+        setPagination({
+          totalPages: response.pagination.pages || 1,
+          totalItems: response.pagination.total || 0,
+        });
       }
     } catch (error) {
       console.error("Error fetching orders:", error);

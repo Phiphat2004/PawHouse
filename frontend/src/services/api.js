@@ -1,4 +1,3 @@
-
 const API_BASE = "/api";
 
 async function request(endpoint, options = {}) {
@@ -56,7 +55,10 @@ export const api = {
   putForm: (endpoint, formData) =>
     request(endpoint, { method: "PUT", body: formData, headers: {} }),
   patch: (endpoint, body) =>
-    request(endpoint, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
+    request(endpoint, {
+      method: "PATCH",
+      body: body ? JSON.stringify(body) : undefined,
+    }),
   delete: (endpoint, options = {}) =>
     request(endpoint, { method: "DELETE", ...options }),
 };
@@ -81,9 +83,9 @@ export const authApi = {
   verifyResetOtp: (data) => api.post("/auth/verify-reset-otp", data),
   resetPassword: (data) => api.post("/auth/reset-password", data),
   changePassword: (data) => api.put("/auth/change-password", data),
-  googleAuth: (data) => api.post("/auth/google/auth", data),           // NEW - Recommended
-  googleRegister: (data) => api.post("/auth/google/register", data),  // Legacy
-  googleLogin: (data) => api.post("/auth/google/login", data),        // Legacy
+  googleAuth: (data) => api.post("/auth/google/auth", data), // NEW - Recommended
+  googleRegister: (data) => api.post("/auth/google/register", data), // Legacy
+  googleLogin: (data) => api.post("/auth/google/login", data), // Legacy
 };
 
 export const productApi = {
@@ -91,11 +93,13 @@ export const productApi = {
   getById: (id) => api.get(`/products/${id}`),
   getBySlug: (slug) => api.get(`/products/slug/${slug}`),
   create: (data) => {
-    if (data instanceof FormData) return request("/products", { method: "POST", body: data });
+    if (data instanceof FormData)
+      return request("/products", { method: "POST", body: data });
     return api.post("/products", data);
   },
   update: (id, data) => {
-    if (data instanceof FormData) return request(`/products/${id}`, { method: "PUT", body: data });
+    if (data instanceof FormData)
+      return request(`/products/${id}`, { method: "PUT", body: data });
     return api.put(`/products/${id}`, data);
   },
   delete: (id) => api.delete(`/products/${id}`),
@@ -129,36 +133,33 @@ export const postApi = {
 export const cartApi = {
   addToCart: (data) => api.post("/cart/add", data),
   getCart: () => api.get("/cart"),
-  updateQuantity: (itemId, quantity) => api.put(`/cart/${itemId}`, { quantity }),
-  removeItem: (product_id) => api.delete("/cart", { body: JSON.stringify({ product_id }) }),
+  updateQuantity: (itemId, quantity) =>
+    api.put(`/cart/${itemId}`, { quantity }),
+  removeItem: (product_id) =>
+    api.delete("/cart", { body: JSON.stringify({ product_id }) }),
   clearCart: () => api.delete("/cart/clear"),
 };
 
 export const orderApi = {
-  createOrder: (data) => api.post("/orders/create", data),
-  getMyOrders: (params) => {
-    const filtered = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ''));
-    const queryParams = new URLSearchParams(filtered).toString();
-    return api.get(`/orders/my${queryParams ? `?${queryParams}` : ''}`);
-  },
+  createOrder: (data) => api.post("/orders", data),
+  getMyOrders: (params = {}) => api.get("/orders", { params }),
   getOrderDetail: (id) => api.get(`/orders/${id}`),
-  cancelOrder: (id) => api.patch(`/orders/${id}/cancel`),
-  markPaymentAsPaid: (orderId) => api.patch(`/payments/order/${orderId}/mark-paid`),
+  cancelOrder: (id, reason) =>
+    api.delete(`/orders/${id}`, {
+      body: reason ? JSON.stringify({ reason }) : undefined,
+    }),
+  markPaymentAsPaid: (orderId) =>
+    api.patch(`/payments/order/${orderId}/mark-paid`),
   getPaymentByOrder: (orderId) => api.get(`/payments/order/${orderId}`),
   // Admin only
   getDashboardStats: () => api.get("/orders/dashboard-stats"),
-  getAllOrders: (params) => {
-    const queryParams = new URLSearchParams(params).toString();
-    return api.get(`/orders${queryParams ? `?${queryParams}` : ''}`);
-  },
-  searchOrders: (params) => {
-    const queryParams = new URLSearchParams(params).toString();
-    return api.get(`/orders/search${queryParams ? `?${queryParams}` : ''}`);
-  },
-  updateOrderStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  getAllOrders: (params = {}) => api.get("/orders", { params }),
+  searchOrders: (params = {}) => api.get("/orders", { params }),
+  updateOrderStatus: (id, status, note) =>
+    api.patch(`/orders/${id}/status`, { status, note }),
   filterOrders: (params) => {
     const queryParams = new URLSearchParams(params).toString();
-    return api.get(`/orders/filter${queryParams ? `?${queryParams}` : ''}`);
+    return api.get(`/orders/filter${queryParams ? `?${queryParams}` : ""}`);
   },
   exportBill: (id) => api.get(`/orders/${id}/export`),
 };
@@ -166,17 +167,17 @@ export const orderApi = {
 export const stockApi = {
   // Stock entries
   createEntry: (data) => api.post("/stock/entry", data),
-  
+
   // Stock levels
   getStockLevels: (params) => api.get("/stock/levels", { params }),
-  
+
   // Stock movements
   getMovements: (params) => api.get("/stock/movements", { params }),
   deleteMovement: (id) => api.delete(`/stock/movements/${id}`),
-  
+
   // Product stock
   getProductStock: (productId) => api.get(`/stock/product/${productId}`),
-  
+
   // Warehouses
   getWarehouses: () => api.get("/stock/warehouses"),
   createWarehouse: (data) => api.post("/stock/warehouses", data),
