@@ -12,3 +12,4 @@ export { default as StockDetailPage } from "./StockDetailPage";
 export { default as StockMovementHistoryPage } from "./StockMovementHistoryPage";
 export { default as AccountManagementPage } from "./AccountManagement";
 export { default as AdminProfilePage } from "./AdminProfilePage";
+export { default as AdminCareAppointmentsPage } from "./AdminCareAppointmentsPage";

@@ -8,6 +8,7 @@ const productRoutes = require("./product.routes");
 const accountManagementRoutes = require("./accountManagement.routes");
 const cartRoutes = require("./cart.routes");
 const orderRoutes = require("./order.routes");
+const careAppointmentRoutes = require("./careAppointment.routes");
 const stockRoutes = require("./stock.routes");
 
 // Auth
@@ -34,6 +35,8 @@ router.use("/cart", cartRoutes);
 // Orders
 router.use("/orders", orderRoutes);
 
+// Care appointments
+router.use("/care-appointments", careAppointmentRoutes);
 // Orders
 router.use('/orders', orderRoutes);
 
