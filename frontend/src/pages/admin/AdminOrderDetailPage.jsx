@@ -173,31 +173,88 @@ export default function AdminOrderDetailPage() {
 
           {/* Status Change */}
           <div className="border-t pt-6">
-            <p className="text-gray-500 text-sm mb-2">Cập nhật trạng thái đơn hàng</p>
-            <div className="flex items-center gap-4">
-              <Select
-                value={order.status}
-                onValueChange={handleStatusChange}
-                disabled={updatingStatus || ['cancelled', 'refunded'].includes(order.status)}
-              >
-                <SelectTrigger className="w-50 bg-white border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Chờ xác nhận</SelectItem>
-                  <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                  <SelectItem value="packing">Đang đóng gói</SelectItem>
-                  <SelectItem value="shipping">Đang giao</SelectItem>
-                  <SelectItem value="completed">Hoàn thành</SelectItem>
-                  <SelectItem value="cancelled">Đã hủy</SelectItem>
-                  <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
-                </SelectContent>
-              </Select>
-              {['cancelled', 'refunded'].includes(order.status) && (
-                <span className="text-sm text-gray-400 italic">Đơn hàng đã kết thúc, không thể thay đổi trạng thái</span>
+            <p className="text-gray-500 text-sm mb-4">Hành động cập nhật trạng thái đơn hàng</p>
+            <div className="flex items-center gap-3">
+              {order.status === 'pending' && (
+                <>
+                  <Button
+                    onClick={() => handleStatusChange('confirmed')}
+                    disabled={updatingStatus}
+                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                  >
+                    Xác nhận đơn
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange('cancelled')}
+                    disabled={updatingStatus}
+                    variant="destructive"
+                    className="shadow-sm border border-red-200"
+                  >
+                    Hủy đơn
+                  </Button>
+                </>
+              )}
+              {order.status === 'confirmed' && (
+                <>
+                  <Button
+                    onClick={() => handleStatusChange('packing')}
+                    disabled={updatingStatus}
+                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+                  >
+                    Chuẩn bị hàng
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange('cancelled')}
+                    disabled={updatingStatus}
+                    variant="destructive"
+                    className="shadow-sm border border-red-200"
+                  >
+                    Hủy đơn
+                  </Button>
+                </>
+              )}
+              {order.status === 'packing' && (
+                <>
+                  <Button
+                    onClick={() => handleStatusChange('shipping')}
+                    disabled={updatingStatus}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                  >
+                    Giao hàng
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusChange('cancelled')}
+                    disabled={updatingStatus}
+                    variant="destructive"
+                    className="shadow-sm border border-red-200"
+                  >
+                    Hủy đơn
+                  </Button>
+                </>
+              )}
+              {order.status === 'shipping' && (
+                <Button
+                  onClick={() => handleStatusChange('completed')}
+                  disabled={updatingStatus}
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                >
+                  Đã giao hàng
+                </Button>
+              )}
+
+              {['completed', 'cancelled', 'refunded'].includes(order.status) && (
+                <span className="text-sm text-gray-500 italic bg-gray-50 px-4 py-2 rounded-md border border-gray-100 font-medium">
+                  Đơn hàng đã kết thúc, không thể thay đổi trạng thái
+                </span>
               )}
               {updatingStatus && (
-                <span className="text-gray-500 text-sm">Đang cập nhật...</span>
+                <span className="text-gray-500 text-sm animate-pulse ml-2 flex items-center font-medium">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Đang xử lý...
+                </span>
               )}
             </div>
           </div>

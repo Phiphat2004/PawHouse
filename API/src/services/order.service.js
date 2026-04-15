@@ -314,9 +314,9 @@ async function cancelOrder(orderId, userId, reason = "") {
     throw error;
   }
 
-  if (!["pending", "confirmed"].includes(order.status)) {
+  if (!["pending", "confirmed", "packing"].includes(order.status)) {
     const error = new Error(
-      "Chỉ có thể huỷ đơn hàng ở trạng thái chờ xác nhận hoặc đã xác nhận",
+      "Chỉ có thể huỷ đơn hàng ở trạng thái chờ xác nhận, đã xác nhận hoặc đang đóng gói",
     );
     error.status = 400;
     throw error;
@@ -398,6 +398,25 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   }
 
   const previousStatus = order.status;
+
+  const validTransitions = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["packing", "cancelled"],
+    packing: ["shipping", "cancelled"],
+    shipping: ["completed"],
+    completed: [],
+    cancelled: [],
+    refunded: [],
+  };
+
+  const allowedNextStatuses = validTransitions[previousStatus] || [];
+  
+  if (!allowedNextStatuses.includes(newStatus)) {
+    const error = new Error(`Không thể chuyển trạng thái từ '${previousStatus}' sang '${newStatus}'`);
+    error.status = 400;
+    throw error;
+  }
+
   order.status = newStatus;
   order.statusHistory.push({
     from: previousStatus,
@@ -408,6 +427,22 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   });
 
   await order.save();
+
+  // Restore stock if the order is cancelled by Admin
+  if (newStatus === "cancelled") {
+    // Requires Product and ProductVariation to be imported, which they are in this file.
+    for (const item of order.items) {
+      if (item.variationId) {
+        await ProductVariation.findByIdAndUpdate(item.variationId, {
+          $inc: { stock: item.quantity },
+        });
+      } else if (item.productId) {
+        await Product.findByIdAndUpdate(item.productId, {
+          $inc: { stock: item.quantity },
+        });
+      }
+    }
+  }
 
   // Send status update email to user
   try {
