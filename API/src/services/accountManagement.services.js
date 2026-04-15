@@ -24,11 +24,16 @@ const getUserName = (user) => {
 
 // Helper function to get role from user (handle both single role and roles array)
 const getUserRole = (user) => {
-  if (user.role) {
-    return user.role === "admin" ? "admin" : "user";
-  }
   if (user.roles && user.roles.length > 0) {
-    return user.roles.includes("admin") ? "admin" : "user";
+    if (user.roles.includes("admin")) return "admin";
+    if (user.roles.includes("staff")) return "staff";
+    if (user.roles.includes("customer")) return "user";
+  }
+
+  if (user.role) {
+    if (user.role === "admin") return "admin";
+    if (user.role === "staff") return "staff";
+    return "user";
   }
   return "user";
 };
@@ -74,12 +79,16 @@ const getAccountsService = async (query = {}) => {
   }
 
   if (role && role !== "all") {
-    const roleValue = role === "admin" ? "admin" : "user";
+    const roleValue = ["admin", "staff", "user"].includes(role) ? role : "user";
 
-    roleConditions.push(
-      { role: roleValue },
-      { roles: roleValue === "admin" ? "admin" : "customer" },
-    );
+    const rolesArrayValue =
+      roleValue === "admin"
+        ? "admin"
+        : roleValue === "staff"
+          ? "staff"
+          : "customer";
+
+    roleConditions.push({ role: roleValue }, { roles: rolesArrayValue });
   }
 
   // Combine conditions with base filter
@@ -195,13 +204,18 @@ const updateRoleService = async (userId, newRole) => {
     throw new Error("Invalid user ID format!");
   }
 
-  const validRoles = ["user", "admin"];
+  const validRoles = ["user", "staff", "admin"];
   if (!validRoles.includes(newRole)) {
     throw new Error("Invalid role!");
   }
 
   try {
-    const oldRole = newRole === "admin" ? "admin" : "customer";
+    const mappedRole =
+      newRole === "admin"
+        ? "admin"
+        : newRole === "staff"
+          ? "staff"
+          : "customer";
 
     // Update user
     // We use { status: { $ne: 'deleted' } } instead of is_deleted: false
@@ -212,7 +226,7 @@ const updateRoleService = async (userId, newRole) => {
       },
       {
         role: newRole,
-        roles: [oldRole], // Update roles array for backward compatibility
+        roles: [mappedRole], // Update roles array for backward compatibility
       },
       { new: true },
     ).select("email profile roles role status is_banned is_deleted createdAt");

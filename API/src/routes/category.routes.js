@@ -1,7 +1,7 @@
-const express = require('express');
-const { body, param, query, validationResult } = require('express-validator');
-const categoryController = require('../controllers/category.controller');
-const { protectRoute } = require('../middlewares');
+const express = require("express");
+const { body, param, query, validationResult } = require("express-validator");
+const categoryController = require("../controllers/category.controller");
+const { protectRoute } = require("../middlewares");
 
 const router = express.Router();
 
@@ -16,32 +16,38 @@ const handleValidationErrors = (req, res, next) => {
 
 // Validation rules
 const createCategoryValidation = [
-  body('name').trim().notEmpty().withMessage('Category name is required'),
-  body('slug').trim().notEmpty().withMessage('Category slug is required'),
-  body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
+  body("name").trim().notEmpty().withMessage("Category name is required"),
+  body("slug").trim().notEmpty().withMessage("Category slug is required"),
+  body("parentId")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid parent category ID"),
 ];
 
 const updateCategoryValidation = [
-  param('id').isMongoId().withMessage('Invalid category ID'),
-  body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
+  param("id").isMongoId().withMessage("Invalid category ID"),
+  body("parentId")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid parent category ID"),
 ];
 
 const getCategoryByIdValidation = [
-  param('id').isMongoId().withMessage('Invalid category ID'),
+  param("id").isMongoId().withMessage("Invalid category ID"),
 ];
 
 const searchCategoriesValidation = [
-  query('search').trim().notEmpty().withMessage('Search query is required'),
+  query("search").trim().notEmpty().withMessage("Search query is required"),
 ];
 
 // Routes
 
 // GET /categories - Get all categories
-router.get('/', categoryController.getAll);
+router.get("/", categoryController.getAll);
 
 // GET /categories/search - Search categories (New functionality requested)
 router.get(
-  '/search',
+  "/search",
   searchCategoriesValidation,
   handleValidationErrors,
   categoryController.getAll, // Reusing getAll as it already supports search param
@@ -49,7 +55,7 @@ router.get(
 
 // GET /categories/:id - Get category by ID
 router.get(
-  '/:id',
+  "/:id",
   getCategoryByIdValidation,
   handleValidationErrors,
   categoryController.getById,
@@ -57,8 +63,8 @@ router.get(
 
 // POST /categories - Create a new category (Admin only)
 router.post(
-  '/',
-  ...protectRoute(['admin']),
+  "/",
+  ...protectRoute(["admin"]),
   createCategoryValidation,
   handleValidationErrors,
   categoryController.create,
@@ -66,8 +72,8 @@ router.post(
 
 // PUT /categories/:id - Update category (Admin only)
 router.put(
-  '/:id',
-  ...protectRoute(['admin']),
+  "/:id",
+  ...protectRoute(["admin"]),
   updateCategoryValidation,
   handleValidationErrors,
   categoryController.update,
@@ -75,9 +81,9 @@ router.put(
 
 // DELETE /categories/:id - Delete category (Admin only)
 router.delete(
-  '/:id',
-  ...protectRoute(['admin']),
-  [param('id').isMongoId().withMessage('Invalid category ID')],
+  "/:id",
+  ...protectRoute(["admin"]),
+  [param("id").isMongoId().withMessage("Invalid category ID")],
   handleValidationErrors,
   categoryController.delete,
 );

@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { STORAGE_KEYS, ROUTES } from "../../utils/constants";
 import { authApi } from "../../services/api";
-import StaffLayout from "./StaffLayout";
 
-export default function AdminLayout({ children }) {
+export default function StaffLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -59,7 +58,6 @@ export default function AdminLayout({ children }) {
     };
   }, [navigate]);
 
-  // Auto-expand stock menu if on stock pages
   useEffect(() => {
     if (location.pathname.includes('/ton-kho') || location.pathname.includes('/nhap-kho')) {
       setStockMenuOpen(true);
@@ -70,8 +68,7 @@ export default function AdminLayout({ children }) {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (token) {
       try {
-        const API_URL =
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
         await fetch(`${API_URL}/auth/logout`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -94,14 +91,6 @@ export default function AdminLayout({ children }) {
     { icon: "📂", label: "Danh mục", path: "/quan-tri/danh-muc" },
   ];
 
-  const adminOnlyMenuItems = [
-    { icon: "👥", label: "Tài Khoản", path: "/quan-tri/tai-khoan" },
-  ];
-
-  const visibleMenuItems = user?.isAdmin
-    ? [...menuItems, ...adminOnlyMenuItems]
-    : menuItems;
-
   const menuItemsAfterStock = [
     { icon: "🌐", label: "Cộng đồng", path: "/quan-tri/cong-dong" },
     { icon: "💬", label: "Liên hệ", path: "/quan-tri/lien-he" },
@@ -121,13 +110,8 @@ export default function AdminLayout({ children }) {
 
   if (!user) return null;
 
-  if (user.isStaff && !user.isAdmin) {
-    return <StaffLayout>{children}</StaffLayout>;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-40 ${
           sidebarOpen ? "w-64" : "w-20"
@@ -156,7 +140,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         <nav className="p-4 pb-24 space-y-2 h-[calc(100vh-80px)] overflow-y-auto">
-          {visibleMenuItems.map((item) => (
+          {menuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -170,8 +154,7 @@ export default function AdminLayout({ children }) {
               {sidebarOpen && <span className="font-medium">{item.label}</span>}
             </Link>
           ))}
-          
-          {/* Tồn kho Menu with Dropdown */}
+
           <div className="space-y-1">
             <button
               onClick={() => setStockMenuOpen(!stockMenuOpen)}
@@ -203,8 +186,7 @@ export default function AdminLayout({ children }) {
                 </svg>
               )}
             </button>
-            
-            {/* Submenu */}
+
             {sidebarOpen && stockMenuOpen && (
               <div className="ml-4 space-y-1 border-l-2 border-orange-200 pl-2">
                 {stockSubMenu.map((subItem) => (
@@ -224,7 +206,6 @@ export default function AdminLayout({ children }) {
             )}
           </div>
 
-          {/* Menu items after stock */}
           {menuItemsAfterStock.map((item) => (
             <Link
               key={item.path}
@@ -252,19 +233,11 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div
-        className={`transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-20"
-        }`}
-      >
-        {/* Top Header */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
         <header className="bg-white shadow-sm sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Quản trị viên
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Nhân viên</h1>
               <p className="text-sm text-gray-500">
                 Xin chào, {user?.profile?.fullName || user?.email}
               </p>
@@ -316,18 +289,8 @@ export default function AdminLayout({ children }) {
                       onClick={() => setDropdownOpen(false)}
                       className="block px-4 py-2 hover:bg-orange-50"
                     >
-                      👤 Tài khoản
+                      👤 Hồ sơ
                     </Link>
-
-                    {user?.isAdmin && (
-                      <Link
-                        to={ROUTES.ADMIN}
-                        onClick={() => setDropdownOpen(false)}
-                        className="block px-4 py-2 hover:bg-orange-50"
-                      >
-                        ⚙️ Quản trị
-                      </Link>
-                    )}
 
                     <hr className="my-2" />
                     <button
@@ -343,7 +306,6 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="p-6">{children}</main>
       </div>
     </div>

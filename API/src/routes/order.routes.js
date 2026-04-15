@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/order.controller");
-const { authenticate } = require("../middlewares/auth.middleware");
+const { authenticate, authorize } = require("../middlewares/auth.middleware");
 
 // All routes require authentication
 router.use(authenticate);
@@ -23,7 +23,11 @@ router.get("/", orderController.searchOrders);
  * Dashboard stats
  * GET /orders/dashboard-stats
  */
-router.get("/dashboard-stats", orderController.getDashboardStats);
+router.get(
+  "/dashboard-stats",
+  authorize(["admin", "staff"]),
+  orderController.getDashboardStats,
+);
 
 /**
  * Get order details
@@ -43,6 +47,10 @@ router.delete("/:id", orderController.cancelOrder);
  * PATCH /orders/:id/status
  * Body: { status, note? }
  */
-router.patch("/:id/status", orderController.updateOrderStatus);
+router.patch(
+  "/:id/status",
+  authorize(["admin", "staff"]),
+  orderController.updateOrderStatus,
+);
 
 module.exports = router;

@@ -7,13 +7,13 @@ const API_BASE = '/api/auth'
 
 function hasAdminRole(user) {
   if (!user) return false
-  if (user.isAdmin === true) return true
+  if (user.isAdmin === true || user.isStaff === true) return true
 
-  if (Array.isArray(user.roles) && user.roles.includes('admin')) {
+  if (Array.isArray(user.roles) && (user.roles.includes('admin') || user.roles.includes('staff'))) {
     return true
   }
 
-  return user.role === 'admin'
+  return user.role === 'admin' || user.role === 'staff'
 }
 
 function getModeFromPath(pathname) {

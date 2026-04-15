@@ -4,8 +4,10 @@ import ProductTable from "../../components/admin/ProductTable";
 import ProductForm from "../../components/admin/ProductForm";
 import { productApi } from "../../services/api";
 import Toast from "../../components/layout/Toast";
+import { hasWriteAccessForCatalog } from "../../utils/role";
 
 export default function AdminProductsPage() {
+  const canManage = hasWriteAccessForCatalog();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,16 +66,19 @@ export default function AdminProductsPage() {
   };
 
   const handleCreate = () => {
+    if (!canManage) return;
     setEditingProduct(null);
     setShowForm(true);
   };
 
   const handleEdit = (product) => {
+    if (!canManage) return;
     setEditingProduct(product);
     setShowForm(true);
   };
 
   const handleDeleteClick = (product) => {
+    if (!canManage) return;
     setProductToDelete(product);
     setShowDeleteModal(true);
   };
@@ -130,6 +135,7 @@ export default function AdminProductsPage() {
   };
 
   const handleToggleStatus = async (productId, currentStatus) => {
+    if (!canManage) return;
     try {
       // Find the product to get all its data
       const product = products.find((p) => p._id === productId);
@@ -220,13 +226,19 @@ export default function AdminProductsPage() {
               Quản lý danh sách sản phẩm của cửa hàng
             </p>
           </div>
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all"
-          >
-            <span className="text-xl">+</span>
-            <span className="font-medium">Thêm sản phẩm</span>
-          </button>
+          {canManage ? (
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all"
+            >
+              <span className="text-xl">+</span>
+              <span className="font-medium">Thêm sản phẩm</span>
+            </button>
+          ) : (
+            <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
+              Chế độ chỉ xem
+            </span>
+          )}
         </div>
 
         {error && (
@@ -288,6 +300,7 @@ export default function AdminProductsPage() {
         <ProductTable
           products={paginatedProducts}
           categories={categories}
+          canManage={canManage}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
           onToggleStatus={handleToggleStatus}
@@ -299,7 +312,7 @@ export default function AdminProductsPage() {
         />
 
         {/* Product Form Modal */}
-        {showForm && (
+        {showForm && canManage && (
           <ProductForm
             product={editingProduct}
             categories={categories}
@@ -309,7 +322,7 @@ export default function AdminProductsPage() {
         )}
 
         {/* Delete Confirmation Modal */}
-        {showDeleteModal && productToDelete && (
+        {showDeleteModal && canManage && productToDelete && (
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 animate-fade-in border-2 border-gray-200">
               <div className="p-6">

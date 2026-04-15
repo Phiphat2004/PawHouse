@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AdminLayout } from "../../components/admin";
 import { productApi } from "../../utils/services/api";
 import Toast from "../../components/layout/Toast";
 import ProductForm from "../../components/admin/ProductForm";
+import { hasWriteAccessForCatalog } from "../../utils/role";
 
 export default function AdminProductDetailPage() {
+  const canManage = hasWriteAccessForCatalog();
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -16,11 +18,7 @@ export default function AdminProductDetailPage() {
   const [categories, setCategories] = useState([]);
   const [toasts, setToasts] = useState([]);
 
-  useEffect(() => {
-    loadProduct();
-  }, [id]);
-
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     try {
       setLoading(true);
       const [productData, categoriesData] = await Promise.all([
@@ -35,7 +33,11 @@ export default function AdminProductDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadProduct();
+  }, [loadProduct]);
 
   const addToast = (type, title, message) => {
     const newToast = { id: Date.now(), type, title, message };
@@ -47,10 +49,12 @@ export default function AdminProductDetailPage() {
   };
 
   const handleDeleteClick = () => {
+    if (!canManage) return;
     setShowDeleteModal(true);
   };
 
   const handleDeleteConfirm = async () => {
+    if (!canManage) return;
     try {
       await productApi.delete(id);
       addToast("success", "Thành công!", "Xóa sản phẩm thành công");
@@ -69,10 +73,12 @@ export default function AdminProductDetailPage() {
   };
 
   const handleEditClick = () => {
+    if (!canManage) return;
     setShowEditForm(true);
   };
 
   const handleEditSubmit = async (formData) => {
+    if (!canManage) return;
     try {
       const updated = await productApi.update(id, formData);
       setProduct(updated.product || updated);
@@ -89,6 +95,7 @@ export default function AdminProductDetailPage() {
   };
 
   const handleToggleStatus = async () => {
+    if (!canManage) return;
     try {
       await productApi.update(id, {
         name: product.name,
@@ -161,29 +168,35 @@ export default function AdminProductDetailPage() {
               <p className="text-gray-600 mt-1">Chi tiết sản phẩm</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleToggleStatus}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${product.isActive
-                  ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                  : "bg-green-100 text-green-700 hover:bg-green-200"
-                }`}
-            >
-              {product.isActive ? "Tạm ngưng" : "Kích hoạt"}
-            </button>
-            <button
-              onClick={handleEditClick}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-            >
-              Chỉnh sửa
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
-            >
-              Xóa
-            </button>
-          </div>
+          {canManage ? (
+            <div className="flex gap-3">
+              <button
+                onClick={handleToggleStatus}
+                className={`px-6 py-3 rounded-lg font-medium transition-all ${product.isActive
+                    ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                  }`}
+              >
+                {product.isActive ? "Tạm ngưng" : "Kích hoạt"}
+              </button>
+              <button
+                onClick={handleEditClick}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              >
+                Chỉnh sửa
+              </button>
+              <button
+                onClick={handleDeleteClick}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+              >
+                Xóa
+              </button>
+            </div>
+          ) : (
+            <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
+              Chế độ chỉ xem
+            </span>
+          )}
         </div>
 
         {/* Main Content */}
@@ -418,7 +431,7 @@ export default function AdminProductDetailPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && canManage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 animate-fade-in">
             <div className="p-6">
@@ -465,7 +478,7 @@ export default function AdminProductDetailPage() {
       )}
 
       {/* Edit Product Form Modal */}
-      {showEditForm && (
+      {showEditForm && canManage && (
         <ProductForm
           product={product}
           categories={categories}

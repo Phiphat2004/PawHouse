@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 export default function ProductTable({
   products,
   categories,
+  canManage = false,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -97,7 +98,7 @@ export default function ProductTable({
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-12 w-12 flex-shrink-0">
+                      <div className="h-12 w-12 shrink-0">
                         {imageUrl ? (
                           <img
                             className="h-12 w-12 rounded-lg object-cover border border-gray-200"
@@ -169,18 +170,30 @@ export default function ProductTable({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() =>
-                        onToggleStatus(product._id, product.isActive)
-                      }
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
-                        product.isActive
-                          ? "bg-green-100 text-green-800 hover:bg-green-200"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      }`}
-                    >
-                      {product.isActive ? "Hoạt động" : "Tạm ngưng"}
-                    </button>
+                    {canManage ? (
+                      <button
+                        onClick={() =>
+                          onToggleStatus(product._id, product.isActive)
+                        }
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
+                          product.isActive
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                        }`}
+                      >
+                        {product.isActive ? "Hoạt động" : "Tạm ngưng"}
+                      </button>
+                    ) : (
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          product.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {product.isActive ? "Hoạt động" : "Tạm ngưng"}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(product.createdAt)}
@@ -194,20 +207,24 @@ export default function ProductTable({
                       >
                         👁️
                       </Link>
-                      <button
-                        onClick={() => onEdit(product)}
-                        className="text-orange-600 hover:text-orange-900 transition-colors"
-                        title="Chỉnh sửa"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => onDelete(product)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
-                        title="Xóa"
-                      >
-                        🗑️
-                      </button>
+                      {canManage && (
+                        <>
+                          <button
+                            onClick={() => onEdit(product)}
+                            className="text-orange-600 hover:text-orange-900 transition-colors"
+                            title="Chỉnh sửa"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => onDelete(product)}
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Xóa"
+                          >
+                            🗑️
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -288,9 +305,9 @@ export default function ProductTable({
                       <button
                         key={pageNum}
                         onClick={() => onPageChange(pageNum)}
-                        className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentPage === pageNum
-                            ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md"
+                            ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                             : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                         }`}
                       >

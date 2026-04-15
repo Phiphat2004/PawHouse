@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Header, Footer } from '../components/layout'
-import { AdminLayout } from '../components/admin'
+import { AdminLayout, StaffLayout } from '../components/admin'
 import { STORAGE_KEYS, ROUTES } from '../utils/constants'
 import { authApi } from '../utils/services/api'
 
-function isAdminUser(user) {
+function hasRole(user, role) {
   if (!user) return false
-  if (user.isAdmin === true) return true
-  return Array.isArray(user.roles) && user.roles.includes('admin')
+  if (role === 'admin' && user.isAdmin === true) return true
+  if (role === 'staff' && user.isStaff === true) return true
+  return Array.isArray(user.roles) && user.roles.includes(role)
 }
 
 export default function EditProfilePage() {
@@ -18,6 +19,7 @@ export default function EditProfilePage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isStaff, setIsStaff] = useState(false)
 
   const [form, setForm] = useState({
     fullName: '',
@@ -48,17 +50,22 @@ export default function EditProfilePage() {
 
       if (storedUser) {
         try {
-          setIsAdmin(isAdminUser(JSON.parse(storedUser)))
+          const parsedUser = JSON.parse(storedUser)
+          setIsAdmin(hasRole(parsedUser, 'admin'))
+          setIsStaff(hasRole(parsedUser, 'staff'))
         } catch {
           setIsAdmin(false)
+          setIsStaff(false)
         }
       }
 
       try {
         const data = await authApi.me()
         const user = data.user
-        const adminFlag = isAdminUser(user)
+        const adminFlag = hasRole(user, 'admin')
+        const staffFlag = hasRole(user, 'staff')
         setIsAdmin(adminFlag)
+        setIsStaff(staffFlag)
 
         setForm({
           fullName: user.profile?.fullName || '',
@@ -198,17 +205,18 @@ export default function EditProfilePage() {
 
       const storedUser = localStorage.getItem(STORAGE_KEYS.USER)
       if (storedUser) {
-        const user = JSON.parse(storedUser)
-        user.fullName = responseData.user.profile.fullName
-        user.avatarUrl = responseData.user.profile.avatarUrl
-        user.isAdmin = isAdmin
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
+          const cachedUser = JSON.parse(storedUser)
+          cachedUser.fullName = responseData.user.profile.fullName
+          cachedUser.avatarUrl = responseData.user.profile.avatarUrl
+          cachedUser.isAdmin = isAdmin
+          cachedUser.isStaff = isStaff
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(cachedUser))
       }
 
       setSuccess('Cập nhật thông tin thành công!')
 
       setTimeout(() => {
-        navigate(isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE, { replace: true })
+        navigate(isAdmin || isStaff ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE, { replace: true })
       }, 1500)
     } catch (err) {
       setError(err.message)
@@ -219,18 +227,20 @@ export default function EditProfilePage() {
 
   const content = (
     <div className="min-h-screen bg-gray-50">
-      {!isAdmin && <Header />}
+      {!(isAdmin || isStaff) && <Header />}
 
-      <main className={isAdmin ? 'p-6' : 'pt-24 pb-16'}>
-        <div className={isAdmin ? '' : 'max-w-2xl mx-auto px-4 sm:px-6 lg:px-8'}>
+      <main className={isAdmin || isStaff ? 'p-6' : 'pt-24 pb-16'}>
+        <div className={isAdmin || isStaff ? '' : 'max-w-2xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <div className="flex items-center gap-4 mb-8">
             <Link
-              to={isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
+              to={isAdmin || isStaff ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               ← Quay lại
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Chỉnh sửa thông tin</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {isAdmin ? 'Chỉnh sửa thông tin quản trị' : isStaff ? 'Chỉnh sửa thông tin nhân viên' : 'Chỉnh sửa thông tin'}
+            </h1>
           </div>
 
           {error && (
@@ -477,9 +487,11 @@ export default function EditProfilePage() {
         </div>
       </main>
 
-      {!isAdmin && <Footer />}
+      {!(isAdmin || isStaff) && <Footer />}
     </div>
   )
 
-  return isAdmin ? <AdminLayout>{content}</AdminLayout> : content
+  if (isAdmin) return <AdminLayout>{content}</AdminLayout>
+  if (isStaff) return <StaffLayout>{content}</StaffLayout>
+  return content
 }

@@ -1,6 +1,8 @@
 import { ToastContainer } from "react-toastify";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { authApi } from "./services/api";
+import { STORAGE_KEYS } from "./utils/constants";
 
 import {
   HomePage,
@@ -48,7 +50,74 @@ function ScrollToTop() {
   return null;
 }
 
+function AdminOnlyRoute({ children, currentUser, ready }) {
+  if (!ready) {
+    return null;
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const roles = Array.isArray(currentUser?.roles) ? currentUser.roles : [];
+  if (!roles.includes("admin")) {
+    return <Navigate to="/quan-tri" replace />;
+  }
+
+  return children;
+}
+
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncCurrentUser() {
+      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+      if (!token) {
+        if (isMounted) {
+          setCurrentUser(null);
+          setAuthReady(true);
+        }
+        return;
+      }
+
+      try {
+        const response = await authApi.me();
+        const user = response?.user;
+        if (user && isMounted) {
+          const normalizedUser = {
+            id: user.id,
+            email: user.email,
+            fullName: user.profile?.fullName || "",
+            avatarUrl: user.profile?.avatarUrl || "",
+            roles: user.roles || [],
+            isAdmin: Array.isArray(user.roles) && user.roles.includes("admin"),
+            isStaff: Array.isArray(user.roles) && user.roles.includes("staff"),
+          };
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(normalizedUser));
+          setCurrentUser(normalizedUser);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setAuthReady(true);
+        }
+      }
+    }
+
+    syncCurrentUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <>
       <ScrollToTop />
@@ -101,7 +170,14 @@ export default function App() {
         <Route path="/quan-tri/ton-kho/:productId" element={<StockDetailPage />} />
         <Route path="/quan-tri/lich-su-xuat-nhap-kho" element={<StockMovementHistoryPage />} />
         <Route path="/quan-tri/nhap-kho" element={<CreateStockEntryPage />} />
-        <Route path="/quan-tri/khach-hang" element={<AccountManagementPage />} />
+        <Route
+          path="/quan-tri/khach-hang"
+          element={
+            <AdminOnlyRoute currentUser={currentUser} ready={authReady}>
+              <AccountManagementPage />
+            </AdminOnlyRoute>
+          }
+        />
         <Route path="/quan-tri/lich-cham-soc" element={<AdminCareAppointmentsPage />} />
         <Route path="/quan-tri/tai-khoan" element={<AdminProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

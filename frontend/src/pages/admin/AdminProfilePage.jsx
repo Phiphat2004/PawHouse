@@ -33,6 +33,10 @@ export default function AdminProfilePage() {
         const data = await authApi.me()
         setUser(data.user)
 
+        const roles = data.user.roles || []
+        const isAdmin = roles.includes('admin')
+        const isStaff = roles.includes('staff')
+
         const storedUser = localStorage.getItem(STORAGE_KEYS.USER)
         if (storedUser) {
           try {
@@ -41,7 +45,9 @@ export default function AdminProfilePage() {
               ...parsedUser,
               fullName: data.user.profile?.fullName || parsedUser.fullName,
               avatarUrl: data.user.profile?.avatarUrl || parsedUser.avatarUrl,
-              isAdmin: true,
+              roles,
+              isAdmin,
+              isStaff,
             }
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(nextUser))
           } catch {
@@ -59,14 +65,20 @@ export default function AdminProfilePage() {
   }, [])
 
   const roles = user?.roles || []
+  const isAdmin = roles.includes('admin')
+  const isStaff = roles.includes('staff')
+  const profileLabel = isAdmin ? 'quản trị viên' : 'nhân viên'
+  const profileTitle = isAdmin ? 'Hồ sơ quản trị viên' : 'Hồ sơ nhân viên'
+  const accountTag = isAdmin ? 'Quản trị viên' : 'Nhân viên'
+  const accountSectionTitle = isAdmin ? 'Thông tin quản trị' : 'Thông tin nhân viên'
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-orange-600">Tài khoản quản trị</p>
-            <h1 className="mt-2 text-3xl font-bold text-gray-900">Hồ sơ quản trị viên</h1>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-orange-600">Tài khoản {profileLabel}</p>
+            <h1 className="mt-2 text-3xl font-bold text-gray-900">{profileTitle}</h1>
             <p className="mt-2 text-sm text-gray-500">
               Xem thông tin tài khoản, vai trò và trạng thái đăng nhập hiện tại.
             </p>
@@ -105,13 +117,13 @@ export default function AdminProfilePage() {
               </div>
 
               <h2 className="mt-4 text-2xl font-bold text-gray-900">
-                {loading ? 'Đang tải...' : user?.profile?.fullName || 'Quản trị viên'}
+                {loading ? 'Đang tải...' : user?.profile?.fullName || accountTag}
               </h2>
               <p className="mt-1 text-sm text-gray-500">{user?.email}</p>
 
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
                 <BadgeCheck size={16} />
-                Quản trị viên
+                {accountTag}
               </div>
             </div>
 
@@ -169,7 +181,7 @@ export default function AdminProfilePage() {
             <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2">
                 <Camera size={18} className="text-orange-600" />
-                <h3 className="text-lg font-bold text-gray-900">Thông tin quản trị</h3>
+                <h3 className="text-lg font-bold text-gray-900">{accountSectionTitle}</h3>
               </div>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">

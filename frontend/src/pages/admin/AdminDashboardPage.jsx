@@ -25,16 +25,32 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null)
   const [productStats, setProductStats] = useState(null)
   const [customerCount, setCustomerCount] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem('pawhouse_user')
+      const user = rawUser ? JSON.parse(rawUser) : null
+      setIsAdmin(Array.isArray(user?.roles) && user.roles.includes('admin'))
+    } catch {
+      setIsAdmin(false)
+    }
+  }, [])
 
   useEffect(() => {
     async function fetchAll() {
       setLoading(true)
       try {
-        const [orderRes, prodRes, accountRes] = await Promise.allSettled([
+        const requests = [
           orderApi.getDashboardStats(),
           productApi.getAll(),
-          getAccounts({ limit: 1 })
-        ])
+        ]
+
+        if (isAdmin) {
+          requests.push(getAccounts({ limit: 1 }))
+        }
+
+        const [orderRes, prodRes, accountRes] = await Promise.allSettled(requests)
 
         if (orderRes.status === 'fulfilled') {
           setStats(orderRes.value.data)
@@ -46,7 +62,7 @@ export default function AdminDashboardPage() {
             active: data.products?.filter(p => p.isActive).length || 0
           })
         }
-        if (accountRes.status === 'fulfilled') {
+        if (accountRes && accountRes.status === 'fulfilled') {
           setCustomerCount(accountRes.value.pagination?.totalItems || accountRes.value.accounts?.length || 0)
         }
       } catch (err) {
@@ -56,7 +72,7 @@ export default function AdminDashboardPage() {
       }
     }
     fetchAll()
-  }, [])
+  }, [isAdmin])
 
   // Revenue trend
   const revenueTrend = stats ? calcTrend(stats.monthRevenue, stats.lastMonthRevenue) : null

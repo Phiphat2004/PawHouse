@@ -182,6 +182,7 @@ const AccountManagement = () => {
                                 <SelectContent>
                                     <SelectItem value="all">Tất cả vai trò</SelectItem>
                                     <SelectItem value={AccountRole.USER}>Người dùng</SelectItem>
+                                    <SelectItem value={AccountRole.STAFF}>Nhân viên</SelectItem>
                                     <SelectItem value={AccountRole.ADMIN}>Quản trị viên</SelectItem>
                                 </SelectContent>
                             </Select>

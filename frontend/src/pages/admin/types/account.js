@@ -1,5 +1,6 @@
 export const AccountRole = {
   USER: "user",
+  STAFF: "staff",
   ADMIN: "admin",
 };
 

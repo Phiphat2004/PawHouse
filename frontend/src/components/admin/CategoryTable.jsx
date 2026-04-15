@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function CategoryTable({
   categories,
+  canManage = false,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -83,18 +84,30 @@ export default function CategoryTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() =>
-                      onToggleStatus(category._id, category.isActive)
-                    }
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
-                      category.isActive
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                    }`}
-                  >
-                    {category.isActive ? "Hoạt động" : "Tạm ngưng"}
-                  </button>
+                  {canManage ? (
+                    <button
+                      onClick={() =>
+                        onToggleStatus(category._id, category.isActive)
+                      }
+                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
+                        category.isActive
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      }`}
+                    >
+                      {category.isActive ? "Hoạt động" : "Tạm ngưng"}
+                    </button>
+                  ) : (
+                    <span
+                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        category.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {category.isActive ? "Hoạt động" : "Tạm ngưng"}
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(category.createdAt)}
@@ -108,20 +121,24 @@ export default function CategoryTable({
                     >
                       👁️
                     </Link>
-                    <button
-                      onClick={() => onEdit(category)}
-                      className="text-orange-600 hover:text-orange-900 transition-colors"
-                      title="Chỉnh sửa"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => onDelete(category)}
-                      className="text-red-600 hover:text-red-900 transition-colors"
-                      title="Xóa"
-                    >
-                      🗑️
-                    </button>
+                    {canManage && (
+                      <>
+                        <button
+                          onClick={() => onEdit(category)}
+                          className="text-orange-600 hover:text-orange-900 transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => onDelete(category)}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                          title="Xóa"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>

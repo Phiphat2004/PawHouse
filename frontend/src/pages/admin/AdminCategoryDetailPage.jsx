@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AdminLayout } from "../../components/admin";
 import { categoryApi, productApi } from "../../services/api";
 import Toast from "../../components/layout/Toast";
 import CategoryForm from "../../components/admin/CategoryForm";
+import { hasWriteAccessForCatalog } from "../../utils/role";
 
 export default function AdminCategoryDetailPage() {
+  const canManage = hasWriteAccessForCatalog();
   const { id } = useParams();
   const navigate = useNavigate();
   const [category, setCategory] = useState(null);
@@ -17,11 +19,7 @@ export default function AdminCategoryDetailPage() {
   const [categories, setCategories] = useState([]);
   const [toasts, setToasts] = useState([]);
 
-  useEffect(() => {
-    loadCategoryData();
-  }, [id]);
-
-  const loadCategoryData = async () => {
+  const loadCategoryData = useCallback(async () => {
     try {
       setLoading(true);
       const [categoryData, categoriesData, productsData] = await Promise.all([
@@ -47,7 +45,11 @@ export default function AdminCategoryDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadCategoryData();
+  }, [loadCategoryData]);
 
   const addToast = (type, title, message) => {
     const newToast = { id: Date.now(), type, title, message };
@@ -59,10 +61,12 @@ export default function AdminCategoryDetailPage() {
   };
 
   const handleDeleteClick = () => {
+    if (!canManage) return;
     setShowDeleteModal(true);
   };
 
   const handleDeleteConfirm = async () => {
+    if (!canManage) return;
     try {
       await categoryApi.delete(id);
       addToast("success", "Thành công!", "Đã xóa danh mục thành công");
@@ -81,10 +85,12 @@ export default function AdminCategoryDetailPage() {
   };
 
   const handleEditClick = () => {
+    if (!canManage) return;
     setShowEditForm(true);
   };
 
   const handleEditSubmit = async (formData) => {
+    if (!canManage) return;
     try {
       const updated = await categoryApi.update(id, formData);
       setCategory(updated.category || updated);
@@ -101,6 +107,7 @@ export default function AdminCategoryDetailPage() {
   };
 
   const handleToggleStatus = async () => {
+    if (!canManage) return;
     try {
       const parentId = category.parentId?._id || category.parentId;
       const updateData = {
@@ -181,29 +188,35 @@ export default function AdminCategoryDetailPage() {
               <p className="text-gray-600 mt-1">Chi tiết danh mục</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleToggleStatus}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${category.isActive
-                  ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                  : "bg-green-100 text-green-700 hover:bg-green-200"
-                }`}
-            >
-              {category.isActive ? "Tạm ngưng" : "Kích hoạt"}
-            </button>
-            <button
-              onClick={handleEditClick}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-            >
-              Chỉnh sửa
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
-            >
-              Xóa
-            </button>
-          </div>
+          {canManage ? (
+            <div className="flex gap-3">
+              <button
+                onClick={handleToggleStatus}
+                className={`px-6 py-3 rounded-lg font-medium transition-all ${category.isActive
+                    ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                  }`}
+              >
+                {category.isActive ? "Tạm ngưng" : "Kích hoạt"}
+              </button>
+              <button
+                onClick={handleEditClick}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              >
+                Chỉnh sửa
+              </button>
+              <button
+                onClick={handleDeleteClick}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+              >
+                Xóa
+              </button>
+            </div>
+          ) : (
+            <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
+              Chế độ chỉ xem
+            </span>
+          )}
         </div>
 
         {/* Main Content */}
@@ -262,7 +275,7 @@ export default function AdminCategoryDetailPage() {
                       to={`/quan-tri/san-pham/${product._id}`}
                       className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all"
                     >
-                      <div className="h-16 w-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-gray-100">
                         {product.images && product.images.length > 0 ? (
                           <img
                             src={
@@ -397,7 +410,7 @@ export default function AdminCategoryDetailPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && canManage && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 animate-fade-in border-2 border-gray-200">
             <div className="p-6">
@@ -455,7 +468,7 @@ export default function AdminCategoryDetailPage() {
       )}
 
       {/* Edit Category Form Modal */}
-      {showEditForm && (
+      {showEditForm && canManage && (
         <CategoryForm
           category={category}
           categories={categories.filter((c) => c._id !== category._id)}
