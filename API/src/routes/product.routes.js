@@ -86,10 +86,6 @@ router.put(
 );
 
 // DELETE /products/:id - Delete product (Admin only)
-router.delete(
-  "/:id",
-  ...protectRoute(["admin"]),
-  productController.delete,
-);
+router.delete("/:id", ...protectRoute(["admin"]), productController.delete);
 
 module.exports = router;
