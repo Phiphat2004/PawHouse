@@ -65,13 +65,11 @@ export default function CheckoutPage() {
   const fetchCartItems = async () => {
     try {
       const response = await cartApi.getCart();
-      if (response.status === "success" && response.data) {
-        const items = response.data.items || [];
-        const selectedItems = items.filter((item) =>
-          selectedItemIds.includes(item._id)
-        );
-        setCartItems(selectedItems);
-      }
+      const items = response.items || response.cart?.items || [];
+      const selectedItems = items.filter((item) =>
+        selectedItemIds.includes(item._id)
+      );
+      setCartItems(selectedItems);
     } catch (err) {
       console.error("Failed to fetch cart:", err);
     }
@@ -97,58 +95,30 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       const orderData = {
-        items: cartItems.map(item => ({
-          variationId: item.variation_id?._id || item.product_id?._id || item.product_id,
-          productId: item.product_id?._id || item.product_id || null,
-          sku: item.product_id?.sku || '',
-          productName: item.product_id?.name || item.variation_id?.name || 'Sản phẩm',
-          variationName: item.variation_id?.name || '',
-          image: item.product_id?.images?.[0]?.url || item.variation_id?.image || '',
-          unitPrice: item.variation_id?.price ?? item.product_id?.price ?? 0,
-          quantity: item.quantity,
-          lineTotal: (item.variation_id?.price ?? item.product_id?.price ?? 0) * item.quantity
-        })),
-        paymentMethod: 'cash',
-        note: formData.note,
-        shippingFee: shippingFee,
-        addressInfo: {
+        addressSnapshot: {
           fullName: formData.name,
           phone: formData.phone,
-          email: formData.email || '',
-          city: formData.city || '',
-          district: formData.district || '',
-          ward: formData.ward || '',
+          email: formData.email || "",
+          city: formData.city || "",
+          district: formData.district || "",
+          ward: formData.ward || "",
           addressLine: formData.address,
         },
+        note: formData.note,
       };
 
       const response = await orderApi.createOrder(orderData);
 
-      if (response.success) {
-        // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
-        try {
-          for (const item of cartItems) {
-            const productId = item.product_id?._id || item.product_id;
-            if (productId) {
-              await cartApi.removeItem(productId);
-            }
-          }
-        } catch (cartErr) {
-          // Không block flow nếu xóa cart lỗi
-          console.warn("Could not remove items from cart:", cartErr);
-        }
+      setToast({
+        type: "success",
+        title: "Thành công!",
+        message: response.message || "Đơn hàng đã được tạo thành công",
+      });
 
-        setToast({
-          type: "success",
-          title: "Thành công!",
-          message: "Đơn hàng đã được tạo thành công",
-        });
-
-        setTimeout(() => {
-          const orderId = response.data?._id;
-          navigate(`/don-hang/${orderId}`);
-        }, 1500);
-      }
+      setTimeout(() => {
+        const orderId = response.order?._id;
+        navigate(orderId ? `/don-hang/${orderId}` : "/don-hang");
+      }, 1200);
     } catch (err) {
       console.error("Failed to create order:", err);
       setToast({
@@ -340,7 +310,7 @@ export default function CheckoutPage() {
                   const price = item.variation_id?.price ?? item.product_id?.price ?? 0;
                   return (
                     <div key={item._id} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
                         {image ? (
                           <img src={image} alt={productName} className="w-full h-full object-cover" />
                         ) : (
@@ -354,7 +324,7 @@ export default function CheckoutPage() {
                         )}
                         <p className="text-xs text-gray-500">x{item.quantity}</p>
                       </div>
-                      <span className="text-sm text-gray-900 font-medium flex-shrink-0">
+                      <span className="text-sm text-gray-900 font-medium shrink-0">
                         {(price * item.quantity).toLocaleString("vi-VN")}₫
                       </span>
                     </div>

@@ -55,16 +55,20 @@ async function getAllProducts({
  * Get product by ID
  */
 async function getProductById(id) {
-  return Product.findOne({ _id: id, isDeleted: { $ne: true } })
-    .populate("categoryIds", "name slug");
+  return Product.findOne({ _id: id, isDeleted: { $ne: true } }).populate(
+    "categoryIds",
+    "name slug",
+  );
 }
 
 /**
  * Get product by slug
  */
 async function getProductBySlug(slug) {
-  return Product.findOne({ slug, isDeleted: { $ne: true } })
-    .populate("categoryIds", "name slug");
+  return Product.findOne({ slug, isDeleted: { $ne: true } }).populate(
+    "categoryIds",
+    "name slug",
+  );
 }
 
 /**
@@ -115,6 +119,37 @@ async function createProduct(data, userRoles, userId) {
     compareAtPrice,
   } = data;
 
+  const normalizedPrice = Number(price);
+  const normalizedStock = Number(stock);
+  const normalizedCompareAtPrice =
+    compareAtPrice === undefined ||
+    compareAtPrice === null ||
+    compareAtPrice === ""
+      ? undefined
+      : Number(compareAtPrice);
+
+  if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
+    const error = new Error("Giá sản phẩm không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  if (Number.isNaN(normalizedStock) || normalizedStock < 0) {
+    const error = new Error("Số lượng tồn kho không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  if (
+    normalizedCompareAtPrice !== undefined &&
+    (Number.isNaN(normalizedCompareAtPrice) ||
+      normalizedCompareAtPrice <= normalizedPrice)
+  ) {
+    const error = new Error("Giá so sánh phải lớn hơn giá bán");
+    error.status = 400;
+    throw error;
+  }
+
   // Check if SKU exists
   const existingSKU = await Product.findOne({
     sku: sku.toUpperCase(),
@@ -145,10 +180,10 @@ async function createProduct(data, userRoles, userId) {
     categoryIds,
     images: images || [],
     isActive: isActive !== false,
-    price,
-    stock,
+    price: normalizedPrice,
+    stock: normalizedStock,
     sku: sku.toUpperCase(),
-    compareAtPrice,
+    compareAtPrice: normalizedCompareAtPrice,
     createdBy: userId,
   });
 
@@ -167,11 +202,14 @@ async function createProduct(data, userRoles, userId) {
             availableQuantity: stock,
           },
         },
-        { upsert: true }
+        { upsert: true },
       );
     }
   } catch (slErr) {
-    console.warn("[Product] Could not init StockLevel (non-fatal):", slErr.message);
+    console.warn(
+      "[Product] Could not init StockLevel (non-fatal):",
+      slErr.message,
+    );
   }
 
   return product.populate("categoryIds", "name slug");
@@ -240,10 +278,50 @@ async function updateProduct(id, data, userRoles) {
   if (categoryIds !== undefined) product.categoryIds = categoryIds;
   if (images !== undefined) product.images = images;
   if (isActive !== undefined) product.isActive = isActive;
-  if (price !== undefined) product.price = price;
-  if (stock !== undefined) product.stock = stock;
+  const normalizedPrice = price !== undefined ? Number(price) : undefined;
+  const normalizedStock = stock !== undefined ? Number(stock) : undefined;
+  const normalizedCompareAtPrice =
+    compareAtPrice === undefined ||
+    compareAtPrice === null ||
+    compareAtPrice === ""
+      ? undefined
+      : Number(compareAtPrice);
+
+  if (
+    normalizedPrice !== undefined &&
+    (Number.isNaN(normalizedPrice) || normalizedPrice < 0)
+  ) {
+    const error = new Error("Giá sản phẩm không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  if (
+    normalizedStock !== undefined &&
+    (Number.isNaN(normalizedStock) || normalizedStock < 0)
+  ) {
+    const error = new Error("Số lượng tồn kho không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  const finalPrice =
+    normalizedPrice !== undefined ? normalizedPrice : Number(product.price);
+  if (
+    normalizedCompareAtPrice !== undefined &&
+    (Number.isNaN(normalizedCompareAtPrice) ||
+      normalizedCompareAtPrice <= finalPrice)
+  ) {
+    const error = new Error("Giá so sánh phải lớn hơn giá bán");
+    error.status = 400;
+    throw error;
+  }
+
+  if (normalizedPrice !== undefined) product.price = normalizedPrice;
+  if (normalizedStock !== undefined) product.stock = normalizedStock;
   if (sku !== undefined) product.sku = sku.toUpperCase();
-  if (compareAtPrice !== undefined) product.compareAtPrice = compareAtPrice;
+  if (compareAtPrice !== undefined)
+    product.compareAtPrice = normalizedCompareAtPrice;
 
   await product.save();
   return product.populate("categoryIds", "name slug");

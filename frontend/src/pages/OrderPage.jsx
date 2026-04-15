@@ -49,18 +49,16 @@ export default function OrderPage() {
       const response = await orderApi.getMyOrders({
         page: pagination.page,
         limit: pagination.limit,
-        status: statusFilter,
+        status: statusFilter === "all" ? undefined : statusFilter,
         search: searchQuery || undefined,
       });
 
-      if (response.success) {
-        setOrders(response.data?.orders || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.data?.total || 0,
-          totalPages: response.data?.totalPages || 0,
-        }));
-      }
+      setOrders(response.orders || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: response.pagination?.total || 0,
+        totalPages: response.pagination?.pages || 0,
+      }));
     } catch (err) {
       console.error("Failed to fetch orders:", err);
       setError("Không thể tải danh sách đơn hàng. Vui lòng thử lại.");
