@@ -26,6 +26,10 @@ async function request(endpoint, options = {}) {
       ),
     );
     const searchParams = new URLSearchParams(filteredParams);
+    const cleanParams = Object.fromEntries(
+      Object.entries(options.params).filter(([_, v]) => v != null)
+    );
+    const searchParams = new URLSearchParams(cleanParams);
     fullUrl = `${url}?${searchParams.toString()}`;
   }
 
