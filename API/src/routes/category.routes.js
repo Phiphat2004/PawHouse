@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, param, validationResult } = require('express-validator');
+const { body, param, query, validationResult } = require('express-validator');
 const categoryController = require('../controllers/category.controller');
 const { protectRoute } = require('../middlewares');
 
@@ -21,23 +21,36 @@ const createCategoryValidation = [
   body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
 ];
 
+const updateCategoryValidation = [
+  param('id').isMongoId().withMessage('Invalid category ID'),
+  body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
+];
+
+const getCategoryByIdValidation = [
+  param('id').isMongoId().withMessage('Invalid category ID'),
+];
+
+const searchCategoriesValidation = [
+  query('search').trim().notEmpty().withMessage('Search query is required'),
+];
+
 // Routes
 
 // GET /categories - Get all categories
 router.get('/', categoryController.getAll);
 
-// GET /categories/:id - Get category by ID
+// GET /categories/search - Search categories (New functionality requested)
 router.get(
-  '/:id',
-  [param('id').isMongoId().withMessage('Invalid category ID')],
+  '/search',
+  searchCategoriesValidation,
   handleValidationErrors,
-  categoryController.getById,
+  categoryController.getAll, // Reusing getAll as it already supports search param
 );
 
 // GET /categories/:id - Get category by ID
 router.get(
   '/:id',
-  [param('id').isMongoId().withMessage('Invalid category ID')],
+  getCategoryByIdValidation,
   handleValidationErrors,
   categoryController.getById,
 );
@@ -55,10 +68,7 @@ router.post(
 router.put(
   '/:id',
   ...protectRoute(['admin']),
-  [
-    param('id').isMongoId().withMessage('Invalid category ID'),
-    body('parentId').optional().isMongoId().withMessage('Invalid parent category ID'),
-  ],
+  updateCategoryValidation,
   handleValidationErrors,
   categoryController.update,
 );

@@ -95,10 +95,6 @@ async function deleteCategory(id, userRoles) {
   };
 }
 
-async function getCategoryById(id) {
-  return Category.findById(id).populate("parentId", "name slug");
-}
-
 async function createCategory(data, userRoles) {
   const { parentId, name, slug, description, isActive } = data;
 

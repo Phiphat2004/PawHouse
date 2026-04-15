@@ -90,8 +90,14 @@ export const productApi = {
   getAll: () => api.get("/products"),
   getById: (id) => api.get(`/products/${id}`),
   getBySlug: (slug) => api.get(`/products/slug/${slug}`),
-  create: (data) => api.post("/products", data),
-  update: (id, data) => api.put(`/products/${id}`, data),
+  create: (data) => {
+    if (data instanceof FormData) return request("/products", { method: "POST", body: data });
+    return api.post("/products", data);
+  },
+  update: (id, data) => {
+    if (data instanceof FormData) return request(`/products/${id}`, { method: "PUT", body: data });
+    return api.put(`/products/${id}`, data);
+  },
   delete: (id) => api.delete(`/products/${id}`),
   getCategories: () => api.get("/categories"),
 };

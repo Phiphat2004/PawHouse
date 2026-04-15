@@ -1,129 +1,7 @@
-const { Product } = require("../models");
+const { Product, StockLevel, Warehouse } = require("../models");
 
 /**
- * Create a new product
- * @param {Object} data - Product data
- * @param {Array} userRoles - User roles for authorization
- * @param {string} userId - ID of the user creating the product
- * @returns {Promise<Object>} - Created product
- */
-async function createProduct(data, userRoles, userId) {
-  const {
-    name,
-    slug,
-    description,
-    brand,
-    categoryIds,
-    images,
-    isActive,
-    price,
-    stock,
-    sku,
-    compareAtPrice,
-  } = data;
-
-  // Check if user is admin
-  if (!userRoles?.includes("admin")) {
-    const error = new Error("Không có quyền thực hiện");
-    error.status = 403;
-    throw error;
-  }
-
-  // Validation
-  if (!price || price <= 0) {
-    const error = new Error("Giá sản phẩm phải lớn hơn 0");
-    error.status = 400;
-    throw error;
-  }
-  if (stock === undefined || stock < 0) {
-    const error = new Error("Số lượng tồn kho không được âm");
-    error.status = 400;
-    throw error;
-  }
-  if (!sku || !sku.trim()) {
-    const error = new Error("Mã SKU không được để trống");
-    error.status = 400;
-    throw error;
-  }
-  if (compareAtPrice && compareAtPrice <= price) {
-    const error = new Error("Giá so sánh phải lớn hơn giá bán");
-    error.status = 400;
-    throw error;
-  }
-
-  // Check if SKU already exists
-  const existingSKU = await Product.findOne({
-    sku: sku.toUpperCase(),
-    isDeleted: { $ne: true },
-  });
-  if (existingSKU) {
-    const error = new Error("Mã SKU đã tồn tại");
-    error.status = 400;
-    throw error;
-  }
-
-  // Check if slug already exists and auto-generate unique slug
-  let finalSlug = slug;
-  const existingProduct = await Product.findOne({
-    slug: finalSlug,
-    isDeleted: { $ne: true },
-  });
-  if (existingProduct) {
-    let counter = 1;
-    while (
-      await Product.findOne({
-        slug: `${slug}-${counter}`,
-        isDeleted: { $ne: true },
-      })
-    ) {
-      counter++;
-    }
-    finalSlug = `${slug}-${counter}`;
-  }
-
-  const product = new Product({
-    name,
-    slug: finalSlug,
-    description,
-    brand,
-    categoryIds,
-    images,
-    isActive,
-    price,
-    stock,
-    sku: sku.toUpperCase(),
-    compareAtPrice,
-    createdBy: userId,
-  });
-
-  await product.save();
-
-  // Try to initialize StockLevel if models are available (matches legacy behavior)
-  try {
-    const { Warehouse, StockLevel } = require("../models");
-    const warehouse = await Warehouse.findOne();
-    if (warehouse && stock > 0) {
-      await StockLevel.findOneAndUpdate(
-        { productId: product._id, warehouseId: warehouse._id },
-        {
-          $setOnInsert: {
-            quantity: stock,
-            reservedQuantity: 0,
-            availableQuantity: stock
-          }
-        },
-        { upsert: true }
-      );
-    }
-  } catch (slErr) {
-    console.warn('[Product Service] Could not init StockLevel (non-fatal):', slErr.message);
-  }
-
-  return product.populate("categoryIds", "name slug");
-}
-
-/**
- * Get all products with pagination and filtering
+ * Get all products with pagination and filtering (Legacy Logic)
  */
 async function getAllProducts({
   page = 1,
@@ -136,12 +14,7 @@ async function getAllProducts({
   const query = { isDeleted: { $ne: true } };
 
   if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { description: { $regex: search, $options: "i" } },
-      { brand: { $regex: search, $options: "i" } },
-      { sku: { $regex: search, $options: "i" } }
-    ];
+    query.$text = { $search: search };
   }
 
   if (categoryId) {
@@ -195,6 +68,116 @@ async function getProductBySlug(slug) {
 }
 
 /**
+ * Search products (Regex-based search like Legacy)
+ */
+async function searchProducts(q) {
+  return Product.find({
+    name: { $regex: q, $options: "i" },
+    isDeleted: { $ne: true },
+  })
+    .limit(50)
+    .populate("categoryIds", "name slug")
+    .sort({ createdAt: -1 });
+}
+
+/**
+ * Get product statistics
+ */
+async function getProductStats() {
+  const total = await Product.countDocuments({ isDeleted: { $ne: true } });
+  const active = await Product.countDocuments({
+    isActive: true,
+    isDeleted: { $ne: true },
+  });
+
+  return {
+    total,
+    active,
+    inactive: total - active,
+  };
+}
+
+/**
+ * Create a new product (Legacy Logic with StockLevel init)
+ */
+async function createProduct(data, userRoles, userId) {
+  const {
+    name,
+    slug,
+    description,
+    brand,
+    categoryIds,
+    images,
+    isActive,
+    price,
+    stock,
+    sku,
+    compareAtPrice,
+  } = data;
+
+  // Check if SKU exists
+  const existingSKU = await Product.findOne({
+    sku: sku.toUpperCase(),
+    isDeleted: { $ne: true },
+  });
+  if (existingSKU) {
+    const error = new Error("Mã SKU đã tồn tại");
+    error.status = 400;
+    throw error;
+  }
+
+  // Check if Slug exists
+  const existingSlug = await Product.findOne({
+    slug,
+    isDeleted: { $ne: true },
+  });
+  if (existingSlug) {
+    const error = new Error("Slug đã tồn tại");
+    error.status = 400;
+    throw error;
+  }
+
+  const product = new Product({
+    name,
+    slug,
+    description,
+    brand,
+    categoryIds,
+    images: images || [],
+    isActive: isActive !== false,
+    price,
+    stock,
+    sku: sku.toUpperCase(),
+    compareAtPrice,
+    createdBy: userId,
+  });
+
+  await product.save();
+
+  // Legacy StockLevel Initialization
+  try {
+    const warehouse = await Warehouse.findOne();
+    if (warehouse && stock > 0) {
+      await StockLevel.findOneAndUpdate(
+        { productId: product._id, warehouseId: warehouse._id },
+        {
+          $setOnInsert: {
+            quantity: stock,
+            reservedQuantity: 0,
+            availableQuantity: stock,
+          },
+        },
+        { upsert: true }
+      );
+    }
+  } catch (slErr) {
+    console.warn("[Product] Could not init StockLevel (non-fatal):", slErr.message);
+  }
+
+  return product.populate("categoryIds", "name slug");
+}
+
+/**
  * Update a product
  */
 async function updateProduct(id, data, userRoles) {
@@ -212,13 +195,6 @@ async function updateProduct(id, data, userRoles) {
     compareAtPrice,
   } = data;
 
-  // Check if user is admin
-  if (!userRoles?.includes("admin")) {
-    const error = new Error("Không có quyền thực hiện");
-    error.status = 403;
-    throw error;
-  }
-
   const product = await Product.findOne({
     _id: id,
     isDeleted: { $ne: true },
@@ -229,23 +205,8 @@ async function updateProduct(id, data, userRoles) {
     throw error;
   }
 
-  // Validation if provided
-  if (price !== undefined && price <= 0) {
-    const error = new Error("Giá sản phẩm phải lớn hơn 0");
-    error.status = 400;
-    throw error;
-  }
-  if (stock !== undefined && stock < 0) {
-    const error = new Error("Số lượng tồn kho không được âm");
-    error.status = 400;
-    throw error;
-  }
+  // Validations
   if (sku !== undefined) {
-    if (!sku.trim()) {
-      const error = new Error("Mã SKU không được để trống");
-      error.status = 400;
-      throw error;
-    }
     const existingSKU = await Product.findOne({
       sku: sku.toUpperCase(),
       isDeleted: { $ne: true },
@@ -257,16 +218,7 @@ async function updateProduct(id, data, userRoles) {
       throw error;
     }
   }
-  if (compareAtPrice !== undefined) {
-    const finalPrice = price !== undefined ? price : product.price;
-    if (compareAtPrice > 0 && compareAtPrice <= finalPrice) {
-      const error = new Error("Giá so sánh phải lớn hơn giá bán");
-      error.status = 400;
-      throw error;
-    }
-  }
 
-  // Slug check
   if (slug && slug !== product.slug) {
     const existingProduct = await Product.findOne({
       slug,
@@ -298,36 +250,32 @@ async function updateProduct(id, data, userRoles) {
 }
 
 /**
- * Delete a product (Soft delete)
+ * Delete a product
  */
-async function deleteProduct(id, userRoles) {
-  // Check if user is admin
-  if (!userRoles?.includes("admin")) {
-    const error = new Error("Không có quyền thực hiện");
-    error.status = 403;
-    throw error;
-  }
-
-  const product = await Product.findOneAndUpdate(
-    { _id: id, isDeleted: { $ne: true } },
-    { isDeleted: true },
-    { new: true }
-  );
-
+async function deleteProduct(id) {
+  const product = await Product.findOne({
+    _id: id,
+    isDeleted: { $ne: true },
+  });
   if (!product) {
     const error = new Error("Không tìm thấy sản phẩm");
     error.status = 404;
     throw error;
   }
 
+  product.isDeleted = true;
+  product.deletedAt = new Date();
+  await product.save();
   return product;
 }
 
 module.exports = {
-  createProduct,
   getAllProducts,
   getProductById,
   getProductBySlug,
+  searchProducts,
+  getProductStats,
+  createProduct,
   updateProduct,
   deleteProduct,
 };
