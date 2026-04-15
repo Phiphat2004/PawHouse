@@ -49,13 +49,13 @@ export default function CheckoutPage() {
       const user = res.user || res;
       setFormData((prev) => ({
         ...prev,
-        name: user.fullName || user.name || prev.name,
+        name: user.profile?.fullName || user.fullName || user.name || prev.name,
         phone: user.phone || prev.phone,
         email: user.email || prev.email,
-        city: user.address?.city || user.city || prev.city,
-        district: user.address?.district || user.district || prev.district,
-        ward: user.address?.ward || user.ward || prev.ward,
-        address: user.address?.addressLine || user.address?.street || prev.address,
+        city: user.profile?.address?.city || user.address?.city || user.city || prev.city,
+        district: user.profile?.address?.district || user.address?.district || user.district || prev.district,
+        ward: user.profile?.address?.ward || user.address?.ward || user.ward || prev.ward,
+        address: user.profile?.address?.addressLine || user.address?.addressLine || user.address?.street || prev.address,
       }));
     } catch {
       // Không bắt buộc — bỏ qua nếu lỗi
@@ -66,13 +66,11 @@ export default function CheckoutPage() {
     try {
       // Cart API trả về { message, cart, items }
       const response = await cartApi.getCart();
-      if (response.status === "success" && response.data) {
-        const items = response.data.items || [];
-        const selectedItems = items.filter((item) =>
-          selectedItemIds.includes(item._id)
-        );
-        setCartItems(selectedItems);
-      }
+      const items = response.items || response.cart?.items || [];
+      const selectedItems = items.filter((item) =>
+        selectedItemIds.includes(item._id)
+      );
+      setCartItems(selectedItems);
     } catch (err) {
       console.error("Failed to fetch cart:", err);
     }
@@ -121,7 +119,7 @@ export default function CheckoutPage() {
         paymentMethod: 'cash',
         note: formData.note,
         shippingFee: shippingFee,
-        addressInfo: {
+        addressSnapshot: {
           fullName: formData.name,
           phone: formData.phone,
           email: formData.email || '',
@@ -130,12 +128,11 @@ export default function CheckoutPage() {
           ward: formData.ward || '',
           addressLine: formData.address,
         },
-        note: formData.note,
       };
 
       const response = await orderApi.createOrder(orderData);
 
-      if (response.success) {
+      if (response.order || response.message || response.success) {
         // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
         try {
           for (const item of cartItems) {
@@ -156,8 +153,12 @@ export default function CheckoutPage() {
         });
 
         setTimeout(() => {
-          const orderId = response.data?._id;
-          navigate(`/don-hang/${orderId}`);
+          const orderId = response.order?._id || response.data?._id;
+          if (orderId) {
+            navigate(`/don-hang/${orderId}`);
+          } else {
+            navigate('/don-hang');
+          }
         }, 1500);
       }
     } catch (err) {
