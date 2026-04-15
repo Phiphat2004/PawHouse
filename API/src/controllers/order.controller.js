@@ -27,9 +27,14 @@ exports.createOrder = async (req, res, next) => {
  */
 exports.searchOrders = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 10, search } = req.query;
+    const { status, page = 1, limit = 10, search, all } = req.query;
 
-    const result = await orderService.searchOrders(req.user._id, {
+    let userId = req.user._id;
+    if (all === 'true' && req.user.roles?.includes('admin')) {
+      userId = null;
+    }
+
+    const result = await orderService.searchOrders(userId, {
       status,
       page,
       limit,
@@ -62,7 +67,11 @@ exports.getDashboardStats = async (req, res, next) => {
  */
 exports.getOrderById = async (req, res, next) => {
   try {
-    const order = await orderService.getOrderById(req.params.id, req.user._id);
+    let userId = req.user._id;
+    if (req.user.roles?.includes('admin')) {
+      userId = null;
+    }
+    const order = await orderService.getOrderById(req.params.id, userId);
 
     res.json({
       message: "Lấy chi tiết đơn hàng thành công",

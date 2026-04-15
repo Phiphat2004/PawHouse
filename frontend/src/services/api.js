@@ -26,6 +26,10 @@ async function request(endpoint, options = {}) {
       ),
     );
     const searchParams = new URLSearchParams(filteredParams);
+    const cleanParams = Object.fromEntries(
+      Object.entries(options.params).filter(([_, v]) => v != null)
+    );
+    const searchParams = new URLSearchParams(cleanParams);
     fullUrl = `${url}?${searchParams.toString()}`;
   }
 
@@ -158,7 +162,7 @@ export const orderApi = {
   getPaymentByOrder: (orderId) => api.get(`/payments/order/${orderId}`),
   // Admin only
   getDashboardStats: () => api.get("/orders/dashboard-stats"),
-  getAllOrders: (params = {}) => api.get("/orders", { params }),
+  getAllOrders: (params = {}) => api.get("/orders", { params: { ...params, all: true } }),
   searchOrders: (params = {}) => api.get("/orders", { params }),
   updateOrderStatus: (id, status, note) =>
     api.patch(`/orders/${id}/status`, { status, note }),

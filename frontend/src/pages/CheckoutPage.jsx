@@ -49,13 +49,13 @@ export default function CheckoutPage() {
       const user = res.user || res;
       setFormData((prev) => ({
         ...prev,
-        name: user.fullName || user.name || prev.name,
+        name: user.profile?.fullName || user.fullName || user.name || prev.name,
         phone: user.phone || prev.phone,
         email: user.email || prev.email,
-        city: user.address?.city || user.city || prev.city,
-        district: user.address?.district || user.district || prev.district,
-        ward: user.address?.ward || user.ward || prev.ward,
-        address: user.address?.addressLine || user.address?.street || user.address || prev.address,
+        city: user.profile?.address?.city || user.address?.city || user.city || prev.city,
+        district: user.profile?.address?.district || user.address?.district || user.district || prev.district,
+        ward: user.profile?.address?.ward || user.address?.ward || user.ward || prev.ward,
+        address: user.profile?.address?.addressLine || user.address?.addressLine || user.address?.street || prev.address,
       }));
     } catch {
       // Không bắt buộc — bỏ qua nếu lỗi
@@ -64,6 +64,7 @@ export default function CheckoutPage() {
 
   const fetchCartItems = async () => {
     try {
+      // Cart API trả về { message, cart, items }
       const response = await cartApi.getCart();
       const items = response.items || response.cart?.items || [];
       const selectedItems = items.filter((item) =>
@@ -82,12 +83,21 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.phone || !formData.address) {
       setToast({
         type: "error",
         title: "Lỗi",
-        message: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        message: "Vui lòng điền đầy đủ thông tin bắt buộc (họ tên, SĐT, địa chỉ)",
+      });
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setToast({
+        type: "error",
+        title: "Lỗi",
+        message: "Không tìm thấy sản phẩm để thanh toán",
       });
       return;
     }
@@ -95,30 +105,62 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       const orderData = {
+        items: cartItems.map(item => ({
+          variationId: item.variation_id?._id || item.product_id?._id || item.product_id,
+          productId: item.product_id?._id || item.product_id || null,
+          sku: item.product_id?.sku || '',
+          productName: item.product_id?.name || item.variation_id?.name || 'Sản phẩm',
+          variationName: item.variation_id?.name || '',
+          image: item.product_id?.images?.[0]?.url || item.variation_id?.image || '',
+          unitPrice: item.variation_id?.price ?? item.product_id?.price ?? 0,
+          quantity: item.quantity,
+          lineTotal: (item.variation_id?.price ?? item.product_id?.price ?? 0) * item.quantity
+        })),
+        paymentMethod: 'cash',
+        note: formData.note,
+        shippingFee: shippingFee,
         addressSnapshot: {
           fullName: formData.name,
           phone: formData.phone,
-          email: formData.email || "",
-          city: formData.city || "",
-          district: formData.district || "",
-          ward: formData.ward || "",
+          email: formData.email || '',
+          city: formData.city || '',
+          district: formData.district || '',
+          ward: formData.ward || '',
           addressLine: formData.address,
         },
-        note: formData.note,
       };
 
       const response = await orderApi.createOrder(orderData);
 
-      setToast({
-        type: "success",
-        title: "Thành công!",
-        message: response.message || "Đơn hàng đã được tạo thành công",
-      });
+      if (response.order || response.message || response.success) {
+        // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
+        try {
+          for (const item of cartItems) {
+            const productId = item.product_id?._id || item.product_id;
+            if (productId) {
+              await cartApi.removeItem(productId);
+            }
+          }
+        } catch (cartErr) {
+          // Không block flow nếu xóa cart lỗi
+          console.warn("Could not remove items from cart:", cartErr);
+        }
 
-      setTimeout(() => {
-        const orderId = response.order?._id;
-        navigate(orderId ? `/don-hang/${orderId}` : "/don-hang");
-      }, 1200);
+        setToast({
+          type: "success",
+          title: "Thành công!",
+          message: response.message || "Đơn hàng đã được tạo thành công",
+        });
+
+        setTimeout(() => {
+          const orderId = response.order?._id || response.data?._id;
+          if (orderId) {
+            navigate(`/don-hang/${orderId}`);
+          } else {
+            navigate('/don-hang');
+          }
+        }, 1500);
+      }
     } catch (err) {
       console.error("Failed to create order:", err);
       setToast({
@@ -131,15 +173,14 @@ export default function CheckoutPage() {
     }
   };
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce(
-      (sum, item) => sum + (item.variation_id?.price ?? item.product_id?.price ?? 0) * item.quantity,
+  const calculateSubtotal = () =>
+    cartItems.reduce(
+      (sum, item) => sum + (item.product_id?.price ?? 0) * item.quantity,
       0
     );
-  };
 
   const subtotal = calculateSubtotal();
-  const shippingFee = 30000; // Default shipping fee
+  const shippingFee = 30000;
   const finalTotal = subtotal + shippingFee;
 
   return (
@@ -158,13 +199,12 @@ export default function CheckoutPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Checkout Form */}
+          {/* ── Form thông tin ── */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Thông tin giao hàng
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Thông tin giao hàng</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Họ tên & SĐT */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -176,10 +216,10 @@ export default function CheckoutPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
+                    placeholder="Nguyễn Văn A"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số điện thoại <span className="text-red-500">*</span>
@@ -190,65 +230,63 @@ export default function CheckoutPage() {
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
+                    placeholder="0901234567"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                   />
                 </div>
               </div>
 
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  placeholder="example@email.com"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                 />
               </div>
 
+              {/* Tỉnh / Quận / Phường */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tỉnh/Thành phố
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
                   <input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
+                    placeholder="Hồ Chí Minh"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quận/Huyện
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
                   <input
                     type="text"
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
+                    placeholder="Quận 1"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phường/Xã
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
                   <input
                     type="text"
                     name="ward"
                     value={formData.ward}
                     onChange={handleInputChange}
+                    placeholder="Phường Bến Nghé"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                   />
                 </div>
               </div>
 
+              {/* Địa chỉ chi tiết */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Địa chỉ chi tiết <span className="text-red-500">*</span>
@@ -259,48 +297,55 @@ export default function CheckoutPage() {
                   value={formData.address}
                   onChange={handleInputChange}
                   required
+                  placeholder="Số nhà, tên đường..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                 />
               </div>
 
+              {/* Phương thức thanh toán */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phương thức thanh toán
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phương thức thanh toán</label>
                 <div className="flex items-center p-3 border border-[#846551] rounded-lg bg-orange-50">
                   <span className="text-[#846551] font-medium">💵 Thanh toán khi nhận hàng (COD)</span>
                 </div>
               </div>
 
+              {/* Ghi chú */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ghi chú
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
                 <textarea
                   name="note"
                   value={formData.note}
                   onChange={handleInputChange}
                   rows={3}
+                  placeholder="Ghi chú cho người giao hàng (tuỳ chọn)..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
                 />
               </div>
 
+              {/* Submit */}
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading || cartItems.length === 0}
+                className="w-full bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? "Đang xử lý..." : "Đặt hàng"}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Đang xử lý...
+                  </>
+                ) : "Đặt hàng"}
               </button>
             </form>
           </div>
 
-          {/* Order Summary */}
+          {/* ── Tóm tắt đơn hàng ── */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-32">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Đơn hàng của bạn
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Đơn hàng của bạn</h2>
 
               <div className="space-y-3 mb-4">
                 {cartItems.map((item) => {
@@ -310,7 +355,7 @@ export default function CheckoutPage() {
                   const price = item.variation_id?.price ?? item.product_id?.price ?? 0;
                   return (
                     <div key={item._id} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
                         {image ? (
                           <img src={image} alt={productName} className="w-full h-full object-cover" />
                         ) : (
@@ -324,7 +369,7 @@ export default function CheckoutPage() {
                         )}
                         <p className="text-xs text-gray-500">x{item.quantity}</p>
                       </div>
-                      <span className="text-sm text-gray-900 font-medium shrink-0">
+                      <span className="text-sm text-gray-900 font-medium flex-shrink-0">
                         {(price * item.quantity).toLocaleString("vi-VN")}₫
                       </span>
                     </div>
@@ -333,17 +378,17 @@ export default function CheckoutPage() {
               </div>
 
               <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 text-sm">
                   <span>Tạm tính:</span>
                   <span>{subtotal.toLocaleString("vi-VN")}₫</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 text-sm">
                   <span>Phí vận chuyển:</span>
                   <span>{shippingFee.toLocaleString("vi-VN")}₫</span>
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
                   <span>Tổng cộng:</span>
-                  <span>{finalTotal.toLocaleString("vi-VN")}₫</span>
+                  <span className="text-[#846551]">{finalTotal.toLocaleString("vi-VN")}₫</span>
                 </div>
               </div>
             </div>
@@ -354,4 +399,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
