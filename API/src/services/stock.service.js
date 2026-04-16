@@ -1,117 +1,280 @@
 const mongoose = require('mongoose');
-const { StockLevel, StockMovement, Product, Warehouse, ProductVariation, Order } = require('../models');
+const { StockLevel, StockMovement, Product, ProductVariation, Order } = require('../models');
+
+const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId('000000000000000000000001');
+const DEFAULT_WAREHOUSE = {
+  _id: DEFAULT_WAREHOUSE_ID,
+  name: 'Kho Cần Thơ',
+  code: 'WH001',
+  address: {
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+  },
+  isActive: true,
+};
+
+function toObjectId(value) {
+  if (!value) return null;
+  if (value instanceof mongoose.Types.ObjectId) return value;
+  if (typeof value === 'string' && mongoose.Types.ObjectId.isValid(value)) {
+    return new mongoose.Types.ObjectId(value);
+  }
+  return null;
+}
+
+function warehouseFromStockLevel(level) {
+  if (!level) return { ...DEFAULT_WAREHOUSE };
+  return {
+    _id: level.warehouseId || DEFAULT_WAREHOUSE._id,
+    name: level.warehouse?.name || DEFAULT_WAREHOUSE.name,
+    code: level.warehouse?.code || DEFAULT_WAREHOUSE.code,
+    address: level.warehouse?.address || DEFAULT_WAREHOUSE.address,
+    isActive: level.warehouse?.isActive ?? true,
+  };
+}
+
+function warehouseFromMovement(movement, fallbackWarehouse) {
+  const base = fallbackWarehouse || DEFAULT_WAREHOUSE;
+  return {
+    _id: movement?.warehouseId || base._id,
+    name: movement?.warehouseSnapshot?.name || base.name,
+    code: movement?.warehouseSnapshot?.code || base.code,
+    address: base.address,
+    isActive: true,
+  };
+}
+
+async function resolveSingleWarehouse() {
+  const existing = await StockLevel.findOne({})
+    .select('warehouseId warehouse')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  if (!existing) {
+    return { ...DEFAULT_WAREHOUSE };
+  }
+
+  return warehouseFromStockLevel(existing);
+}
+
+async function getWarehouseObjectById(warehouseId) {
+  const filterId = toObjectId(warehouseId);
+  if (!filterId) {
+    return resolveSingleWarehouse();
+  }
+
+  const stockLevel = await StockLevel.findOne({ warehouseId: filterId })
+    .select('warehouseId warehouse')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  if (!stockLevel) {
+    return {
+      ...DEFAULT_WAREHOUSE,
+      _id: filterId,
+    };
+  }
+
+  return warehouseFromStockLevel(stockLevel);
+}
+
+function attachWarehouseToStockLevel(level, fallbackWarehouse) {
+  const warehouse = warehouseFromStockLevel(level) || fallbackWarehouse || DEFAULT_WAREHOUSE;
+  return {
+    ...level,
+    warehouseId: {
+      _id: warehouse._id,
+      name: warehouse.name,
+      code: warehouse.code,
+      address: warehouse.address,
+      isActive: warehouse.isActive,
+    },
+  };
+}
+
+function attachWarehouseToMovement(movement, fallbackWarehouse) {
+  const warehouse = warehouseFromMovement(movement, fallbackWarehouse);
+  return {
+    ...movement,
+    warehouseId: {
+      _id: warehouse._id,
+      name: warehouse.name,
+      code: warehouse.code,
+      address: warehouse.address,
+      isActive: warehouse.isActive,
+    },
+  };
+}
+
+async function recalculateAndSyncProductStock(productId) {
+  const totalStock = await StockLevel.aggregate([
+    { $match: { productId: new mongoose.Types.ObjectId(productId) } },
+    { $group: { _id: null, total: { $sum: '$quantity' } } },
+  ]);
+
+  await Product.updateOne(
+    { _id: productId },
+    { $set: { stock: totalStock.length > 0 ? totalStock[0].total : 0 } },
+  );
+}
 
 async function createStockEntry(data) {
   const { productId, warehouseId, quantity, type = 'IN', reason, createdBy } = data;
 
   const product = await Product.findById(productId);
   if (!product) throw new Error('Product not found');
-  const warehouse = await Warehouse.findById(warehouseId);
-  if (!warehouse) throw new Error('Warehouse not found');
-  if (!warehouse.isActive) throw new Error('Warehouse is not active');
 
-  const actualQuantity = Math.abs(quantity);
+  const warehouse = warehouseId
+    ? await getWarehouseObjectById(warehouseId)
+    : await resolveSingleWarehouse();
+
+  const actualQuantity = Math.abs(Number(quantity) || 0);
+  if (actualQuantity <= 0) throw new Error('Invalid quantity');
+
   let stockLevel;
 
   if (type === 'OUT') {
     stockLevel = await StockLevel.findOneAndUpdate(
-      { productId, warehouseId, $expr: { $gte: [{ $subtract: ['$quantity', '$reservedQuantity'] }, actualQuantity] } },
+      {
+        productId,
+        warehouseId: warehouse._id,
+        $expr: { $gte: [{ $subtract: ['$quantity', '$reservedQuantity'] }, actualQuantity] },
+      },
       { $inc: { quantity: -actualQuantity, availableQuantity: -actualQuantity } },
-      { new: true }
+      { new: true },
     );
+
     if (!stockLevel) {
-      const existing = await StockLevel.findOne({ productId, warehouseId });
+      const existing = await StockLevel.findOne({ productId, warehouseId: warehouse._id });
       if (!existing) throw new Error('Cannot remove stock from empty warehouse');
       const available = existing.quantity - existing.reservedQuantity;
       throw new Error(`Insufficient stock. Available: ${available}, Requested: ${actualQuantity}`);
     }
   } else {
     stockLevel = await StockLevel.findOneAndUpdate(
-      { productId, warehouseId },
-      { $inc: { quantity: actualQuantity, availableQuantity: actualQuantity }, $set: { lastRestockedAt: new Date() }, $setOnInsert: { reservedQuantity: 0, reorderLevel: 10 } },
-      { new: true, upsert: true }
+      { productId, warehouseId: warehouse._id },
+      {
+        $inc: { quantity: actualQuantity, availableQuantity: actualQuantity },
+        $set: { lastRestockedAt: new Date() },
+        $setOnInsert: {
+          reservedQuantity: 0,
+          reorderLevel: 10,
+          warehouse: {
+            name: warehouse.name,
+            code: warehouse.code,
+            address: warehouse.address,
+            isActive: true,
+          },
+        },
+      },
+      { new: true, upsert: true },
     );
   }
 
-  // Cập nhật tổng stock vào Product
-  const totalStock = await StockLevel.aggregate([{ $match: { productId: product._id } }, { $group: { _id: null, total: { $sum: '$quantity' } } }]);
-  await Product.updateOne({ _id: productId }, { $set: { stock: totalStock.length > 0 ? totalStock[0].total : 0 } });
+  await recalculateAndSyncProductStock(productId);
 
   const movement = await StockMovement.create({
-    productId, warehouseId, type: type === 'OUT' ? 'OUT' : 'IN',
-    quantity: actualQuantity, reason,
+    productId,
+    warehouseId: warehouse._id,
+    warehouseSnapshot: {
+      name: warehouse.name,
+      code: warehouse.code,
+    },
+    type: type === 'OUT' ? 'OUT' : 'IN',
+    quantity: actualQuantity,
+    reason,
     referenceType: type === 'OUT' ? 'SALE' : 'PURCHASE',
     createdBy,
-    notes: type === 'OUT' ? `Stock removed: ${actualQuantity} units` : `Stock entry: Added ${actualQuantity} units`
+    notes: type === 'OUT'
+      ? `Stock removed: ${actualQuantity} units`
+      : `Stock entry: Added ${actualQuantity} units`,
   });
 
+  const stockLevelDoc = await StockLevel.findById(stockLevel._id)
+    .populate('productId', 'name sku price images')
+    .lean();
+  const movementDoc = await StockMovement.findById(movement._id)
+    .populate('productId', 'name sku')
+    .populate('createdBy', 'email')
+    .lean();
+
   return {
-    stockLevel: await StockLevel.findById(stockLevel._id).populate('productId', 'name sku price images').populate('warehouseId', 'name code address'),
-    movement: await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code').populate('createdBy', 'email')
+    stockLevel: attachWarehouseToStockLevel(stockLevelDoc, warehouse),
+    movement: attachWarehouseToMovement(movementDoc, warehouse),
   };
 }
 
-// Reserve stock for an order: increase reservedQuantity, decrease availableQuantity
 async function reserveStock(orderId, items = [], createdBy) {
-  const { Warehouse } = require('../models');
-  const warehouse = await Warehouse.findOne({ isActive: true });
-  if (!warehouse) throw new Error('No active warehouse found to reserve stock');
-
+  const warehouse = await resolveSingleWarehouse();
   const movements = [];
+
   for (const item of items) {
-    const productId = item.productId || item.productId;
-    const variationId = item.variationId || item.variationId;
+    const productId = item.productId;
+    const variationId = item.variationId;
     const qty = Math.abs(Number(item.quantity) || 0);
     if (!productId || qty <= 0) continue;
 
-    // Try to reserve on StockLevel first
-    let stockLevel = await StockLevel.findOneAndUpdate(
-      { productId, warehouseId: warehouse._id, $expr: { $gte: [{ $subtract: ['$quantity', '$reservedQuantity'] }, qty] } },
+    const stockLevel = await StockLevel.findOneAndUpdate(
+      {
+        productId,
+        warehouseId: warehouse._id,
+        $expr: { $gte: [{ $subtract: ['$quantity', '$reservedQuantity'] }, qty] },
+      },
       { $inc: { reservedQuantity: qty, availableQuantity: -qty } },
-      { new: true }
+      { new: true },
     );
 
     if (stockLevel) {
-      const totalStock = await StockLevel.aggregate([{ $match: { productId: mongoose.Types.ObjectId(productId) } }, { $group: { _id: null, total: { $sum: '$quantity' } } }]);
-      await Product.updateOne({ _id: productId }, { $set: { stock: totalStock.length > 0 ? totalStock[0].total : 0 } });
+      await recalculateAndSyncProductStock(productId);
 
       const movement = await StockMovement.create({
         productId,
         warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: 'RESERVE',
         quantity: qty,
         reason: 'Reserve for order',
         referenceType: 'ORDER',
         referenceId: String(orderId),
         createdBy,
-        notes: `Reserved ${qty} units for order ${orderId}`
+        notes: `Reserved ${qty} units for order ${orderId}`,
       });
 
-      movements.push(await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code'));
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate('productId', 'name sku')
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
       continue;
     }
 
-    // Fallback: if item is a variation, decrement variation.stock as a form of reservation
     if (variationId) {
-      // Try to update ProductVariation stock directly
       const pv = await ProductVariation.findById(variationId);
       if (!pv) throw new Error('Product variation not found for reservation');
-      if ((pv.stock || 0) < qty) throw new Error(`Insufficient variation stock for reservation. Available: ${pv.stock || 0}, Requested: ${qty}`);
+      if ((pv.stock || 0) < qty) {
+        throw new Error(`Insufficient variation stock for reservation. Available: ${pv.stock || 0}, Requested: ${qty}`);
+      }
       await ProductVariation.findByIdAndUpdate(variationId, { $inc: { stock: -qty } });
 
       const movement = await StockMovement.create({
         productId,
         warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: 'RESERVE',
         quantity: qty,
         reason: 'Reserve variation for order',
         referenceType: 'ORDER',
         referenceId: String(orderId),
         createdBy,
-        notes: `Reserved variation ${variationId} ${qty} units for order ${orderId}`
+        notes: `Reserved variation ${variationId} ${qty} units for order ${orderId}`,
       });
 
-      movements.push(await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code'));
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate('productId', 'name sku')
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
       continue;
     }
 
@@ -123,106 +286,113 @@ async function reserveStock(orderId, items = [], createdBy) {
   return { message: 'Reserved stock for order', movements };
 }
 
-// Release reserved stock (e.g., order cancelled)
 async function releaseStock(orderId, items = [], createdBy) {
-  const { Warehouse } = require('../models');
-  const warehouse = await Warehouse.findOne({ isActive: true });
-  if (!warehouse) throw new Error('No active warehouse found to release stock');
-
+  const warehouse = await resolveSingleWarehouse();
   const movements = [];
+
   for (const item of items) {
-    const productId = item.productId || item.productId;
-    const variationId = item.variationId || item.variationId;
+    const productId = item.productId;
+    const variationId = item.variationId;
     const qty = Math.abs(Number(item.quantity) || 0);
     if (!productId || qty <= 0) continue;
 
     const stockLevel = await StockLevel.findOneAndUpdate(
       { productId, warehouseId: warehouse._id },
       { $inc: { reservedQuantity: -qty, availableQuantity: qty } },
-      { new: true }
+      { new: true },
     );
 
-    // If no stockLevel found, fallback to ProductVariation stock update
     if (!stockLevel && variationId) {
       await ProductVariation.findByIdAndUpdate(variationId, { $inc: { stock: qty } });
       const movement = await StockMovement.create({
         productId,
         warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: 'RELEASE',
         quantity: qty,
         reason: 'Release reserved variation for order',
         referenceType: 'ORDER',
         referenceId: String(orderId),
         createdBy,
-        notes: `Released variation ${variationId} ${qty} units for order ${orderId}`
+        notes: `Released variation ${variationId} ${qty} units for order ${orderId}`,
       });
-      movements.push(await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code'));
+
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate('productId', 'name sku')
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
       continue;
     }
 
-    // ensure reservedQuantity not negative
     if (stockLevel && stockLevel.reservedQuantity < 0) {
       stockLevel.reservedQuantity = 0;
       stockLevel.availableQuantity = Math.max(0, stockLevel.quantity - stockLevel.reservedQuantity);
       await stockLevel.save();
     }
 
-    const totalStock = await StockLevel.aggregate([{ $match: { productId: mongoose.Types.ObjectId(productId) } }, { $group: { _id: null, total: { $sum: '$quantity' } } }]);
-    await Product.updateOne({ _id: productId }, { $set: { stock: totalStock.length > 0 ? totalStock[0].total : 0 } });
+    await recalculateAndSyncProductStock(productId);
 
     const movement = await StockMovement.create({
       productId,
       warehouseId: warehouse._id,
+      warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
       type: 'RELEASE',
       quantity: qty,
       reason: 'Release reserved for order',
       referenceType: 'ORDER',
       referenceId: String(orderId),
       createdBy,
-      notes: `Released ${qty} units for order ${orderId}`
+      notes: `Released ${qty} units for order ${orderId}`,
     });
 
-    movements.push(await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code'));
+    const movementDoc = await StockMovement.findById(movement._id)
+      .populate('productId', 'name sku')
+      .lean();
+    movements.push(attachWarehouseToMovement(movementDoc, warehouse));
   }
 
   return { message: 'Released reserved stock for order', movements };
 }
 
-// Fulfill reserved stock: subtract from quantity and reservedQuantity (finalize sale)
 async function fulfillStock(orderId, items = [], createdBy) {
-  const { Warehouse } = require('../models');
-  const warehouse = await Warehouse.findOne({ isActive: true });
-  if (!warehouse) throw new Error('No active warehouse found to fulfill stock');
-
+  const warehouse = await resolveSingleWarehouse();
   const movements = [];
+
   for (const item of items) {
-    const productId = item.productId || item.productId;
-    const variationId = item.variationId || item.variationId;
+    const productId = item.productId;
+    const variationId = item.variationId;
     const qty = Math.abs(Number(item.quantity) || 0);
     if (!productId || qty <= 0) continue;
 
     const stockLevel = await StockLevel.findOneAndUpdate(
-      { productId, warehouseId: warehouse._id, $expr: { $gte: ['$reservedQuantity', qty] } },
+      {
+        productId,
+        warehouseId: warehouse._id,
+        $expr: { $gte: ['$reservedQuantity', qty] },
+      },
       { $inc: { reservedQuantity: -qty, quantity: -qty, availableQuantity: -qty } },
-      { new: true }
+      { new: true },
     );
 
     if (!stockLevel) {
-      // If no stockLevel but this is a variation previously reserved via variation.stock decrement,
-      // create a FULFILL movement without double-decrementing variation stock.
       if (variationId) {
         const movement = await StockMovement.create({
           productId,
           warehouseId: warehouse._id,
+          warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
           type: 'FULFILL',
           quantity: qty,
           reason: 'Fulfill variation order',
           referenceType: 'SALE',
           referenceId: String(orderId),
           createdBy,
-          notes: `Fulfilled variation ${variationId} ${qty} units for order ${orderId}`
+          notes: `Fulfilled variation ${variationId} ${qty} units for order ${orderId}`,
         });
-        movements.push(await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code'));
+
+        const movementDoc = await StockMovement.findById(movement._id)
+          .populate('productId', 'name sku')
+          .lean();
+        movements.push(attachWarehouseToMovement(movementDoc, warehouse));
         continue;
       }
 
@@ -231,22 +401,25 @@ async function fulfillStock(orderId, items = [], createdBy) {
       throw new Error(`Cannot fulfill stock. Reserved: ${reserved}, Requested: ${qty}`);
     }
 
-    const totalStock = await StockLevel.aggregate([{ $match: { productId: mongoose.Types.ObjectId(productId) } }, { $group: { _id: null, total: { $sum: '$quantity' } } }]);
-    await Product.updateOne({ _id: productId }, { $set: { stock: totalStock.length > 0 ? totalStock[0].total : 0 } });
+    await recalculateAndSyncProductStock(productId);
 
     const movement = await StockMovement.create({
       productId,
       warehouseId: warehouse._id,
+      warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
       type: 'FULFILL',
       quantity: qty,
       reason: 'Fulfill order',
       referenceType: 'SALE',
       referenceId: String(orderId),
       createdBy,
-      notes: `Fulfilled ${qty} units for order ${orderId}`
+      notes: `Fulfilled ${qty} units for order ${orderId}`,
     });
 
-    movements.push(await StockMovement.findById(movement._id).populate('productId', 'name sku').populate('warehouseId', 'name code'));
+    const movementDoc = await StockMovement.findById(movement._id)
+      .populate('productId', 'name sku')
+      .lean();
+    movements.push(attachWarehouseToMovement(movementDoc, warehouse));
   }
 
   return { message: 'Fulfilled stock for order', movements };
@@ -256,9 +429,17 @@ async function getStockLevels(filters = {}) {
   const { productId, warehouseId, lowStock } = filters;
   const query = {};
   if (productId) query.productId = productId;
-  if (warehouseId) query.warehouseId = warehouseId;
+  if (warehouseId && mongoose.Types.ObjectId.isValid(warehouseId)) {
+    query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
+  }
   if (lowStock) query.$expr = { $lte: ['$quantity', '$reorderLevel'] };
-  return StockLevel.find(query).populate('productId', 'name sku price images').populate('warehouseId', 'name code address').sort({ updatedAt: -1 });
+
+  const levels = await StockLevel.find(query)
+    .populate('productId', 'name sku price images')
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  return levels.map((level) => attachWarehouseToStockLevel(level));
 }
 
 async function getStockMovements(filters = {}) {
@@ -266,7 +447,6 @@ async function getStockMovements(filters = {}) {
   const numericPage = Number(page) || 1;
   const numericLimit = Number(limit) || 20;
 
-  // 1) Manual stock movements (non-order-reference only)
   const manualQuery = {
     $or: [
       { referenceId: { $exists: false } },
@@ -275,17 +455,25 @@ async function getStockMovements(filters = {}) {
     ],
   };
   if (productId) manualQuery.productId = productId;
-  if (warehouseId) manualQuery.warehouseId = warehouseId;
+  if (warehouseId && mongoose.Types.ObjectId.isValid(warehouseId)) {
+    manualQuery.warehouseId = new mongoose.Types.ObjectId(warehouseId);
+  }
   if (type) manualQuery.type = type;
+
+  const fallbackWarehouse = await (warehouseId
+    ? getWarehouseObjectById(warehouseId)
+    : resolveSingleWarehouse());
 
   const manualMovements = await StockMovement.find(manualQuery)
     .populate('productId', 'name sku')
-    .populate('warehouseId', 'name code')
     .populate('createdBy', 'name email')
     .sort({ createdAt: -1 })
     .lean();
 
-  // 2) Order-synced movements (authoritative from current order status)
+  const normalizedManual = manualMovements.map((movement) =>
+    attachWarehouseToMovement(movement, fallbackWarehouse),
+  );
+
   const statusToType = {
     pending: 'RESERVE',
     shipping: 'OUT',
@@ -320,29 +508,19 @@ async function getStockMovements(filters = {}) {
     const statusHistory = Array.isArray(order.statusHistory) ? order.statusHistory : [];
     const statusAt = statusHistory.find((h) => h?.to === order.status)?.at;
     const createdAt = statusAt || order.updatedAt || order.createdAt;
-    const orderUserName = order.userId?.name || order.addressSnapshot?.fullName || order.userId?.email || 'Khach hang';
+    const orderUserName =
+      order.userId?.name ||
+      order.addressSnapshot?.fullName ||
+      order.userId?.email ||
+      'Khach hang';
 
     for (const item of order.items || []) {
       const itemProductId = item.productId?._id || item.productId;
       if (productId && String(itemProductId) !== String(productId)) continue;
 
-      const productStockLevel = warehouseId
-        ? await StockLevel.findOne({ productId: itemProductId, warehouseId })
-            .populate('warehouseId', 'name code')
-            .lean()
-        : await StockLevel.findOne({ productId: itemProductId })
-            .populate('warehouseId', 'name code')
-            .sort({ quantity: -1, updatedAt: -1 })
-            .lean();
-
-      if (!productStockLevel) {
+      if (warehouseId && String(fallbackWarehouse._id) !== String(warehouseId)) {
         continue;
       }
-
-      const resolvedWarehouse = productStockLevel.warehouseId || {
-        name: 'Kho sản phẩm',
-        code: 'STOCK',
-      };
 
       orderMovements.push({
         _id: `order-${order._id}-${itemProductId}-${movementType}`,
@@ -351,7 +529,7 @@ async function getStockMovements(filters = {}) {
           name: item.productName || 'San pham',
           sku: item.sku || '',
         },
-        warehouseId: resolvedWarehouse,
+        warehouseId: fallbackWarehouse,
         type: movementType,
         quantity: Number(item.quantity) || 0,
         reason: visibleStatus,
@@ -367,7 +545,7 @@ async function getStockMovements(filters = {}) {
     }
   }
 
-  const combined = [...orderMovements, ...manualMovements].sort(
+  const combined = [...orderMovements, ...normalizedManual].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
@@ -387,11 +565,8 @@ async function getStockMovements(filters = {}) {
 }
 
 async function getProductTotalStock(productId) {
-  const stockLevels = await StockLevel.find({ productId })
-    .populate('warehouseId', 'name code address')
-    .lean();
+  const stockLevels = await StockLevel.find({ productId }).lean();
 
-  // Reserve should reflect orders that are still pending (waiting confirmation)
   const pendingOrders = await Order.find({
     status: 'pending',
     'items.productId': productId,
@@ -427,8 +602,9 @@ async function getProductTotalStock(productId) {
       : Math.min(proportionalReserved, Number(level.quantity) || 0);
     remainingReserved -= reservedForWarehouse;
 
+    const warehouse = warehouseFromStockLevel(level);
     return {
-      warehouseId: level.warehouseId || null,
+      warehouseId: warehouse,
       quantity: level.quantity,
       available: Math.max((Number(level.quantity) || 0) - reservedForWarehouse, 0),
       reserved: reservedForWarehouse,
@@ -443,6 +619,19 @@ async function getProductTotalStock(productId) {
   };
 }
 
+async function getWarehouses() {
+  const warehouse = await resolveSingleWarehouse();
+  return [warehouse];
+}
+
+async function createWarehouse() {
+  throw new Error('Single warehouse mode does not allow creating extra warehouses');
+}
+
+async function deleteWarehouse() {
+  throw new Error('Single warehouse mode does not allow deleting warehouse');
+}
+
 async function deleteStockMovement(movementId) {
   const movement = await StockMovement.findById(movementId);
   if (!movement) throw new Error('Stock movement not found');
@@ -450,4 +639,16 @@ async function deleteStockMovement(movementId) {
   return { message: 'Stock movement deleted successfully', deletedMovement: movement };
 }
 
-module.exports = { createStockEntry, reserveStock, releaseStock, fulfillStock, getStockLevels, getStockMovements, getProductTotalStock, deleteStockMovement };
+module.exports = {
+  createStockEntry,
+  reserveStock,
+  releaseStock,
+  fulfillStock,
+  getStockLevels,
+  getStockMovements,
+  getProductTotalStock,
+  getWarehouses,
+  createWarehouse,
+  deleteWarehouse,
+  deleteStockMovement,
+};

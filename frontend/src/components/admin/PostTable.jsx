@@ -125,9 +125,7 @@ export default function PostTable({
                           {truncateText(post.excerpt, 80)}
                         </p>
                       )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        Slug: {post.slug}
-                      </p>
+                      
                     </div>
                   </div>
                 </td>
@@ -142,10 +140,10 @@ export default function PostTable({
                 <td className="px-6 py-4">{getStatusBadge(post.status)}</td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">
-                    {formatDate(post.publishedAt)}
+                   Ngày xuất bản: {formatDate(post.publishedAt)}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Tạo: {formatDate(post.createdAt)}
+                   Ngày tạo: {formatDate(post.createdAt)}
                   </div>
                 </td>
                 <td className="px-6 py-4">

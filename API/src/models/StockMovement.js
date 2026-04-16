@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const DEFAULT_WAREHOUSE_ID = '000000000000000000000001';
+
 const stockMovementSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -8,8 +10,20 @@ const stockMovementSchema = new mongoose.Schema({
   },
   warehouseId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Warehouse',
-    required: true
+    required: true,
+    default: () => new mongoose.Types.ObjectId(DEFAULT_WAREHOUSE_ID)
+  },
+  warehouseSnapshot: {
+    name: {
+      type: String,
+      default: 'Kho Cần Thơ',
+      trim: true
+    },
+    code: {
+      type: String,
+      default: 'WH001',
+      trim: true
+    }
   },
   type: {
     type: String,
@@ -46,5 +60,18 @@ const stockMovementSchema = new mongoose.Schema({
 // Index để truy vấn nhanh
 stockMovementSchema.index({ productId: 1, warehouseId: 1, createdAt: -1 });
 stockMovementSchema.index({ type: 1, createdAt: -1 });
+
+stockMovementSchema.pre('save', function(next) {
+  if (!this.warehouseId) {
+    this.warehouseId = new mongoose.Types.ObjectId(DEFAULT_WAREHOUSE_ID);
+  }
+  if (!this.warehouseSnapshot || !this.warehouseSnapshot.name) {
+    this.warehouseSnapshot = {
+      name: 'Kho Cần Thơ',
+      code: 'WH001'
+    };
+  }
+  next();
+});
 
 module.exports = mongoose.model('StockMovement', stockMovementSchema);

@@ -25,7 +25,6 @@ const CartItem = require("./CartItem");
 const ProductVariation = require("./ProductVariation");
 const StockLevel = require("./StockLevel");
 const StockMovement = require("./StockMovement");
-const Warehouse = require("./Warehouse");
 
 module.exports = {
   // Core
@@ -51,5 +50,4 @@ module.exports = {
   ProductVariation,
   StockLevel,
   StockMovement,
-  Warehouse,
 };

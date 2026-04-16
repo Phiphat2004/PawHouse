@@ -1,5 +1,4 @@
 const stockService = require('../services/stock.service');
-const { Warehouse } = require('../models');
 
 const stockController = {
   /**
@@ -10,8 +9,8 @@ const stockController = {
     try {
       const { productId, warehouseId, quantity, type = 'IN', reason } = req.body;
 
-      if (!productId || !warehouseId || !quantity) {
-        return res.status(400).json({ error: 'productId, warehouseId và quantity là bắt buộc' });
+      if (!productId || !quantity) {
+        return res.status(400).json({ error: 'productId và quantity là bắt buộc' });
       }
       if (quantity <= 0) return res.status(400).json({ error: 'Quantity phải lớn hơn 0' });
       if (type && !['IN', 'OUT'].includes(type)) {
@@ -28,8 +27,6 @@ const stockController = {
       res.status(201).json({ message: type === 'OUT' ? 'Xuất kho thành công' : 'Nhập kho thành công', ...result });
     } catch (error) {
       if (error.message === 'Product not found') return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
-      if (error.message === 'Warehouse not found') return res.status(404).json({ error: 'Không tìm thấy kho' });
-      if (error.message === 'Warehouse is not active') return res.status(400).json({ error: 'Kho không hoạt động' });
       if (error.message === 'Cannot remove stock from empty warehouse') return res.status(400).json({ error: 'Không thể xuất hàng từ kho trống' });
       if (error.message?.includes('Insufficient stock')) return res.status(400).json({ error: error.message });
       next(error);
@@ -95,7 +92,7 @@ const stockController = {
    */
   async getWarehouses(req, res, next) {
     try {
-      const warehouses = await Warehouse.find({ isActive: true }).sort({ name: 1 });
+      const warehouses = await stockService.getWarehouses();
       res.json({ warehouses });
     } catch (error) { next(error); }
   },
@@ -106,15 +103,14 @@ const stockController = {
    */
   async createWarehouse(req, res, next) {
     try {
-      const { name, code, address } = req.body;
-      if (!name || !code) return res.status(400).json({ error: 'Tên và mã kho là bắt buộc' });
-
-      const existing = await Warehouse.findOne({ code });
-      if (existing) return res.status(400).json({ error: 'Mã kho đã tồn tại' });
-
-      const warehouse = await Warehouse.create({ name, code, address });
-      res.status(201).json({ message: 'Tạo kho thành công', warehouse });
-    } catch (error) { next(error); }
+      await stockService.createWarehouse(req.body || {});
+      res.status(201).json({ message: 'Tạo kho thành công' });
+    } catch (error) {
+      if (error.message?.includes('Single warehouse mode')) {
+        return res.status(400).json({ error: 'Hệ thống đang ở chế độ 1 kho, không thể tạo thêm kho' });
+      }
+      next(error);
+    }
   },
 
   /**
@@ -123,10 +119,14 @@ const stockController = {
    */
   async deleteWarehouse(req, res, next) {
     try {
-      const warehouse = await Warehouse.findByIdAndDelete(req.params.id);
-      if (!warehouse) return res.status(404).json({ error: 'Không tìm thấy kho' });
-      res.json({ message: 'Xóa kho thành công', warehouse });
-    } catch (error) { next(error); }
+      await stockService.deleteWarehouse(req.params.id);
+      res.json({ message: 'Xóa kho thành công' });
+    } catch (error) {
+      if (error.message?.includes('Single warehouse mode')) {
+        return res.status(400).json({ error: 'Hệ thống đang ở chế độ 1 kho, không thể xóa kho' });
+      }
+      next(error);
+    }
   }
 };
 
