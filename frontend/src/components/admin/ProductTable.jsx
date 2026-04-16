@@ -59,9 +59,7 @@ export default function ProductTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Sản phẩm
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Thương hiệu
-              </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Danh mục
               </th>
@@ -74,9 +72,7 @@ export default function ProductTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trạng thái
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ngày tạo
-              </th>
+
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Thao tác
               </th>
@@ -119,20 +115,18 @@ export default function ProductTable({
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-semibold text-gray-900 max-w-sm truncate" title={product.name}>
                           {product.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {product.slug}
-                        </div>
+                        {product.brand && (
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {product.brand}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {product.brand || "-"}
-                    </div>
-                  </td>
+
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate">
                       {getCategoryNames(product.categoryIds)}
@@ -169,29 +163,25 @@ export default function ProductTable({
                         onClick={() =>
                           onToggleStatus(product._id, product.isActive)
                         }
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${
-                          product.isActive
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${product.isActive
                             ? "bg-green-100 text-green-800 hover:bg-green-200"
                             : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                        }`}
+                          }`}
                       >
                         {product.isActive ? "Hoạt động" : "Tạm ngưng"}
                       </button>
                     ) : (
                       <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          product.isActive
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${product.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
-                        }`}
+                          }`}
                       >
                         {product.isActive ? "Hoạt động" : "Tạm ngưng"}
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(product.createdAt)}
-                  </td>
+
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <Link
@@ -249,11 +239,10 @@ export default function ProductTable({
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === 1
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                }`}
+                  }`}
               >
                 ← Trước
               </button>
@@ -299,11 +288,10 @@ export default function ProductTable({
                       <button
                         key={pageNum}
                         onClick={() => onPageChange(pageNum)}
-                        className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === pageNum
+                        className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
                             ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                             : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>
@@ -316,11 +304,10 @@ export default function ProductTable({
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === totalPages
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                }`}
+                  }`}
               >
                 Sau →
               </button>

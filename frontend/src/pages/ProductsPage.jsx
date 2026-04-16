@@ -79,7 +79,7 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
         {/* Page Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -204,11 +204,10 @@ export default function ProductsPage() {
                             <button
                               key={pageNum}
                               onClick={() => handlePageChange(pageNum)}
-                              className={`w-10 h-10 rounded-lg font-medium transition ${
-                                currentPage === pageNum
-                                  ? "bg-orange-500 text-white"
-                                  : "border border-gray-300 hover:bg-gray-50"
-                              }`}
+                              className={`w-10 h-10 rounded-lg font-medium transition ${currentPage === pageNum
+                                ? "bg-orange-500 text-white"
+                                : "border border-gray-300 hover:bg-gray-50"
+                                }`}
                             >
                               {pageNum}
                             </button>
