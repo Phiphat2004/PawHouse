@@ -35,6 +35,36 @@ export default function AdminOrdersPage() {
     totalPages: 1,
     totalItems: 0,
   });
+  const [stats, setStats] = useState(null);
+  const statusOptions = [
+    { value: "all", label: "Tất cả trạng thái" },
+    { value: "pending", label: "Chờ xác nhận" },
+    { value: "confirmed", label: "Đã xác nhận" },
+    { value: "packing", label: "Đang đóng gói" },
+    { value: "shipping", label: "Đang giao" },
+    { value: "completed", label: "Hoàn thành" },
+    { value: "cancelled", label: "Đã hủy" },
+    { value: "refunded", label: "Đã hoàn tiền" },
+  ];
+
+  const normalizeStatus = (value) => String(value || "").toLowerCase();
+
+  const selectedStatus =
+    statusOptions.find(
+      (item) => item.value === normalizeStatus(statusFilter)
+    ) || statusOptions[0];
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await orderApi.getDashboardStats();
+        setStats(res);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats", err);
+      }
+    }
+    fetchStats();
+  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -52,8 +82,12 @@ export default function AdminOrdersPage() {
         params.search = searchQuery;
       }
 
-      if (statusFilter && statusFilter !== "all") {
-        params.status = statusFilter;
+      // if (statusFilter && statusFilter !== "all") {
+      //   params.status = statusFilter;
+      // }
+
+      if (statusFilter && normalizeStatus(statusFilter) !== "all") {
+        params.status = normalizeStatus(statusFilter);
       }
 
       const response = await orderApi.getAllOrders(params);
@@ -94,6 +128,8 @@ export default function AdminOrdersPage() {
   };
 
   const getStatusBadge = (status) => {
+    const normalized = normalizeStatus(status);
+
     const statusMap = {
       pending: { label: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-700" },
       confirmed: { label: "Đã xác nhận", color: "bg-blue-100 text-blue-700" },
@@ -104,11 +140,18 @@ export default function AdminOrdersPage() {
       refunded: { label: "Đã hoàn tiền", color: "bg-gray-100 text-gray-700" },
     };
 
-    const info = statusMap[status] || { label: status, color: "bg-gray-100 text-gray-700" };
+    const info = statusMap[normalized] || {
+      label: status,
+      color: "bg-gray-100 text-gray-700",
+    };
+
     return <Badge className={info.color}>{info.label}</Badge>;
   };
 
   return (
+
+
+
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
@@ -121,6 +164,29 @@ export default function AdminOrdersPage() {
             Hiển thị {orders.length} trong tổng số {pagination.totalItems || 0} đơn hàng
           </p>
         </div>
+
+        {/* Order Status Overview */}
+        {stats?.byStatus && (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Tổng quan đơn hàng</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {[
+                { key: 'pending', label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-700' },
+                { key: 'confirmed', label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700' },
+                { key: 'packing', label: 'Đang đóng gói', color: 'bg-indigo-100 text-indigo-700' },
+                { key: 'shipping', label: 'Đang giao', color: 'bg-purple-100 text-purple-700' },
+                { key: 'completed', label: 'Hoàn thành', color: 'bg-green-100 text-green-700' },
+                { key: 'cancelled', label: 'Đã hủy', color: 'bg-red-100 text-red-700' },
+                { key: 'refunded', label: 'Hoàn tiền', color: 'bg-gray-100 text-gray-700' },
+              ].map(s => (
+                <div key={s.key} className={`rounded-lg p-3 ${s.color} text-center`}>
+                  <div className="text-2xl font-bold">{stats.byStatus[s.key] || 0}</div>
+                  <div className="text-xs font-medium mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -139,23 +205,23 @@ export default function AdminOrdersPage() {
               />
             </div>
             <Select
-              value={statusFilter}
+              value={normalizeStatus(statusFilter)}
               onValueChange={(value) => {
                 setStatusFilter(value);
                 setCurrentPage(1);
               }}
               disabled={loading}
             >
-              <SelectTrigger className="w-[200px] bg-white border-gray-200">
-                <SelectValue placeholder="Tất cả trạng thái" />
+              <SelectTrigger className="w-[240px] bg-white border-gray-200">
+                <span>{selectedStatus.label}</span>
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="pending">Chờ xác nhận</SelectItem>
-                <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                <SelectItem value="shipping">Đang giao</SelectItem>
-                <SelectItem value="completed">Hoàn thành</SelectItem>
-                <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
+                {statusOptions.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -173,7 +239,7 @@ export default function AdminOrdersPage() {
                 <TableHeader>
                   <TableRow className="bg-gray-50 hover:bg-gray-50">
                     <TableHead className="text-gray-700 font-semibold">
-                      MÃ ĐỞ N HÀNG
+                      MÃ ĐƠN HÀNG
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold">
                       KHÁCH HÀNG
@@ -199,12 +265,11 @@ export default function AdminOrdersPage() {
                   {orders.map((order, index) => (
                     <TableRow
                       key={order._id}
-                      className={`hover:bg-gray-50 cursor-pointer ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                      }`}
+                      className={`hover:bg-gray-50 cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                        }`}
                     >
                       <TableCell className="font-medium">
-                        {order.orderId || order._id}
+                        {order.orderCode || order.orderId || order._id}
                       </TableCell>
                       <TableCell className="text-gray-600">
                         {order.customerName ||

@@ -43,11 +43,11 @@ export default function TopProducts({ products = [], loading = false }) {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">{product._id}</h3>
-                <p className="text-sm text-gray-500">{product.totalSold} đã bán</p>
+                <h3 className="font-semibold text-gray-900 truncate">{product.name || 'Tên sản phẩm'}</h3>
+                <p className="text-sm text-gray-500">{product.soldAmount || 0} đã bán</p>
               </div>
               <div className="text-right shrink-0">
-                <div className="font-semibold text-gray-900">{formatCurrency(product.totalRevenue)}</div>
+                <div className="font-semibold text-gray-900">{formatCurrency(product.revenue || 0)}</div>
               </div>
             </div>
           ))}
