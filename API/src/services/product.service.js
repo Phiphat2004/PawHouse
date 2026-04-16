@@ -121,12 +121,11 @@ async function createProduct(data, userRoles, userId) {
 
   const normalizedPrice = Number(price);
   const normalizedStock = Number(stock);
-  const normalizedCompareAtPrice =
-    compareAtPrice === undefined ||
-    compareAtPrice === null ||
-    compareAtPrice === ""
-      ? undefined
-      : Number(compareAtPrice);
+  // compareAtPrice=0 means "no discount" (will be saved as undefined)
+  const rawCompareAt = compareAtPrice === undefined || compareAtPrice === null || compareAtPrice === ""
+    ? undefined
+    : Number(compareAtPrice);
+  const normalizedCompareAtPrice = rawCompareAt === 0 ? undefined : rawCompareAt;
 
   if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
     const error = new Error("Giá sản phẩm không hợp lệ");
@@ -280,12 +279,11 @@ async function updateProduct(id, data, userRoles) {
   if (isActive !== undefined) product.isActive = isActive;
   const normalizedPrice = price !== undefined ? Number(price) : undefined;
   const normalizedStock = stock !== undefined ? Number(stock) : undefined;
-  const normalizedCompareAtPrice =
-    compareAtPrice === undefined ||
-    compareAtPrice === null ||
-    compareAtPrice === ""
-      ? undefined
-      : Number(compareAtPrice);
+  // compareAtPrice=0 means "remove discount" (will be saved as undefined)
+  const rawCompareAt = compareAtPrice === undefined || compareAtPrice === null || compareAtPrice === ""
+    ? undefined
+    : Number(compareAtPrice);
+  const normalizedCompareAtPrice = rawCompareAt === 0 ? null : rawCompareAt;
 
   if (
     normalizedPrice !== undefined &&
@@ -309,6 +307,7 @@ async function updateProduct(id, data, userRoles) {
     normalizedPrice !== undefined ? normalizedPrice : Number(product.price);
   if (
     normalizedCompareAtPrice !== undefined &&
+    normalizedCompareAtPrice !== null &&
     (Number.isNaN(normalizedCompareAtPrice) ||
       normalizedCompareAtPrice <= finalPrice)
   ) {
@@ -320,8 +319,9 @@ async function updateProduct(id, data, userRoles) {
   if (normalizedPrice !== undefined) product.price = normalizedPrice;
   if (normalizedStock !== undefined) product.stock = normalizedStock;
   if (sku !== undefined) product.sku = sku.toUpperCase();
+  // null means "remove discount", undefined means "unchanged"
   if (compareAtPrice !== undefined)
-    product.compareAtPrice = normalizedCompareAtPrice;
+    product.compareAtPrice = normalizedCompareAtPrice === null ? undefined : normalizedCompareAtPrice;
 
   await product.save();
   return product.populate("categoryIds", "name slug");
