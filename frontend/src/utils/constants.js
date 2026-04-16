@@ -13,6 +13,7 @@ export const ROUTES = {
 
   ADMIN: "/quan-tri",
   ADMIN_PROFILE: "/quan-tri/tai-khoan",
+  ADMIN_EDIT_PROFILE: "/quan-tri/tai-khoan/chinh-sua",
   ADMIN_PRODUCTS: "/quan-tri/san-pham",
   ADMIN_ORDERS: "/quan-tri/don-hang",
   ADMIN_CARE_APPOINTMENTS: "/quan-tri/lich-cham-soc",
