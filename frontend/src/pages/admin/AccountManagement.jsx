@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Users } from 'lucide-react';
+import { SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AccountTable } from './AccountTable';
@@ -145,7 +145,7 @@ const AccountManagement = () => {
                 {/* Header */}
                 <div>
                     <h2 className="flex items-center gap-2 text-2xl font-bold text-[#2c2c2c] mb-6">
-                        <Users size={24} className="text-[#846551]" />
+                        <TeamOutlined className="text-[#846551] text-[24px]" />
                         Quản lý tài khoản
                     </h2>
                 </div>
@@ -154,7 +154,7 @@ const AccountManagement = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div className="flex flex-col md:flex-row gap-4 mb-4">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <Input
                                 type="text"
                                 placeholder="Tìm kiếm theo tên hoặc email..."

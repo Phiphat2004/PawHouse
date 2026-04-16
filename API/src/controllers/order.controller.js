@@ -7,7 +7,7 @@ exports.createOrder = async (req, res, next) => {
   try {
     const { addressSnapshot, deliveryZoneId, note } = req.body;
 
-    const order = await orderService.createOrder(req.user._id, {
+    const result = await orderService.createOrder(req.user._id, {
       addressSnapshot,
       deliveryZoneId,
       note,
@@ -15,7 +15,8 @@ exports.createOrder = async (req, res, next) => {
 
     res.status(201).json({
       message: "Tạo đơn hàng thành công",
-      order,
+      order: result.order || result,
+      reservedMovements: result.reservedMovements || []
     });
   } catch (error) {
     next(error);

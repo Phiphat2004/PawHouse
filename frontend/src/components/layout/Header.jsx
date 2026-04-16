@@ -1,5 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  CalendarOutlined,
+  DownOutlined,
+  FileTextOutlined,
+  HomeOutlined,
+  InboxOutlined,
+  LogoutOutlined,
+  SettingOutlined,
+  ShoppingCartOutlined,
+  ShopOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { STORAGE_KEYS, ROUTES } from "../../utils/constants";
 import { authApi } from "../../services/api";
 import { useCart } from "../../hooks/useCart";
@@ -147,7 +159,7 @@ export default function Header() {
                   className="relative p-2 rounded-full hover:bg-orange-50 transition"
                   title="Giỏ hàng"
                 >
-                  <span className="text-2xl">🛒</span>
+                  <ShoppingCartOutlined className="text-2xl text-gray-700" />
                   {cartCount > 0 && (
                     <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                       {cartCount > 99 ? '99+' : cartCount}
@@ -185,7 +197,7 @@ export default function Header() {
                         dropdownOpen ? "rotate-180" : ""
                       }`}
                     >
-                      ▼
+                      <DownOutlined className="text-xs text-gray-500" />
                     </span>
                   </button>
 
@@ -194,34 +206,34 @@ export default function Header() {
                       <Link
                         to={ROUTES.PROFILE}
                         onClick={() => setDropdownOpen(false)}
-                        className="block px-4 py-2 hover:bg-orange-50"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                       >
-                        👤 Tài khoản
+                        <UserOutlined /> Tài khoản
                       </Link>
 
                       <Link
                         to="/don-hang"
                         onClick={() => setDropdownOpen(false)}
-                        className="block px-4 py-2 hover:bg-orange-50"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                       >
-                        📦 Đơn hàng của tôi
+                        <InboxOutlined /> Đơn hàng của tôi
                       </Link>
 
                       <Link
                         to="/lich-cham-soc"
                         onClick={() => setDropdownOpen(false)}
-                        className="block px-4 py-2 hover:bg-orange-50"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                       >
-                        🗓️ Lịch chăm sóc
+                        <CalendarOutlined /> Lịch chăm sóc
                       </Link>
 
                       {(user.isAdmin || user.isStaff) && (
                         <Link
                           to="/cong-dong/bai-viet-cua-toi"
                           onClick={() => setDropdownOpen(false)}
-                          className="block px-4 py-2 hover:bg-orange-50"
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                         >
-                          📝 Bài viết của tôi
+                          <FileTextOutlined /> Bài viết của tôi
                         </Link>
                       )}
 
@@ -229,18 +241,18 @@ export default function Header() {
                         <Link
                           to={ROUTES.ADMIN}
                           onClick={() => setDropdownOpen(false)}
-                          className="block px-4 py-2 hover:bg-orange-50"
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                         >
-                          ⚙️ Quản trị
+                          <SettingOutlined /> Quản trị
                         </Link>
                       )}
 
                       <hr className="my-2" />
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2"
                       >
-                        🚪 Đăng xuất
+                        <LogoutOutlined /> Đăng xuất
                       </button>
                     </div>
                   )}

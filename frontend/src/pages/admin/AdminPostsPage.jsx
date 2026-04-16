@@ -179,7 +179,6 @@ export default function AdminPostsPage() {
                   {posts.length}
                 </p>
               </div>
-              <div className="text-4xl">📝</div>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -190,7 +189,6 @@ export default function AdminPostsPage() {
                   {posts.filter((p) => p.status === "published").length}
                 </p>
               </div>
-              <div className="text-4xl">✅</div>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -201,7 +199,6 @@ export default function AdminPostsPage() {
                   {posts.filter((p) => p.status === "draft").length}
                 </p>
               </div>
-              <div className="text-4xl">📄</div>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -212,7 +209,6 @@ export default function AdminPostsPage() {
                   {posts.filter((p) => p.status === "hidden").length}
                 </p>
               </div>
-              <div className="text-4xl">🔒</div>
             </div>
           </div>
         </div>
@@ -223,7 +219,7 @@ export default function AdminPostsPage() {
             <div className="md:col-span-2">
               <input
                 type="text"
-                placeholder="🔍 Tìm kiếm bài viết..."
+                placeholder="Tìm kiếm bài viết..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"

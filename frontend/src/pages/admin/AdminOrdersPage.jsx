@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Package } from "lucide-react";
+import { SearchOutlined, InboxOutlined } from "@ant-design/icons";
 import { AdminLayout } from "../../components/admin";
 import { orderApi } from "../../services/api";
 import { Input } from "@/components/ui/input";
@@ -114,7 +114,7 @@ export default function AdminOrdersPage() {
         {/* Header */}
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-[#2c2c2c] mb-2">
-            <Package size={24} className="text-[#846551]" />
+            <InboxOutlined className="text-[#846551] text-[24px]" />
             Quản lý đơn hàng
           </h2>
           <p className="text-gray-500">
@@ -126,7 +126,7 @@ export default function AdminOrdersPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="text"
                 placeholder="Tìm theo mã đơn, tên hoặc email khách hàng..."

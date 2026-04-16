@@ -177,7 +177,7 @@ export default function AdminCategoryDetailPage() {
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                📂 {category.name}
+                {category.name}
               </h1>
               <p className="text-gray-600 mt-1">Chi tiết danh mục</p>
             </div>
@@ -219,7 +219,7 @@ export default function AdminCategoryDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">📝 Mô tả</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4"> Mô tả</h2>
               <div className="prose max-w-none">
                 {category.description ? (
                   <p className="text-gray-700 whitespace-pre-wrap">
@@ -237,7 +237,7 @@ export default function AdminCategoryDetailPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  🛍️ Sản phẩm ({products.length})
+                   Sản phẩm ({products.length})
                 </h2>
               </div>
               {products.length > 0 ? (
@@ -261,7 +261,7 @@ export default function AdminCategoryDetailPage() {
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-gray-400">
-                            📦
+                            
                           </div>
                         )}
                       </div>
@@ -295,7 +295,7 @@ export default function AdminCategoryDetailPage() {
             {/* Status Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                📊 Trạng thái
+                Trạng thái
               </h2>
               <div className="space-y-4">
                 <div>
@@ -305,11 +305,11 @@ export default function AdminCategoryDetailPage() {
                   <div className="mt-1">
                     {category.isActive ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        ✓ Đang hoạt động
+                      Đang hoạt động
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                        ⊗ Tạm ngưng
+                        Tạm ngưng
                       </span>
                     )}
                   </div>
@@ -326,7 +326,7 @@ export default function AdminCategoryDetailPage() {
             {/* Basic Info Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                ℹ️ Thông tin
+                Thông tin
               </h2>
               <div className="space-y-4">
                 <div>
@@ -355,7 +355,7 @@ export default function AdminCategoryDetailPage() {
             {/* Statistics Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                📈 Thống kê
+                Thống kê
               </h2>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">

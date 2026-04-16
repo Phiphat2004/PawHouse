@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { RightOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import { productApi } from "../../services/api";
 import { useAddToCart } from "../../hooks/useAddToCart";
 import Toast from "../layout/Toast";
@@ -116,9 +117,9 @@ export default function FeaturedProducts() {
           </div>
           <Link
             to="/san-pham"
-            className="px-6 py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-full hover:bg-orange-500 hover:text-white transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-full hover:bg-orange-500 hover:text-white transition-all"
           >
-            Xem tất cả →
+            Xem tất cả <RightOutlined />
           </Link>
         </div>
 
@@ -162,7 +163,7 @@ export default function FeaturedProducts() {
                       />
                     </Link>
                     {hasDiscount && (
-                      <span className="absolute top-3 left-3 px-3 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded-full">
+                      <span className="absolute top-3 left-3 px-3 py-1 bg-linear-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded-full">
                         Giảm{" "}
                         {Math.round(
                           ((comparePrice - productPrice) / comparePrice) * 100,
@@ -180,7 +181,7 @@ export default function FeaturedProducts() {
                         className="p-3 bg-white rounded-full hover:bg-orange-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
                         title="Thêm vào giỏ hàng"
                       >
-                        🛒
+                        <ShoppingCartOutlined />
                       </button>
                     </div>
                   </div>

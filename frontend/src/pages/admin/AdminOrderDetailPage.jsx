@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Package, ArrowLeft } from "lucide-react";
+import { InboxOutlined, ArrowLeftOutlined, LoadingOutlined } from "@ant-design/icons";
 import { AdminLayout } from "../../components/admin";
 import { orderApi } from "../../services/api";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,10 @@ export default function AdminOrderDetailPage() {
     try {
       setUpdatingStatus(true);
       await orderApi.updateOrderStatus(id, newStatus, "Cập nhật từ trang quản trị");
+      // Notify stock history pages (other tabs/routes) to refetch immediately
+      try {
+        localStorage.setItem('stockMovementUpdated', JSON.stringify({ t: Date.now(), orderId: id, status: newStatus }));
+      } catch {}
       toast.success("Cập nhật trạng thái đơn hàng thành công");
       // Refresh toàn bộ order để statusHistory được cập nhật
       await fetchOrderDetail();
@@ -110,7 +114,7 @@ export default function AdminOrderDetailPage() {
             onClick={() => navigate("/quan-tri/don-hang")}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
           >
-            <ArrowLeft size={18} /> Quay lại danh sách đơn hàng
+            <ArrowLeftOutlined className="text-[18px]" /> Quay lại danh sách đơn hàng
           </Button>
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
@@ -132,11 +136,11 @@ export default function AdminOrderDetailPage() {
           onClick={() => navigate("/quan-tri/don-hang")}
           className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
         >
-          <ArrowLeft size={18} /> Quay lại danh sách đơn hàng
+          <ArrowLeftOutlined className="text-[18px]" /> Quay lại danh sách đơn hàng
         </Button>
 
         <div className="flex items-center gap-2 mb-2">
-          <Package size={24} className="text-[#846551]" />
+          <InboxOutlined className="text-[#846551] text-[24px]" />
           <h2 className="text-2xl font-bold text-[#2c2c2c]">
             Chi tiết đơn hàng
           </h2>
@@ -249,10 +253,7 @@ export default function AdminOrderDetailPage() {
               )}
               {updatingStatus && (
                 <span className="text-gray-500 text-sm animate-pulse ml-2 flex items-center font-medium">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <LoadingOutlined className="-ml-1 mr-2 h-4 w-4 text-gray-500" spin />
                   Đang xử lý...
                 </span>
               )}

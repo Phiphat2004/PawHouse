@@ -9,7 +9,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AccountStatus } from './types/account';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 const BanConfirmationDialog = ({ account, onClose, onConfirm }) => {
     if (!account) return null;
@@ -28,11 +28,11 @@ const BanConfirmationDialog = ({ account, onClose, onConfirm }) => {
                     <div className="flex items-center gap-3 mb-2">
                         {isBanning ? (
                             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                                <AlertTriangle className="w-6 h-6 text-red-600" />
+                                <WarningOutlined className="w-6 h-6 text-red-600" />
                             </div>
                         ) : (
                             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                <CheckCircle className="w-6 h-6 text-green-600" />
+                                <CheckCircleOutlined className="w-6 h-6 text-green-600" />
                             </div>
                         )}
                         <AlertDialogTitle>

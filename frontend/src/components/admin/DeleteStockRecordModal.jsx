@@ -111,7 +111,7 @@ export default function DeleteStockRecordModal({ isOpen, onClose, movement, onSu
                 <div>
                   <p className="font-semibold text-amber-900">Cảnh báo!</p>
                   <p className="text-sm text-amber-800 mt-1">
-                    Bạn có chắc chắn muốn xóa bản ghi xuất nhập kho này? Hành động này sẽ xóa lịch sử giao dịch nhưng không ảnh hưởng đến số lượng tồn kho hiện tại.
+                    Bạn có chắc chắn muốn xóa bản ghi xuất nhập kho này? Hành động này sẽ xóa lịch sử tồn kho nhưng không ảnh hưởng đến số lượng tồn kho hiện tại.
                   </p>
                 </div>
               </div>
@@ -127,7 +127,7 @@ export default function DeleteStockRecordModal({ isOpen, onClose, movement, onSu
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Loại giao dịch:</span>
+                  <span className="text-gray-600">Trạng thái:</span>
                   <span className="font-semibold text-gray-900">{getMovementTypeLabel(movement.type)}</span>
                 </div>
                 <div className="flex justify-between">

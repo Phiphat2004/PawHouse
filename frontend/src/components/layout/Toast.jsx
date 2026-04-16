@@ -1,6 +1,12 @@
 // Lê Nhựt Hào
 import { useEffect } from "react";
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-react";
+import {
+  CheckCircleFilled,
+  CloseCircleOutlined,
+  WarningOutlined,
+  InfoCircleOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 
 const Toast = ({ type = "success", title, message, onClose, index = 0 }) => {
   useEffect(() => {
@@ -12,22 +18,22 @@ const Toast = ({ type = "success", title, message, onClose, index = 0 }) => {
     success: {
       bg: "bg-green-50 border-green-300",
       text: "text-green-800",
-      icon: <CheckCircle className="w-5 h-5 text-green-600" />,
+      icon: <CheckCircleFilled className="w-5 h-5 text-green-600" />,
     },
     error: {
       bg: "bg-red-50 border-red-300",
       text: "text-red-800",
-      icon: <XCircle className="w-5 h-5 text-red-600" />,
+      icon: <CloseCircleOutlined className="w-5 h-5 text-red-600" />,
     },
     warning: {
       bg: "bg-yellow-50 border-yellow-300",
       text: "text-yellow-800",
-      icon: <AlertTriangle className="w-5 h-5 text-yellow-600" />,
+      icon: <WarningOutlined className="w-5 h-5 text-yellow-600" />,
     },
     info: {
       bg: "bg-blue-50 border-blue-300",
       text: "text-blue-800",
-      icon: <Info className="w-5 h-5 text-blue-600" />,
+      icon: <InfoCircleOutlined className="w-5 h-5 text-blue-600" />,
     },
   };
 
@@ -53,7 +59,7 @@ const Toast = ({ type = "success", title, message, onClose, index = 0 }) => {
           className={`${style.close} transition`}
           aria-label="Close notification"
         >
-          <X className="w-4 h-4" />
+          <CloseOutlined className="w-4 h-4" />
         </button>
       </div>
     </div>

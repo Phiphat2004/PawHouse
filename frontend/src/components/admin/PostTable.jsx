@@ -1,4 +1,12 @@
 import { Link } from "react-router-dom";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  InboxOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 
 export default function PostTable({
   posts,
@@ -57,7 +65,9 @@ export default function PostTable({
   if (posts.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-        <div className="text-6xl mb-4">📝</div>
+        <div className="text-5xl text-orange-500 mb-4">
+          <FileTextOutlined />
+        </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
           Chưa có bài viết nào
         </h3>
@@ -145,7 +155,7 @@ export default function PostTable({
                       className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                       title="Xem chi tiết"
                     >
-                      👁️
+                      <EyeOutlined />
                     </Link>
                     {canApprove && (
                       <button
@@ -161,7 +171,7 @@ export default function PostTable({
                             : "Xuất bản"
                         }
                       >
-                        {post.status === "published" ? "📥" : "📤"}
+                        {post.status === "published" ? <InboxOutlined /> : <UploadOutlined />}
                       </button>
                     )}
                     <button
@@ -169,14 +179,14 @@ export default function PostTable({
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       title="Chỉnh sửa"
                     >
-                      ✏️
+                      <EditOutlined />
                     </button>
                     <button
                       onClick={() => onDelete(post._id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Xóa"
                     >
-                      🗑️
+                      <DeleteOutlined />
                     </button>
                   </div>
                 </td>

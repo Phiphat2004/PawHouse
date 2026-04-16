@@ -131,6 +131,7 @@ export default function CheckoutPage() {
       };
 
       const response = await orderApi.createOrder(orderData);
+      const orderId = response.order?._id || response.data?._id;
 
       if (response.order || response.message || response.success) {
         // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
@@ -153,13 +154,19 @@ export default function CheckoutPage() {
         });
 
         setTimeout(() => {
-          const orderId = response.order?._id || response.data?._id;
           if (orderId) {
             navigate(`/don-hang/${orderId}`);
           } else {
             navigate('/don-hang');
           }
         }, 1500);
+        // Notify other tabs/pages that stock movements may have changed (reserve created)
+        try {
+          const payload = { t: Date.now(), orderId };
+          // include reserved movements from API response if provided
+          if (response.reservedMovements) payload.movements = response.reservedMovements;
+          localStorage.setItem('stockMovementUpdated', JSON.stringify(payload));
+        } catch {}
       }
     } catch (err) {
       console.error("Failed to create order:", err);
@@ -180,7 +187,7 @@ export default function CheckoutPage() {
     );
 
   const subtotal = calculateSubtotal();
-  const shippingFee = 30000;
+  const shippingFee = 0;
   const finalTotal = subtotal + shippingFee;
 
   return (
@@ -384,7 +391,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-gray-600 text-sm">
                   <span>Phí vận chuyển:</span>
-                  <span>{shippingFee.toLocaleString("vi-VN")}₫</span>
+                  <span>{shippingFee === 0 ? "Miễn phí" : `${shippingFee.toLocaleString("vi-VN")}₫`}</span>
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
                   <span>Tổng cộng:</span>
