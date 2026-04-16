@@ -157,6 +157,19 @@ async function createOrder(userId, orderData) {
 
   await order.save();
 
+  // Create payment record
+  const Payment = require("../models").Payment || require("../models/Payment");
+  if (Payment) {
+    const paymentMethod = orderData.paymentMethod || "cash";
+    const payment = new Payment({
+      orderId: order._id,
+      method: paymentMethod,
+      status: "pending",
+      amount: total
+    });
+    await payment.save();
+  }
+
   // Update product stock
   for (const item of orderItems) {
     if (item.variationId) {
@@ -269,7 +282,26 @@ async function getOrderById(orderId, userId) {
     throw error;
   }
 
-  return order;
+  const orderObj = order.toObject();
+  const Payment = require("../models").Payment || require("../models/Payment");
+  let payment = null;
+  if (Payment) {
+    payment = await Payment.findOne({ orderId: order._id }).lean();
+  }
+  
+  if (!payment) {
+    payment = {
+      method: "cash",
+      status: orderObj.status === "completed" ? "paid" : "pending",
+      amount: orderObj.total || 0
+    };
+  } else if (orderObj.status === "completed" && payment.status !== "paid") {
+    payment.status = "paid";
+  }
+  
+  orderObj.payment = payment;
+
+  return orderObj;
 }
 
 /**
@@ -427,6 +459,21 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   });
 
   await order.save();
+
+  // Update payment status to 'paid' when order is marked as 'completed' (Đã giao hàng)
+  if (newStatus === "completed") {
+    const Payment = require("../models").Payment || require("../models/Payment");
+    if (Payment) {
+      await Payment.findOneAndUpdate(
+        { orderId: order._id },
+        { 
+          $set: { status: "paid", paidAt: new Date(), amount: order.total },
+          $setOnInsert: { method: "cash" }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+  }
 
   // Restore stock if the order is cancelled by Admin
   if (newStatus === "cancelled") {
