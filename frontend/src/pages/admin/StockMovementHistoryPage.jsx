@@ -340,7 +340,7 @@ export default function StockMovementHistoryPage() {
                 <option value="IN">⬆️ Nhập kho</option>
                 <option value="OUT">⬇️ Xuất kho</option>
                 <option value="RESERVE">🔒 Tạm giữ đơn</option>
-                <option value="RELEASE">🔓 Hủy đơn</option>
+                
                 <option value="FULFILL">✅ Đã giao hàng</option>              
               </select>
             </div>

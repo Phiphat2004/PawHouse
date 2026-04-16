@@ -243,7 +243,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                   )}
                 </div>
               </div>
-              <p className="text-sm text-gray-500 mt-2">{stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name ? 'Kho mặc định — không thể thay đổi' : 'Chưa có kho'}</p>
+              <p className="text-sm text-gray-500 mt-2">{stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name ? '' : 'Chưa có kho'}</p>
               {selectedWarehouseStock && (
                 <div className="mt-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl shadow-sm">
                   <div className="space-y-2">
