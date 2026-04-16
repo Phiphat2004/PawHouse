@@ -1,7 +1,21 @@
 const mongoose = require("mongoose");
 const { CareAppointment, User } = require("../models");
 const emailService = require("./email.service");
-const APPOINTMENT_STATUSES = ["pending", "approved", "rejected", "cancelled"];
+const APPOINTMENT_STATUSES = [
+  "pending",
+  "approved",
+  "confirmed",
+  "rejected",
+  "cancelled",
+  "checked_in",
+  "in_progress",
+  "completed",
+];
+const ACTIVE_BOOKING_STATUSES = ["pending", "approved", "confirmed"];
+
+function isConfirmedStatus(status) {
+  return status === "approved" || status === "confirmed";
+}
 
 function normalizeStatusFilter(status) {
   const value = String(status || "")
@@ -46,8 +60,15 @@ function validateScheduleNotPast(normalizedDate, startMinutes) {
 }
 
 async function createAppointment(customerId, payload) {
-  const { petName, petType, serviceType, appointmentDate, startTime, note } =
-    payload;
+  const {
+    petName,
+    petType,
+    serviceType,
+    appointmentDate,
+    startTime,
+    note,
+    paymentMethod,
+  } = payload;
 
   if (!petName || !petType || !serviceType || !appointmentDate || !startTime) {
     const error = new Error("Thiếu thông tin đặt lịch");
@@ -75,7 +96,7 @@ async function createAppointment(customerId, payload) {
     customerId,
     appointmentDate: normalizedDate,
     startTime,
-    status: { $in: ["pending", "approved"] },
+    status: { $in: ACTIVE_BOOKING_STATUSES },
   });
 
   if (duplicate) {
@@ -92,6 +113,8 @@ async function createAppointment(customerId, payload) {
     appointmentDate: normalizedDate,
     startTime,
     note: note ? String(note).trim() : "",
+    paymentMethod: paymentMethod === "online" ? "online" : "onsite",
+    cancellationReason: "",
   });
 
   const populatedAppointment = await appointment.populate(
@@ -133,8 +156,13 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
     throw error;
   }
 
-  if (appointment.status !== "pending") {
-    const error = new Error("Chỉ có thể chỉnh sửa lịch đang chờ duyệt");
+  if (
+    appointment.status !== "pending" &&
+    !isConfirmedStatus(appointment.status)
+  ) {
+    const error = new Error(
+      "Chỉ có thể đổi lịch đang chờ duyệt hoặc đã xác nhận",
+    );
     error.status = 400;
     throw error;
   }
@@ -189,7 +217,7 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
     customerId,
     appointmentDate: nextDate,
     startTime: nextStartTime,
-    status: { $in: ["pending", "approved"] },
+    status: { $in: ACTIVE_BOOKING_STATUSES },
   });
 
   if (duplicate) {
@@ -204,6 +232,77 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
   appointment.appointmentDate = nextDate;
   appointment.startTime = nextStartTime;
   appointment.note = nextNote;
+
+  // If customer reschedules an already confirmed appointment, it goes back to pending for review.
+  if (isConfirmedStatus(appointment.status)) {
+    appointment.status = "pending";
+    appointment.reviewedBy = undefined;
+    appointment.reviewedAt = undefined;
+    appointment.rejectionReason = "";
+  }
+
+  await appointment.save();
+
+  return appointment;
+}
+
+async function getMyAppointmentById(customerId, appointmentId) {
+  if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+    const error = new Error("Mã lịch hẹn không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  const appointment = await CareAppointment.findOne({
+    _id: appointmentId,
+    customerId,
+  }).populate("reviewedBy", "email profile.fullName");
+
+  if (!appointment) {
+    const error = new Error("Không tìm thấy lịch hẹn");
+    error.status = 404;
+    throw error;
+  }
+
+  return appointment;
+}
+
+async function cancelMyAppointment(customerId, appointmentId, payload = {}) {
+  if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+    const error = new Error("Mã lịch hẹn không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  const appointment = await CareAppointment.findOne({
+    _id: appointmentId,
+    customerId,
+  });
+  if (!appointment) {
+    const error = new Error("Không tìm thấy lịch hẹn");
+    error.status = 404;
+    throw error;
+  }
+
+  if (
+    appointment.status !== "pending" &&
+    !isConfirmedStatus(appointment.status)
+  ) {
+    const error = new Error("Lịch hẹn này không thể hủy ở thời điểm hiện tại");
+    error.status = 400;
+    throw error;
+  }
+
+  const cancellationReason = String(payload.reason || "").trim();
+  if (!cancellationReason) {
+    const error = new Error("Vui lòng nhập lý do hủy lịch");
+    error.status = 400;
+    throw error;
+  }
+
+  appointment.status = "cancelled";
+  appointment.reviewedAt = new Date();
+  appointment.cancellationReason = cancellationReason;
   await appointment.save();
 
   return appointment;
@@ -306,10 +405,11 @@ async function approveAppointment(appointmentId, reviewerId) {
     throw error;
   }
 
-  appointment.status = "approved";
+  appointment.status = "confirmed";
   appointment.reviewedBy = reviewerId;
   appointment.reviewedAt = new Date();
   appointment.rejectionReason = "";
+  appointment.cancellationReason = "";
   await appointment.save();
 
   try {
@@ -329,10 +429,136 @@ async function approveAppointment(appointmentId, reviewerId) {
   return appointment;
 }
 
+async function rejectAppointment(appointmentId, reviewerId, payload = {}) {
+  if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+    const error = new Error("Mã lịch hẹn không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  const appointment = await CareAppointment.findById(appointmentId);
+  if (!appointment) {
+    const error = new Error("Không tìm thấy lịch hẹn");
+    error.status = 404;
+    throw error;
+  }
+
+  if (appointment.status !== "pending") {
+    const error = new Error("Chỉ có thể từ chối lịch đang chờ duyệt");
+    error.status = 400;
+    throw error;
+  }
+
+  appointment.status = "rejected";
+  appointment.reviewedBy = reviewerId;
+  appointment.reviewedAt = new Date();
+  appointment.rejectionReason = String(payload.reason || "").trim();
+  appointment.cancellationReason = "";
+  await appointment.save();
+
+  return appointment;
+}
+
+function validateStatusTransition(currentStatus, nextStatus) {
+  const allowFromPending =
+    nextStatus === "confirmed" && currentStatus === "pending";
+  if (allowFromPending) return;
+
+  if (nextStatus === "checked_in") {
+    if (!isConfirmedStatus(currentStatus)) {
+      const error = new Error(
+        "Chỉ có thể nhận khách sau khi lịch đã được xác nhận",
+      );
+      error.status = 400;
+      throw error;
+    }
+    return;
+  }
+
+  if (nextStatus === "in_progress") {
+    if (currentStatus !== "checked_in") {
+      const error = new Error(
+        "Cần chuyển sang Đã check-in trước khi bắt đầu dịch vụ",
+      );
+      error.status = 400;
+      throw error;
+    }
+    return;
+  }
+
+  if (nextStatus === "completed") {
+    if (currentStatus !== "in_progress") {
+      const error = new Error(
+        "Cần chuyển sang Đang chăm sóc trước khi hoàn tất",
+      );
+      error.status = 400;
+      throw error;
+    }
+    return;
+  }
+
+  const error = new Error("Trạng thái cập nhật không hợp lệ");
+  error.status = 400;
+  throw error;
+}
+
+async function updateAppointmentStatus(
+  appointmentId,
+  reviewerId,
+  payload = {},
+) {
+  if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+    const error = new Error("Mã lịch hẹn không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  const nextStatus = String(payload.status || "")
+    .trim()
+    .toLowerCase();
+  const allowedNextStatuses = [
+    "checked_in",
+    "in_progress",
+    "completed",
+    "confirmed",
+  ];
+  if (!allowedNextStatuses.includes(nextStatus)) {
+    const error = new Error("Trạng thái cập nhật không hợp lệ");
+    error.status = 400;
+    throw error;
+  }
+
+  const appointment = await CareAppointment.findById(appointmentId);
+  if (!appointment) {
+    const error = new Error("Không tìm thấy lịch hẹn");
+    error.status = 404;
+    throw error;
+  }
+
+  validateStatusTransition(appointment.status, nextStatus);
+
+  appointment.status = nextStatus;
+  appointment.reviewedBy = reviewerId;
+  appointment.reviewedAt = new Date();
+  if (nextStatus !== "rejected") {
+    appointment.rejectionReason = "";
+  }
+  if (nextStatus !== "cancelled") {
+    appointment.cancellationReason = "";
+  }
+  await appointment.save();
+
+  return appointment;
+}
+
 module.exports = {
   createAppointment,
   updateMyAppointment,
+  getMyAppointmentById,
+  cancelMyAppointment,
   getMyAppointments,
   getAppointmentsForStaff,
   approveAppointment,
+  rejectAppointment,
+  updateAppointmentStatus,
 };

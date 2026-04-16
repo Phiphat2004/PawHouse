@@ -29,17 +29,28 @@ const BUSINESS_END_HOUR = 20;
 
 const statusLabel = {
   pending: "Chờ duyệt",
-  approved: "Đã duyệt",
+  approved: "Đã xác nhận",
+  confirmed: "Đã xác nhận",
   rejected: "Từ chối",
   cancelled: "Đã hủy",
+  checked_in: "Đã check-in",
+  in_progress: "Đang chăm sóc",
+  completed: "Hoàn tất",
 };
 
 const statusStyle = {
   pending: "bg-amber-100 text-amber-800",
   approved: "bg-emerald-100 text-emerald-800",
+  confirmed: "bg-emerald-100 text-emerald-800",
   rejected: "bg-red-100 text-red-800",
   cancelled: "bg-gray-100 text-gray-700",
+  checked_in: "bg-cyan-100 text-cyan-800",
+  in_progress: "bg-blue-100 text-blue-800",
+  completed: "bg-violet-100 text-violet-800",
 };
+
+const canCustomerEdit = (status) => status === "pending" || status === "approved" || status === "confirmed";
+const canCustomerCancel = (status) => status === "pending" || status === "approved" || status === "confirmed";
 
 export default function CareAppointmentsPage() {
   const navigate = useNavigate();
@@ -50,6 +61,13 @@ export default function CareAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState("");
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [cancelPopup, setCancelPopup] = useState({
+    open: false,
+    appointmentId: "",
+    reason: "",
+  });
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
@@ -207,13 +225,52 @@ export default function CareAppointmentsPage() {
 
     try {
       setSavingEdit(true);
-      await careAppointmentApi.updateAppointment(editingId, editForm);
+      await careAppointmentApi.rescheduleAppointment(editingId, editForm);
       await fetchMyAppointments();
       cancelEdit();
     } catch (err) {
       showErrorPopup(err.message || "Không thể cập nhật lịch hẹn");
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const openCancelPopup = (item) => {
+    setSelectedAppointment(null);
+    setCancelPopup({
+      open: true,
+      appointmentId: item._id,
+      reason: "",
+    });
+  };
+
+  const closeCancelPopup = () => {
+    setCancelPopup({
+      open: false,
+      appointmentId: "",
+      reason: "",
+    });
+  };
+
+  const submitCancelAppointment = async () => {
+    const reason = cancelPopup.reason.trim();
+    if (!reason) {
+      showErrorPopup("Bạn cần nhập lý do hủy lịch");
+      return;
+    }
+
+    try {
+      setActionLoadingId(cancelPopup.appointmentId);
+      await careAppointmentApi.cancelAppointment(cancelPopup.appointmentId, reason);
+      await fetchMyAppointments();
+      if (selectedAppointment?._id === cancelPopup.appointmentId) {
+        setSelectedAppointment(null);
+      }
+      closeCancelPopup();
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể hủy lịch hẹn");
+    } finally {
+      setActionLoadingId("");
     }
   };
 
@@ -329,21 +386,36 @@ export default function CareAppointmentsPage() {
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusStyle[item.status] || "bg-gray-100 text-gray-700"}`}>
                           {statusLabel[item.status] || item.status}
                         </span>
-                        {item.status === "pending" && editingId !== item._id && (
+                        <button
+                          onClick={() => setSelectedAppointment(item)}
+                          className="px-3 py-1 rounded-lg text-xs font-medium bg-sky-100 text-sky-700 hover:bg-sky-200"
+                        >
+                          Chi tiết
+                        </button>
+                        {canCustomerEdit(item.status) && editingId !== item._id && (
                           <button
                             onClick={() => startEdit(item)}
                             className="px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
                           >
-                            Chỉnh sửa
+                            Đổi lịch
                           </button>
                         )}
+                        {canCustomerCancel(item.status) ? (
+                          <button
+                            onClick={() => openCancelPopup(item)}
+                            disabled={actionLoadingId === item._id}
+                            className="px-3 py-1 rounded-lg text-xs font-medium bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50"
+                          >
+                            {actionLoadingId === item._id ? "Đang hủy..." : "Hủy lịch"}
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                     {item.note && <p className="mt-2 text-sm text-gray-600">Ghi chú: {item.note}</p>}
 
                     {editingId === item._id && (
                       <div className="mt-4 p-4 rounded-lg border border-blue-200 bg-blue-50/40 space-y-3">
-                        <h3 className="font-semibold text-gray-800">Chỉnh sửa lịch hẹn</h3>
+                        <h3 className="font-semibold text-gray-800">Đổi lịch hẹn</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <input
                             value={editForm.petName}
@@ -414,7 +486,7 @@ export default function CareAppointmentsPage() {
                             disabled={savingEdit}
                             className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                           >
-                            {savingEdit ? "Đang lưu..." : "Lưu thay đổi"}
+                            {savingEdit ? "Đang lưu..." : "Lưu và gửi duyệt lại"}
                           </button>
                           <button
                             onClick={cancelEdit}
@@ -433,6 +505,136 @@ export default function CareAppointmentsPage() {
           </section>
         </div>
       </main>
+
+      {selectedAppointment ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+            <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Chi tiết lịch chăm sóc</h3>
+              <button
+                onClick={() => setSelectedAppointment(null)}
+                className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200"
+              >
+                Đóng
+              </button>
+            </div>
+            <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">Tên thú cưng</p>
+                <p className="font-medium text-gray-900">{selectedAppointment.petName}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Loại thú cưng</p>
+                <p className="font-medium text-gray-900">{selectedAppointment.petType}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Dịch vụ</p>
+                <p className="font-medium text-gray-900">{selectedAppointment.serviceType}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Trạng thái</p>
+                <p className="font-medium text-gray-900">{statusLabel[selectedAppointment.status] || selectedAppointment.status}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Ngày hẹn</p>
+                <p className="font-medium text-gray-900">{new Date(selectedAppointment.appointmentDate).toLocaleDateString("vi-VN")}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Khung giờ</p>
+                <p className="font-medium text-gray-900">{selectedAppointment.startTime}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Phương thức thanh toán</p>
+                <p className="font-medium text-gray-900">
+                  {selectedAppointment.paymentMethod === "online" ? "Online" : "Thanh toán tại cửa hàng"}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500">Trạng thái thanh toán</p>
+                <p className="font-medium text-gray-900">
+                  {selectedAppointment.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-gray-500">Ghi chú</p>
+                <p className="font-medium text-gray-900 whitespace-pre-wrap">
+                  {selectedAppointment.note || "Không có ghi chú"}
+                </p>
+              </div>
+              {selectedAppointment.rejectionReason ? (
+                <div className="md:col-span-2">
+                  <p className="text-gray-500">Lý do từ chối</p>
+                  <p className="font-medium text-rose-700 whitespace-pre-wrap">
+                    {selectedAppointment.rejectionReason}
+                  </p>
+                </div>
+              ) : null}
+              {selectedAppointment.cancellationReason ? (
+                <div className="md:col-span-2">
+                  <p className="text-gray-500">Lý do hủy</p>
+                  <p className="font-medium text-amber-700 whitespace-pre-wrap">
+                    {selectedAppointment.cancellationReason}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+            <div className="border-t border-gray-200 px-5 py-4 flex justify-end gap-2">
+              {canCustomerCancel(selectedAppointment.status) ? (
+                <button
+                  onClick={() => openCancelPopup(selectedAppointment)}
+                  disabled={actionLoadingId === selectedAppointment._id}
+                  className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+                >
+                  {actionLoadingId === selectedAppointment._id ? "Đang hủy..." : "Hủy lịch"}
+                </button>
+              ) : null}
+              <button
+                onClick={() => setSelectedAppointment(null)}
+                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {cancelPopup.open ? (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+            <div className="border-b border-gray-200 px-5 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Hủy lịch hẹn</h3>
+            </div>
+            <div className="px-5 py-4 space-y-2">
+              <p className="text-sm text-gray-600">Vui lòng nhập lý do hủy lịch để cửa hàng hỗ trợ bạn tốt hơn.</p>
+              <textarea
+                rows={4}
+                value={cancelPopup.reason}
+                onChange={(e) =>
+                  setCancelPopup((prev) => ({ ...prev, reason: e.target.value }))
+                }
+                placeholder="Nhập lý do hủy..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-rose-400 focus:outline-none"
+              />
+            </div>
+            <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+              <button
+                onClick={closeCancelPopup}
+                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={submitCancelAppointment}
+                disabled={actionLoadingId === cancelPopup.appointmentId}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {actionLoadingId === cancelPopup.appointmentId ? "Đang hủy..." : "Xác nhận hủy"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {errorPopup ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

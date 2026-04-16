@@ -6,12 +6,31 @@ import { careAppointmentApi } from "../../services/api";
 import { toast } from "react-toastify";
 
 const statusLabel = {
-    all: "Tất cả",
+  all: "Tất cả",
   pending: "Chờ duyệt",
-  approved: "Đã duyệt",
+  approved: "Đã xác nhận",
+  confirmed: "Đã xác nhận",
   rejected: "Từ chối",
   cancelled: "Đã hủy",
+  checked_in: "Đã check-in",
+  in_progress: "Đang chăm sóc",
+  completed: "Hoàn tất",
 };
+
+const statusActions = {
+  confirmed: { label: "Xác nhận", type: "confirm" },
+  checked_in: { label: "Check-in", type: "progress" },
+  in_progress: { label: "Bắt đầu dịch vụ", type: "progress" },
+  completed: { label: "Hoàn tất", type: "progress" },
+};
+
+function getNextStatus(currentStatus) {
+  if (currentStatus === "pending") return "confirmed";
+  if (currentStatus === "approved" || currentStatus === "confirmed") return "checked_in";
+  if (currentStatus === "checked_in") return "in_progress";
+  if (currentStatus === "in_progress") return "completed";
+  return "";
+}
 
 export default function AdminCareAppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
@@ -19,6 +38,12 @@ export default function AdminCareAppointmentsPage() {
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState(["", ""]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [processingId, setProcessingId] = useState("");
+  const [rejectPopup, setRejectPopup] = useState({
+    open: false,
+    appointmentId: "",
+    reason: "",
+  });
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
@@ -59,13 +84,84 @@ export default function AdminCareAppointmentsPage() {
 
   async function handleApprove(id) {
     try {
+      setProcessingId(id);
       await careAppointmentApi.approveAppointment(id);
-      toast.success("Duyệt lịch thành công và đã gửi email cho khách");
+      toast.success("Xác nhận lịch thành công và đã gửi email cho khách");
       await fetchAppointments();
       return true;
     } catch (err) {
       showErrorPopup(err.message || "Không thể duyệt lịch");
       return false;
+    } finally {
+      setProcessingId("");
+    }
+  }
+
+  async function handleReject(id, reason) {
+    try {
+      setProcessingId(id);
+      await careAppointmentApi.rejectAppointment(id, reason);
+      toast.success("Đã từ chối lịch hẹn");
+      await fetchAppointments();
+      return true;
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể từ chối lịch");
+      return false;
+    } finally {
+      setProcessingId("");
+    }
+  }
+
+  function openRejectPopup(appointmentId) {
+    setSelectedAppointment(null);
+    setRejectPopup({
+      open: true,
+      appointmentId,
+      reason: "",
+    });
+  }
+
+  function closeRejectPopup() {
+    setRejectPopup({
+      open: false,
+      appointmentId: "",
+      reason: "",
+    });
+  }
+
+  async function submitReject() {
+    const reason = rejectPopup.reason.trim();
+    if (!reason) {
+      showErrorPopup("Vui lòng nhập lý do từ chối");
+      return;
+    }
+
+    const ok = await handleReject(rejectPopup.appointmentId, reason);
+    if (ok) {
+      if (selectedAppointment?._id === rejectPopup.appointmentId) {
+        setSelectedAppointment(null);
+      }
+      closeRejectPopup();
+    }
+  }
+
+  async function handleAdvanceStatus(item) {
+    const nextStatus = getNextStatus(item.status);
+    if (!nextStatus || nextStatus === "confirmed") {
+      return false;
+    }
+
+    try {
+      setProcessingId(item._id);
+      await careAppointmentApi.updateAppointmentStatus(item._id, nextStatus);
+      toast.success(`Đã cập nhật trạng thái: ${statusLabel[nextStatus] || nextStatus}`);
+      await fetchAppointments();
+      return true;
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể cập nhật trạng thái");
+      return false;
+    } finally {
+      setProcessingId("");
     }
   }
 
@@ -85,9 +181,13 @@ export default function AdminCareAppointmentsPage() {
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="pending">Chờ duyệt</option>
-            <option value="approved">Đã duyệt</option>
+            <option value="approved">Đã xác nhận (legacy)</option>
+            <option value="confirmed">Đã xác nhận</option>
             <option value="rejected">Từ chối</option>
             <option value="cancelled">Đã hủy</option>
+            <option value="checked_in">Đã check-in</option>
+            <option value="in_progress">Đang chăm sóc</option>
+            <option value="completed">Hoàn tất</option>
           </select>
           <DatePicker.RangePicker
             className="min-w-70"
@@ -159,11 +259,30 @@ export default function AdminCareAppointmentsPage() {
                             Xem chi tiết
                           </button>
                           {item.status === "pending" ? (
+                            <>
+                              <button
+                                onClick={() => handleApprove(item._id)}
+                                disabled={processingId === item._id}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50"
+                              >
+                                Xác nhận
+                              </button>
+                              <button
+                                onClick={() => openRejectPopup(item._id)}
+                                disabled={processingId === item._id}
+                                className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50"
+                              >
+                                Từ chối
+                              </button>
+                            </>
+                          ) : null}
+                          {getNextStatus(item.status) && getNextStatus(item.status) !== "confirmed" ? (
                             <button
-                              onClick={() => handleApprove(item._id)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              onClick={() => handleAdvanceStatus(item)}
+                              disabled={processingId === item._id}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
                             >
-                              Duyệt lịch
+                              {statusActions[getNextStatus(item.status)]?.label || "Cập nhật"}
                             </button>
                           ) : null}
                         </div>
@@ -238,18 +357,57 @@ export default function AdminCareAppointmentsPage() {
                     {selectedAppointment.note || "Không có ghi chú"}
                   </p>
                 </div>
+                {selectedAppointment.rejectionReason ? (
+                  <div className="md:col-span-2">
+                    <p className="text-gray-500">Lý do từ chối</p>
+                    <p className="font-medium text-rose-700 whitespace-pre-wrap">
+                      {selectedAppointment.rejectionReason}
+                    </p>
+                  </div>
+                ) : null}
+                {selectedAppointment.cancellationReason ? (
+                  <div className="md:col-span-2">
+                    <p className="text-gray-500">Lý do hủy</p>
+                    <p className="font-medium text-amber-700 whitespace-pre-wrap">
+                      {selectedAppointment.cancellationReason}
+                    </p>
+                  </div>
+                ) : null}
               </div>
 
               <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
                 {selectedAppointment.status === "pending" ? (
+                  <>
+                    <button
+                      onClick={async () => {
+                        const ok = await handleApprove(selectedAppointment._id);
+                        if (ok) setSelectedAppointment(null);
+                      }}
+                      disabled={processingId === selectedAppointment._id}
+                      className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      Xác nhận
+                    </button>
+                    <button
+                      onClick={() => openRejectPopup(selectedAppointment._id)}
+                      disabled={processingId === selectedAppointment._id}
+                      className="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+                    >
+                      Từ chối
+                    </button>
+                  </>
+                ) : null}
+                {getNextStatus(selectedAppointment.status) &&
+                getNextStatus(selectedAppointment.status) !== "confirmed" ? (
                   <button
                     onClick={async () => {
-                      const ok = await handleApprove(selectedAppointment._id);
+                      const ok = await handleAdvanceStatus(selectedAppointment);
                       if (ok) setSelectedAppointment(null);
                     }}
-                    className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                    disabled={processingId === selectedAppointment._id}
+                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
                   >
-                    Duyệt lịch
+                    {statusActions[getNextStatus(selectedAppointment.status)]?.label || "Cập nhật"}
                   </button>
                 ) : null}
                 <button
@@ -257,6 +415,43 @@ export default function AdminCareAppointmentsPage() {
                   className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700"
                 >
                   Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {rejectPopup.open ? (
+          <div className="fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+              <div className="border-b border-gray-200 px-5 py-4">
+                <h3 className="text-lg font-semibold text-gray-900">Từ chối lịch hẹn</h3>
+              </div>
+              <div className="px-5 py-4 space-y-2">
+                <p className="text-sm text-gray-600">Vui lòng nhập lý do từ chối để gửi cho khách hàng.</p>
+                <textarea
+                  rows={4}
+                  value={rejectPopup.reason}
+                  onChange={(e) =>
+                    setRejectPopup((prev) => ({ ...prev, reason: e.target.value }))
+                  }
+                  placeholder="Nhập lý do từ chối..."
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-rose-400 focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+                <button
+                  onClick={closeRejectPopup}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={submitReject}
+                  disabled={processingId === rejectPopup.appointmentId}
+                  className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+                >
+                  {processingId === rejectPopup.appointmentId ? "Đang gửi..." : "Xác nhận từ chối"}
                 </button>
               </div>
             </div>
