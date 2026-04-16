@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SearchOutlined, InboxOutlined } from "@ant-design/icons";
 import { AdminLayout } from "../../components/admin";
 import { orderApi } from "../../services/api";
@@ -97,11 +97,7 @@ export default function AdminOrdersPage() {
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [searchQuery, statusFilter, currentPage]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -121,10 +117,16 @@ export default function AdminOrdersPage() {
 
       setOrders(response.orders || []);
       if (response.pagination) {
+        const totalPages = response.pagination.pages || 1;
         setPagination({
-          totalPages: response.pagination.pages || 1,
+          totalPages,
           totalItems: response.pagination.total || 0,
         });
+
+        // Keep current page within valid range when filters shrink the result set.
+        if (currentPage > totalPages) {
+          setCurrentPage(totalPages);
+        }
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -132,7 +134,11 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const formatDate = (date) => {
     if (!date) return { date: "-", time: "" };
@@ -306,6 +312,7 @@ export default function AdminOrdersPage() {
                       NGÀY ĐẶT
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold text-center">
+                      THAO TÁC
                       THAO TÁC
                     </TableHead>
                   </TableRow>

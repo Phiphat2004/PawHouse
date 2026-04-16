@@ -16,6 +16,17 @@ export default function CartPage() {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
 
+  const showErrorToast = (message) => {
+    const msg = message || "Không thể cập nhật số lượng";
+    const isStockError = msg.toLowerCase().includes("chỉ còn") || msg.toLowerCase().includes("tồn kho");
+
+    setToast({
+      type: "error",
+      title: isStockError ? "Không đủ tồn kho" : "Có lỗi xảy ra",
+      message: msg,
+    });
+  };
+
   // Check authentication
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -86,9 +97,9 @@ export default function CartPage() {
       const item = cartItems.find((i) => i._id === itemId);
       if (!item) return;
 
-      const stock = item.product_id?.stock ?? 0;
+      const stock = Number(item.product_id?.stock);
       const newQuantity = item.quantity + 1;
-      if (stock && newQuantity > stock) {
+      if (!Number.isNaN(stock) && stock >= 0 && newQuantity > stock) {
         setToast({
           type: "error",
           title: "Không đủ tồn kho",
@@ -102,7 +113,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      alert(err.data?.message || "Không thể cập nhật số lượng");
+      showErrorToast(err.message || err.data?.message || "Không thể cập nhật số lượng");
     }
   };
 
@@ -118,7 +129,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      alert(err.data?.message || "Không thể cập nhật số lượng");
+      showErrorToast(err.message || err.data?.message || "Không thể cập nhật số lượng");
     }
   };
 
@@ -131,8 +142,8 @@ export default function CartPage() {
       if (newQuantity === item.quantity) return;
 
       const validQuantity = Math.max(1, newQuantity);
-      const stock = item.product_id?.stock ?? 0;
-      if (stock && validQuantity > stock) {
+      const stock = Number(item.product_id?.stock);
+      if (!Number.isNaN(stock) && stock >= 0 && validQuantity > stock) {
         setToast({
           type: "error",
           title: "Không đủ tồn kho",
@@ -146,7 +157,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      alert(err.data?.message || "Không thể cập nhật số lượng");
+      showErrorToast(err.message || err.data?.message || "Không thể cập nhật số lượng");
     }
   };
 
@@ -267,7 +278,7 @@ export default function CartPage() {
               Bạn chưa có sản phẩm nào trong giỏ hàng
             </p>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/san-pham")}
               className="bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition"
             >
               Tiếp tục mua sắm

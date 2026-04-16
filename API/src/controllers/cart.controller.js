@@ -1,8 +1,11 @@
-const { Cart, CartItem, Product } = require('../models');
+const { Cart, CartItem, Product } = require("../models");
 
 // Helper: tính lại giá cart và save
 async function recalculateCart(cart) {
-  await cart.populate({ path: 'items', populate: { path: 'product_id', select: 'price compareAtPrice' } });
+  await cart.populate({
+    path: "items",
+    populate: { path: "product_id", select: "price compareAtPrice" },
+  });
   let original = 0;
   let total = 0;
   for (const item of cart.items) {
@@ -19,17 +22,19 @@ async function recalculateCart(cart) {
 // GET /api/cart
 exports.getCart = async (req, res, next) => {
   try {
-    let cart = await Cart.findOne({ user_id: req.user._id })
-      .populate({
-        path: 'items',
-        populate: { path: 'product_id', select: 'name price compareAtPrice images slug stock' }
-      });
+    let cart = await Cart.findOne({ user_id: req.user._id }).populate({
+      path: "items",
+      populate: {
+        path: "product_id",
+        select: "name price compareAtPrice images slug stock",
+      },
+    });
 
     if (!cart) {
-      return res.json({ message: 'Cart is empty', cart: null, items: [] });
+      return res.json({ message: "Cart is empty", cart: null, items: [] });
     }
 
-    return res.json({ message: 'OK', cart, items: cart.items });
+    return res.json({ message: "OK", cart, items: cart.items });
   } catch (err) {
     next(err);
   }
@@ -41,19 +46,23 @@ exports.addToCart = async (req, res, next) => {
     const { product_id, quantity = 1 } = req.body;
 
     if (!product_id) {
-      return res.status(400).json({ message: 'product_id is required' });
+      return res.status(400).json({ message: "product_id is required" });
     }
 
     const qty = parseInt(quantity);
     if (isNaN(qty) || qty < 1) {
-      return res.status(400).json({ message: 'quantity must be a positive integer' });
+      return res
+        .status(400)
+        .json({ message: "quantity must be a positive integer" });
     }
 
     // Kiểm tra sản phẩm tồn tại
     const product = await Product.findById(product_id);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
+
+    const productStock = Number(product.stock) || 0;
 
     // Tìm hoặc tạo cart
     let cart = await Cart.findOne({ user_id: req.user._id });
@@ -62,17 +71,34 @@ exports.addToCart = async (req, res, next) => {
     }
 
     // Populate items để check duplicate
-    await cart.populate('items');
+    await cart.populate("items");
 
     const existingItem = cart.items.find(
-      (i) => i.product_id.toString() === product_id.toString()
+      (i) => i.product_id.toString() === product_id.toString(),
     );
 
     if (existingItem) {
+      const requestedQty = existingItem.quantity + qty;
+      if (requestedQty > productStock) {
+        return res.status(400).json({
+          message: `Chỉ còn ${productStock} sản phẩm trong kho`,
+          stock: productStock,
+          requested: requestedQty,
+        });
+      }
+
       // Tăng quantity nếu đã có
       existingItem.quantity += qty;
       await existingItem.save();
     } else {
+      if (qty > productStock) {
+        return res.status(400).json({
+          message: `Chỉ còn ${productStock} sản phẩm trong kho`,
+          stock: productStock,
+          requested: qty,
+        });
+      }
+
       // Tạo CartItem mới
       const newItem = await CartItem.create({
         cart_id: cart._id,
@@ -85,13 +111,16 @@ exports.addToCart = async (req, res, next) => {
 
     // Reload cart với populated data
     cart = await Cart.findById(cart._id).populate({
-      path: 'items',
-      populate: { path: 'product_id', select: 'name price compareAtPrice images slug stock' }
+      path: "items",
+      populate: {
+        path: "product_id",
+        select: "name price compareAtPrice images slug stock",
+      },
     });
 
     await recalculateCart(cart);
 
-    return res.json({ message: 'Đã thêm vào giỏ hàng thành công!', cart });
+    return res.json({ message: "Đã thêm vào giỏ hàng thành công!", cart });
   } catch (err) {
     next(err);
   }
@@ -105,19 +134,33 @@ exports.updateQuantity = async (req, res, next) => {
 
     const qty = parseInt(quantity);
     if (isNaN(qty) || qty < 1) {
-      return res.status(400).json({ message: 'quantity must be at least 1' });
+      return res.status(400).json({ message: "quantity must be at least 1" });
     }
 
     const cart = await Cart.findOne({ user_id: req.user._id });
-    if (!cart) return res.status(404).json({ message: 'Cart not found' });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
 
     // Verify item belongs to this cart
     if (!cart.items.map(String).includes(itemId)) {
-      return res.status(403).json({ message: 'Item does not belong to your cart' });
+      return res
+        .status(403)
+        .json({ message: "Item does not belong to your cart" });
     }
 
     const item = await CartItem.findById(itemId);
-    if (!item) return res.status(404).json({ message: 'Cart item not found' });
+    if (!item) return res.status(404).json({ message: "Cart item not found" });
+
+    const product = await Product.findById(item.product_id).select("stock");
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    const productStock = Number(product.stock) || 0;
+    if (qty > productStock) {
+      return res.status(400).json({
+        message: `Chỉ còn ${productStock} sản phẩm trong kho`,
+        stock: productStock,
+        requested: qty,
+      });
+    }
 
     item.quantity = qty;
     await item.save();
@@ -125,11 +168,14 @@ exports.updateQuantity = async (req, res, next) => {
     await recalculateCart(cart);
 
     const updatedCart = await Cart.findById(cart._id).populate({
-      path: 'items',
-      populate: { path: 'product_id', select: 'name price compareAtPrice images slug stock' }
+      path: "items",
+      populate: {
+        path: "product_id",
+        select: "name price compareAtPrice images slug stock",
+      },
     });
 
-    return res.json({ message: 'Quantity updated', cart: updatedCart });
+    return res.json({ message: "Quantity updated", cart: updatedCart });
   } catch (err) {
     next(err);
   }
@@ -139,29 +185,40 @@ exports.updateQuantity = async (req, res, next) => {
 exports.removeItem = async (req, res, next) => {
   try {
     const { product_id } = req.body;
-    if (!product_id) return res.status(400).json({ message: 'product_id is required' });
+    if (!product_id)
+      return res.status(400).json({ message: "product_id is required" });
 
-    const cart = await Cart.findOne({ user_id: req.user._id }).populate('items');
-    if (!cart) return res.status(404).json({ message: 'Cart not found' });
+    const cart = await Cart.findOne({ user_id: req.user._id }).populate(
+      "items",
+    );
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    const item = cart.items.find((i) => i.product_id.toString() === product_id.toString());
-    if (!item) return res.status(404).json({ message: 'Item not found in cart' });
+    const item = cart.items.find(
+      (i) => i.product_id.toString() === product_id.toString(),
+    );
+    if (!item)
+      return res.status(404).json({ message: "Item not found in cart" });
 
     // Remove from CartItem collection
     await CartItem.findByIdAndDelete(item._id);
 
     // Remove reference from cart
-    cart.items = cart.items.filter((i) => i._id.toString() !== item._id.toString());
+    cart.items = cart.items.filter(
+      (i) => i._id.toString() !== item._id.toString(),
+    );
     await cart.save();
 
     await recalculateCart(cart);
 
     const updatedCart = await Cart.findById(cart._id).populate({
-      path: 'items',
-      populate: { path: 'product_id', select: 'name price compareAtPrice images slug stock' }
+      path: "items",
+      populate: {
+        path: "product_id",
+        select: "name price compareAtPrice images slug stock",
+      },
     });
 
-    return res.json({ message: 'Item removed from cart', cart: updatedCart });
+    return res.json({ message: "Item removed from cart", cart: updatedCart });
   } catch (err) {
     next(err);
   }
@@ -171,7 +228,7 @@ exports.removeItem = async (req, res, next) => {
 exports.clearCart = async (req, res, next) => {
   try {
     const cart = await Cart.findOne({ user_id: req.user._id });
-    if (!cart) return res.json({ message: 'Cart already empty' });
+    if (!cart) return res.json({ message: "Cart already empty" });
 
     // Delete all CartItems
     await CartItem.deleteMany({ cart_id: cart._id });
@@ -181,7 +238,7 @@ exports.clearCart = async (req, res, next) => {
     cart.total_price = 0;
     await cart.save();
 
-    return res.json({ message: 'Cart cleared' });
+    return res.json({ message: "Cart cleared" });
   } catch (err) {
     next(err);
   }

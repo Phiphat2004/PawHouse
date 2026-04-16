@@ -21,6 +21,8 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [cancelPopupOpen, setCancelPopupOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const fetchOrderDetail = useCallback(async () => {
     try {
@@ -46,12 +48,10 @@ export default function AdminOrderDetailPage() {
     fetchOrderDetail();
   }, [fetchOrderDetail]);
 
-  const handleStatusChange = async (newStatus) => {
-    if (!order) return;
-
+  const submitStatusChange = async (newStatus, note = "Cập nhật từ trang quản trị") => {
     try {
       setUpdatingStatus(true);
-      await orderApi.updateOrderStatus(id, newStatus, "Cập nhật từ trang quản trị");
+      await orderApi.updateOrderStatus(id, newStatus, note);
       // Notify stock history pages (other tabs/routes) to refetch immediately
       try {
         localStorage.setItem('stockMovementUpdated', JSON.stringify({ t: Date.now(), orderId: id, status: newStatus }));
@@ -59,11 +59,39 @@ export default function AdminOrderDetailPage() {
       toast.success("Cập nhật trạng thái đơn hàng thành công");
       // Refresh toàn bộ order để statusHistory được cập nhật
       await fetchOrderDetail();
+      return true;
     } catch (error) {
       console.error("Failed to update status:", error);
       toast.error(error.message || "Không thể cập nhật trạng thái đơn hàng");
+      return false;
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    if (!order) return;
+
+    if (newStatus === "cancelled") {
+      setCancelReason("");
+      setCancelPopupOpen(true);
+      return;
+    }
+
+    await submitStatusChange(newStatus);
+  };
+
+  const handleConfirmCancelOrder = async () => {
+    const trimmedReason = cancelReason.trim();
+    if (!trimmedReason) {
+      toast.error("Vui lòng nhập lý do hủy đơn");
+      return;
+    }
+
+    const ok = await submitStatusChange("cancelled", trimmedReason);
+    if (ok) {
+      setCancelPopupOpen(false);
+      setCancelReason("");
     }
   };
 
@@ -152,7 +180,7 @@ export default function AdminOrderDetailPage() {
             <div>
               <p className="text-gray-500 text-sm mb-1">Mã đơn hàng</p>
               <p className="text-lg font-semibold text-gray-900">
-                {order.orderId || order._id}
+                {order.orderCode || order.orderNumber || order._id}
               </p>
             </div>
             <div>
@@ -504,6 +532,48 @@ export default function AdminOrderDetailPage() {
           </div>
         )}
       </div>
+
+      {cancelPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+            <div className="border-b border-gray-100 px-5 py-4">
+              <h4 className="text-lg font-semibold text-gray-900">Lý do hủy đơn</h4>
+              <p className="mt-1 text-sm text-gray-500">
+                Vui lòng nhập lý do trước khi xác nhận hủy đơn hàng.
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <textarea
+                rows={4}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Nhập lý do hủy đơn..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-5 py-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (updatingStatus) return;
+                  setCancelPopupOpen(false);
+                  setCancelReason("");
+                }}
+                disabled={updatingStatus}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmCancelOrder}
+                disabled={updatingStatus}
+              >
+                {updatingStatus ? "Đang xử lý..." : "Xác nhận hủy đơn"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

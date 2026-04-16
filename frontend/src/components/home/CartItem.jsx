@@ -6,6 +6,9 @@ import { useEffect, useState } from "react";
 export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQuantityChange }) {
     const itemId = item?._id || item?.id;
     const [localQuantity, setLocalQuantity] = useState(item?.quantity || 1);
+    const stock = Number(item?.product_id?.stock);
+    const hasValidStock = !Number.isNaN(stock) && stock >= 0;
+    const maxQuantity = hasValidStock ? Math.max(1, stock) : undefined;
 
     useEffect(() => {
         setLocalQuantity(item?.quantity || 1);
@@ -18,6 +21,9 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
     const handleInputBlur = () => {
         let val = parseInt(localQuantity, 10);
         if (Number.isNaN(val) || val < 1) val = 1;
+        if (hasValidStock) {
+            val = Math.min(val, Math.max(1, stock));
+        }
         setLocalQuantity(val);
         if (val !== item?.quantity && onQuantityChange) {
             onQuantityChange(itemId, val);
@@ -62,6 +68,7 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                         <input
                             type="number"
                             min="1"
+                            max={maxQuantity}
                             value={localQuantity}
                             onChange={handleInputChange}
                             onBlur={handleInputBlur}

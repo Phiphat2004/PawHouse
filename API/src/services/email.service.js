@@ -73,6 +73,15 @@ function formatDate(d) {
   });
 }
 
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const STATUS_LABELS = {
   pending: "Chờ xác nhận",
   confirmed: "Đã xác nhận",
@@ -219,6 +228,22 @@ exports.sendOrderStatusUpdate = async (order, toEmail) => {
 
   const statusLabel = STATUS_LABELS[order.status] || order.status;
   const statusColor = STATUS_COLORS[order.status] || "#846551";
+  const latestCancelledHistory = Array.isArray(order.statusHistory)
+    ? [...order.statusHistory]
+        .reverse()
+        .find((history) => history?.to === "cancelled")
+    : null;
+  const cancellationReason =
+    order.status === "cancelled"
+      ? (latestCancelledHistory?.note || order.note || "").trim()
+      : "";
+  const cancellationReasonBlock = cancellationReason
+    ? `
+    <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:12px 14px;margin:0 0 20px;">
+      <p style="margin:0 0 6px;font-size:13px;color:#9f1239;font-weight:700;">Lý do hủy đơn</p>
+      <p style="margin:0;font-size:14px;color:#881337;line-height:1.5;">${escapeHtml(cancellationReason)}</p>
+    </div>`
+    : "";
 
   const messages = {
     confirmed:
@@ -251,6 +276,7 @@ exports.sendOrderStatusUpdate = async (order, toEmail) => {
         ${statusLabel}
       </span>
     </div>
+    ${cancellationReasonBlock}
     <p style="margin:0 0 24px;font-size:14px;color:#6b7280;">${messages[order.status] || ""}</p>
     ${orderSummaryTable(order)}`;
 

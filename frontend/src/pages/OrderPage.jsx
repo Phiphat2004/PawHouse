@@ -13,6 +13,13 @@ export default function OrderPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [cancelPopup, setCancelPopup] = useState({
+    open: false,
+    orderId: null,
+    reason: "",
+    error: "",
+  });
+  const [cancelLoadingId, setCancelLoadingId] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -86,17 +93,45 @@ export default function OrderPage() {
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
+    setCancelPopup({
+      open: true,
+      orderId,
+      reason: "",
+      error: "",
+    });
+  };
+
+  const closeCancelPopup = () => {
+    if (cancelLoadingId) return;
+    setCancelPopup({
+      open: false,
+      orderId: null,
+      reason: "",
+      error: "",
+    });
+  };
+
+  const submitCancelOrder = async () => {
+    const reason = cancelPopup.reason.trim();
+    if (!reason) {
+      setCancelPopup((prev) => ({
+        ...prev,
+        error: "Vui lòng nhập lý do hủy đơn",
+      }));
       return;
     }
 
     try {
-      await orderApi.cancelOrder(orderId);
+      setCancelLoadingId(cancelPopup.orderId);
+      await orderApi.cancelOrder(cancelPopup.orderId, reason);
       alert("Đơn hàng đã được hủy");
+      closeCancelPopup();
       fetchOrders();
     } catch (err) {
       console.error("Failed to cancel order:", err);
       alert(err.data?.message || "Không thể hủy đơn hàng");
+    } finally {
+      setCancelLoadingId(null);
     }
   };
 
@@ -297,6 +332,47 @@ export default function OrderPage() {
           </div>
         )}
       </main>
+
+      {cancelPopup.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+            <div className="border-b border-gray-100 px-5 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Hủy đơn hàng</h3>
+              <p className="mt-1 text-sm text-gray-600">Vui lòng nhập lý do hủy đơn để cửa hàng hỗ trợ bạn tốt hơn.</p>
+            </div>
+            <div className="px-5 py-4">
+              <textarea
+                rows={4}
+                value={cancelPopup.reason}
+                onChange={(e) =>
+                  setCancelPopup((prev) => ({ ...prev, reason: e.target.value, error: "" }))
+                }
+                placeholder="Nhập lý do hủy..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+              />
+              {cancelPopup.error && (
+                <p className="mt-2 text-sm text-red-600">{cancelPopup.error}</p>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={closeCancelPopup}
+                disabled={!!cancelLoadingId}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={submitCancelOrder}
+                disabled={!!cancelLoadingId}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {cancelLoadingId ? "Đang hủy..." : "Xác nhận hủy"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </div>
   );
