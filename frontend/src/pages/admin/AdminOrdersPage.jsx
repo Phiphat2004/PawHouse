@@ -244,7 +244,13 @@ export default function AdminOrdersPage() {
               disabled={loading}
             >
               <SelectTrigger className="w-60 bg-white border-gray-200">
-                <SelectValue placeholder="Tất cả trạng thái" />
+                <span>
+                  {
+                    statusOptions.find(
+                      (item) => item.value === normalizeStatus(statusFilter)
+                    )?.label || "Tất cả trạng thái"
+                  }
+                </span>
               </SelectTrigger>
 
               <SelectContent>
@@ -258,7 +264,7 @@ export default function AdminOrdersPage() {
 
             <Button
               variant="outline"
-              className="h-11 rounded-xl border-slate-200 px-4 text-slate-600 hover:bg-slate-50"
+              className="h-10 rounded-xl border-slate-200 px-3 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-50"
               onClick={() => {
                 setSearchQuery("");
                 setStatusFilter("all");
