@@ -3,7 +3,7 @@ import { Header, Footer } from "../components/layout";
 const teamMembers = [
   { name: "Hồ Phi Phát", role: "CE181877", emoji: "👨🏻‍💻" },
   { name: "Lâm Huy Hoàng", role: "CE181003", emoji: "👨🏾‍💻" },
-  { name: "Nguyễn Văn Nghĩa", role: "CE180831", emoji: "🐶" },
+  { name: "Nguyễn Văn Nghĩa", role: "CE180831", emoji: "👨🏽‍💻" },
   { name: "Bùi Anh Tuấn", role: "CE161158", emoji: "👨‍💻" },
 ];
 
