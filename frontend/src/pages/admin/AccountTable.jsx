@@ -1,4 +1,10 @@
-import { Eye, UserCog, Lock, LockOpen, Undo2 } from 'lucide-react';
+import {
+    EyeOutlined,
+    UserSwitchOutlined,
+    LockOutlined,
+    UnlockOutlined,
+    UndoOutlined,
+} from '@ant-design/icons';
 import {
     Table,
     TableBody,
@@ -127,7 +133,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                                                     size="sm"
                                                     onClick={() => onViewDetail(account)}
                                                 >
-                                                    <Eye className="w-4 h-4" />
+                                                    <EyeOutlined className="w-4 h-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -144,7 +150,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                                                     disabled={account.is_deleted}  // NEW: Disable for deleted
                                                     className={account.is_deleted ? 'opacity-50 cursor-not-allowed' : ''}  // NEW: Visual disabled
                                                 >
-                                                    <UserCog className="w-4 h-4" />
+                                                    <UserSwitchOutlined className="w-4 h-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -169,11 +175,11 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                                                     }
                                                 >
                                                     {account.status === AccountStatus.INACTIVE ? (
-                                                        <Undo2 className="w-4 h-4" />
+                                                        <UndoOutlined className="w-4 h-4" />
                                                     ) : account.status === AccountStatus.BANNED ? (
-                                                        <LockOpen className="w-4 h-4" />
+                                                        <UnlockOutlined className="w-4 h-4" />
                                                     ) : (
-                                                        <Lock className="w-4 h-4" />
+                                                        <LockOutlined className="w-4 h-4" />
                                                     )}
                                                 </Button>
                                             </TooltipTrigger>

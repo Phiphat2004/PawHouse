@@ -1,4 +1,13 @@
 import { Link } from 'react-router-dom'
+import {
+  EnvironmentOutlined,
+  FacebookFilled,
+  InstagramFilled,
+  MailOutlined,
+  PhoneOutlined,
+  ShopOutlined,
+  YoutubeFilled,
+} from '@ant-design/icons'
 
 export default function Footer() {
   return (
@@ -7,18 +16,18 @@ export default function Footer() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl">🐾</span>
+              <ShopOutlined className="text-3xl text-orange-500" />
               <span className="text-2xl font-bold">PawHouse</span>
             </div>
             <p className="text-gray-400 mb-4">Nền tảng cung cấp sản phẩm thú cưng uy tín, chất lượng cao.</p>
             <div className="flex gap-4">
-              {['📘', '📸', '🎵'].map((icon, i) => (
+              {[FacebookFilled, InstagramFilled, YoutubeFilled].map((Icon, i) => (
                 <a
                   key={i}
                   href="#"
                   className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
                 >
-                  {icon}
+                  <Icon className="text-base" />
                 </a>
               ))}
             </div>
@@ -48,14 +57,14 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Liên Hệ</h4>
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-start gap-2">
-                <span className="mt-0.5">📍</span>
+                <EnvironmentOutlined className="mt-0.5" />
                 <span>Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội</span>
               </li>
               <li className="flex items-center gap-2">
-                <span>📞</span> 0909 123 456
+                <PhoneOutlined /> 0909 123 456
               </li>
               <li className="flex items-center gap-2">
-                <span>✉️</span> support@pawhouse.vn
+                <MailOutlined /> support@pawhouse.vn
               </li>
             </ul>
           </div>

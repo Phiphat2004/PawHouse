@@ -8,7 +8,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { DeleteOutlined } from '@ant-design/icons';
 
 const DeleteAccountDialog = ({ account, onClose, onConfirm }) => {
     if (!account) return null;
@@ -25,7 +25,7 @@ const DeleteAccountDialog = ({ account, onClose, onConfirm }) => {
                 <AlertDialogHeader>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                            <Trash2 className="w-6 h-6 text-red-600" />
+                            <DeleteOutlined className="w-6 h-6 text-red-600" />
                         </div>
                         <AlertDialogTitle>
                             Vô hiệu hoá tài khoản
