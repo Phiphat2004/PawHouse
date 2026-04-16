@@ -1,20 +1,20 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import CartItem from "../components/home/CartItem";
 import CartSummary from "../components/home/CartSummary";
+import Toast from "../components/layout/Toast";
 import { cartApi } from "../utils/services/api";
 import { STORAGE_KEYS } from "../utils/constants";
 import { updateCartCount, getCachedCart, subscribeToCartData } from "../hooks/useCart";
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const [cart, setCart] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Check authentication
   useEffect(() => {
@@ -29,7 +29,6 @@ export default function CartPage() {
     // Subscribe to cart data changes
     const unsubscribe = subscribeToCartData((cartData) => {
       if (cartData && cartData.items) {
-        setCart(cartData);
         setCartItems(cartData.items);
         setSelectedItems(cartData.items.map((item) => item._id));
       }
@@ -44,7 +43,6 @@ export default function CartPage() {
       // Try to use cached data first
       const cached = getCachedCart();
       if (cached && !skipLoading) {
-        setCart(cached);
         if (cached.items && cached.items.length > 0) {
           setCartItems(cached.items);
           setSelectedItems(cached.items.map((item) => item._id));
@@ -60,7 +58,6 @@ export default function CartPage() {
       const cartData = await updateCartCount(true);
 
       if (cartData && cartData.items && cartData.items.length > 0) {
-        setCart(cartData);
         // items is array of CartItem objects with: _id, product_id, quantity, added_at
         setCartItems(cartData.items);
         // Auto-select all items by their _id
@@ -68,7 +65,6 @@ export default function CartPage() {
       } else {
         // Cart is empty
         setCartItems([]);
-        setCart(cartData || null);
         setSelectedItems([]);
       }
     } catch (err) {
@@ -78,7 +74,6 @@ export default function CartPage() {
         setError("Không thể tải giỏ hàng. Vui lòng thử lại.");
       }
       setCartItems([]);
-      setCart(null);
       setSelectedItems([]);
     } finally {
       setLoading(false);
@@ -91,7 +86,17 @@ export default function CartPage() {
       const item = cartItems.find((i) => i._id === itemId);
       if (!item) return;
 
+      const stock = item.product_id?.stock ?? 0;
       const newQuantity = item.quantity + 1;
+      if (stock && newQuantity > stock) {
+        setToast({
+          type: "error",
+          title: "Không đủ tồn kho",
+          message: `Chỉ còn ${stock} sản phẩm trong kho`,
+        });
+        return;
+      }
+
       await cartApi.updateQuantity(itemId, newQuantity);
       await fetchCart(); // Refresh cart
       updateCartCount(); // Update cart count in header
@@ -126,6 +131,16 @@ export default function CartPage() {
       if (newQuantity === item.quantity) return;
 
       const validQuantity = Math.max(1, newQuantity);
+      const stock = item.product_id?.stock ?? 0;
+      if (stock && validQuantity > stock) {
+        setToast({
+          type: "error",
+          title: "Không đủ tồn kho",
+          message: `Chỉ còn ${stock} sản phẩm trong kho`,
+        });
+        return;
+      }
+
       await cartApi.updateQuantity(itemId, validQuantity);
       await fetchCart(); // Refresh cart
       updateCartCount(); // Update cart count in header
@@ -163,7 +178,6 @@ export default function CartPage() {
 
       await cartApi.clearCart();
       setCartItems([]);
-      setCart(null);
       setSelectedItems([]);
       updateCartCount(); // Update cart count in header
     } catch (err) {
@@ -205,7 +219,10 @@ export default function CartPage() {
   };
 
   const total = calculateTotal();
-  const itemCount = selectedItems.length > 0 ? selectedItems.length : cartItems.length;
+  // totalQuantity: sum of quantities for selected items (if any) or whole cart
+  const totalQuantity = selectedItems.length > 0
+    ? cartItems.filter(item => selectedItems.includes(item._id)).reduce((s, i) => s + (i.quantity || 0), 0)
+    : cartItems.reduce((s, i) => s + (i.quantity || 0), 0);
 
   if (loading) {
     return (
@@ -229,7 +246,7 @@ export default function CartPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Giỏ hàng</h1>
           <p className="text-gray-600">
             {cartItems.length > 0
-              ? `${cartItems.length} sản phẩm trong giỏ hàng`
+              ? `${totalQuantity} sản phẩm trong giỏ hàng`
               : "Giỏ hàng của bạn đang trống"}
           </p>
         </div>
@@ -312,10 +329,18 @@ export default function CartPage() {
             <div className="lg:col-span-1">
               <CartSummary
                 total={total}
-                count={itemCount}
+                count={totalQuantity}
                 cart={cartItems}
                 selectedItems={selectedItems}
               />
+              {toast && (
+                <Toast
+                  type={toast.type}
+                  title={toast.title}
+                  message={toast.message}
+                  onClose={() => setToast(null)}
+                />
+              )}
             </div>
           </div>
         )}

@@ -41,6 +41,7 @@ export default function Footer() {
               <li><Link to="/cong-dong" className="hover:text-orange-500 transition-colors">Cộng đồng</Link></li>
               <li><Link to="/ve-chung-toi" className="hover:text-orange-500 transition-colors">Về chúng tôi</Link></li>
               <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Liên hệ</Link></li>
+              <li><Link to="/lich-cham-soc" className="hover:text-orange-500 transition-colors">Lịch chăm sóc</Link></li>
             </ul>
           </div>
 

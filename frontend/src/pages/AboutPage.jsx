@@ -1,10 +1,10 @@
 import { Header, Footer } from "../components/layout";
 
 const teamMembers = [
-  { name: "Nguyễn Thị Hồng Thương", role: "Trưởng nhóm & Phát triển Backend", emoji: "👩‍💻" },
-  { name: "Lê Nhựt Hào", role: "Phát triển Frontend", emoji: "👨‍💻" },
-  { name: "Trần Văn An", role: "Phát triển Backend", emoji: "👨‍💻" },
-  { name: "Nguyễn Thị Bích", role: "Thiết kế UI/UX", emoji: "👩‍🎨" },
+  { name: "Hồ Phi Phát", role: "CE181877", emoji: "👨🏻‍💻" },
+  { name: "Lâm Huy Hoàng", role: "CE181003", emoji: "👨🏾‍💻" },
+  { name: "Nguyễn Văn Nghĩa", role: "CE180831", emoji: "🐶" },
+  { name: "Bùi Anh Tuấn", role: "CE161158", emoji: "👨‍💻" },
 ];
 
 const stats = [
