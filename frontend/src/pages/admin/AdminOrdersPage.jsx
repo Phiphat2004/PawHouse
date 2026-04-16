@@ -80,11 +80,6 @@ export default function AdminOrdersPage() {
 
   const normalizeStatus = (value) => String(value || "").toLowerCase();
 
-  const selectedStatus =
-    statusOptions.find(
-      (item) => item.value === normalizeStatus(statusFilter)
-    ) || statusOptions[0];
-
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -239,6 +234,26 @@ export default function AdminOrdersPage() {
                 className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 shadow-none transition focus-visible:ring-2 focus-visible:ring-[#846551]/20"
               />
             </div>
+            <Select
+              value={normalizeStatus(statusFilter)}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-60 bg-white border-gray-200">
+                <SelectValue placeholder="Tất cả trạng thái" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {statusOptions.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Select
