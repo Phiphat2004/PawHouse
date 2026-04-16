@@ -35,8 +35,10 @@ export default function AdminLayout({ children }) {
           email: userData.email,
           profile: userData.profile,
           roles: userData.roles || [],
-          isAdmin: Array.isArray(userData.roles) && userData.roles.includes("admin"),
-          isStaff: Array.isArray(userData.roles) && userData.roles.includes("staff"),
+          isAdmin:
+            Array.isArray(userData.roles) && userData.roles.includes("admin"),
+          isStaff:
+            Array.isArray(userData.roles) && userData.roles.includes("staff"),
         };
 
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(normalizedUser));
@@ -59,9 +61,11 @@ export default function AdminLayout({ children }) {
     };
   }, [navigate]);
 
-  // Auto-expand stock menu if on stock pages
   useEffect(() => {
-    if (location.pathname.includes('/ton-kho') || location.pathname.includes('/nhap-kho')) {
+    if (
+      location.pathname.includes("/ton-kho") ||
+      location.pathname.includes("/nhap-kho")
+    ) {
       setStockMenuOpen(true);
     }
   }, [location.pathname]);
@@ -118,6 +122,22 @@ export default function AdminLayout({ children }) {
     return location.pathname.startsWith(item.path);
   };
 
+  const stockMenuActive =
+    location.pathname.includes("/ton-kho") ||
+    location.pathname.includes("/nhap-kho");
+
+  const getMenuItemClass = (active) => {
+    return [
+      "flex items-center rounded-lg transition-all duration-200",
+      sidebarOpen
+        ? "w-full gap-3 px-4 py-3 justify-start"
+        : "w-12 h-12 mx-auto justify-center p-0",
+      active
+        ? "bg-orange-500 text-white shadow-md"
+        : "text-gray-700 hover:bg-orange-50",
+    ].join(" ");
+  };
+
   if (!user) return null;
 
   if (user.isStaff && !user.isAdmin) {
@@ -128,142 +148,166 @@ export default function AdminLayout({ children }) {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-40 ${
-          sidebarOpen ? "w-64" : "w-20"
-        }`}
+        className={`fixed top-0 left-0 h-screen bg-white shadow-lg transition-all duration-300 z-40 border-r ${sidebarOpen ? "w-64" : "w-20"
+          }`}
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          {sidebarOpen && (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🐾</span>
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-amber-500">
-                PawHouse
-              </span>
-            </div>
-          )}
-          {!sidebarOpen && (
-            <div className="flex items-center justify-center w-full">
-              <span className="text-2xl">🐾</span>
-            </div>
-          )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            {sidebarOpen ? "◀" : "▶"}
-          </button>
-        </div>
+        <div className="flex h-full flex-col">
+          {/* Header */}
+          <div className="shrink-0 border-b p-4">
+            <div
+              className={`flex items-center ${sidebarOpen ? "justify-between" : "justify-center flex-col gap-3"
+                }`}
+            >
+              {sidebarOpen ? (
+                <>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-2xl shrink-0">🐾</span>
+                    <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-amber-500 truncate">
+                      PawHouse
+                    </span>
+                  </div>
 
-        <nav className="p-4 pb-24 space-y-2 h-[calc(100vh-80px)] overflow-y-auto">
-          {visibleMenuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                isActive(item)
-                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                  : "text-gray-700 hover:bg-orange-50"
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              {sidebarOpen && <span className="font-medium">{item.label}</span>}
-            </Link>
-          ))}
-          
-          {/* Tồn kho Menu with Dropdown */}
-          <div className="space-y-1">
-            <button
-              onClick={() => setStockMenuOpen(!stockMenuOpen)}
-              className={`flex items-center justify-between w-full gap-3 px-4 py-3 rounded-lg transition-all ${
-                location.pathname.includes('/ton-kho') || location.pathname.includes('/nhap-kho')
-                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                  : "text-gray-700 hover:bg-orange-50"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">📦</span>
-                {sidebarOpen && <span className="font-medium">Tồn kho</span>}
-              </div>
-              {sidebarOpen && (
-                <svg
-                  className={`w-4 h-4 transition-transform ${
-                    stockMenuOpen ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              )}
-            </button>
-            
-            {/* Submenu */}
-            {sidebarOpen && stockMenuOpen && (
-              <div className="ml-4 space-y-1 border-l-2 border-orange-200 pl-2">
-                {stockSubMenu.map((subItem) => (
-                  <Link
-                    key={subItem.path}
-                    to={subItem.path}
-                    className={`block px-4 py-2 rounded-lg text-sm transition-all ${
-                      location.pathname === subItem.path
-                        ? "bg-orange-100 text-orange-700 font-medium"
-                        : "text-gray-600 hover:bg-orange-50"
-                    }`}
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 shrink-0 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    {subItem.label}
-                  </Link>
-                ))}
-              </div>
-            )}
+                    ◀
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl">🐾</span>
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 shrink-0 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    ▶
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Menu items after stock */}
-          {menuItemsAfterStock.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                isActive(item)
-                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                  : "text-gray-700 hover:bg-orange-50"
-              }`}
-            >
-              <span className="text-xl">{item.icon}</span>
-              {sidebarOpen && <span className="font-medium">{item.label}</span>}
-            </Link>
-          ))}
-        </nav>
+          {/* Scrollable menu */}
+          <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+            {visibleMenuItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={getMenuItemClass(isActive(item))}
+                title={!sidebarOpen ? item.label : ""}
+              >
+                <span className="text-xl shrink-0">{item.icon}</span>
+                {sidebarOpen && <span className="font-medium">{item.label}</span>}
+              </Link>
+            ))}
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <span className="text-xl">🚪</span>
-            {sidebarOpen && <span className="font-medium">Đăng xuất</span>}
-          </button>
+            {/* Tồn kho */}
+            <div className="space-y-1">
+              <button
+                onClick={() => {
+                  if (sidebarOpen) {
+                    setStockMenuOpen(!stockMenuOpen);
+                  } else {
+                    navigate("/quan-tri/ton-kho");
+                  }
+                }}
+                className={[
+                  "flex items-center rounded-lg transition-all duration-200",
+                  sidebarOpen
+                    ? "w-full justify-between px-4 py-3"
+                    : "w-12 h-12 mx-auto justify-center p-0",
+                  stockMenuActive
+                    ? "bg-orange-500 text-white shadow-md"
+                    : "text-gray-700 hover:bg-orange-50",
+                ].join(" ")}
+                title={!sidebarOpen ? "Tồn kho" : ""}
+              >
+                <div
+                  className={`flex items-center ${sidebarOpen ? "gap-3" : "justify-center"
+                    }`}
+                >
+                  <span className="text-xl shrink-0">📦</span>
+                  {sidebarOpen && <span className="font-medium">Tồn kho</span>}
+                </div>
+
+                {sidebarOpen && (
+                  <svg
+                    className={`w-4 h-4 transition-transform ${stockMenuOpen ? "rotate-180" : ""
+                      }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                )}
+              </button>
+
+              {sidebarOpen && stockMenuOpen && (
+                <div className="ml-4 space-y-1 border-l-2 border-orange-200 pl-2">
+                  {stockSubMenu.map((subItem) => (
+                    <Link
+                      key={subItem.path}
+                      to={subItem.path}
+                      className={`block px-4 py-2 rounded-lg text-sm transition-all ${location.pathname === subItem.path
+                        ? "bg-orange-100 text-orange-700 font-medium"
+                        : "text-gray-600 hover:bg-orange-50"
+                        }`}
+                    >
+                      {subItem.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Menu items after stock */}
+            {menuItemsAfterStock.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={getMenuItemClass(isActive(item))}
+                title={!sidebarOpen ? item.label : ""}
+              >
+                <span className="text-xl shrink-0">{item.icon}</span>
+                {sidebarOpen && <span className="font-medium">{item.label}</span>}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Footer */}
+          <div className="shrink-0 border-t bg-white p-4">
+            <button
+              onClick={handleLogout}
+              className={`flex items-center rounded-lg text-red-600 hover:bg-red-50 transition-colors ${sidebarOpen
+                ? "w-full gap-3 px-4 py-3 justify-start"
+                : "w-12 h-12 mx-auto justify-center p-0"
+                }`}
+              title={!sidebarOpen ? "Đăng xuất" : ""}
+            >
+              <span className="text-xl shrink-0">🚪</span>
+              {sidebarOpen && <span className="font-medium">Đăng xuất</span>}
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main Content */}
       <div
-        className={`transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-20"
-        }`}
+        className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"
+          }`}
       >
         {/* Top Header */}
         <header className="bg-white shadow-sm sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Quản trị viên
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Quản trị viên</h1>
               <p className="text-sm text-gray-500">
                 Xin chào, {user?.profile?.fullName || user?.email}
               </p>
@@ -300,9 +344,8 @@ export default function AdminLayout({ children }) {
                     {user?.profile?.fullName || user?.email}
                   </span>
                   <span
-                    className={`hidden md:inline-block transition-transform ${
-                      dropdownOpen ? "rotate-180" : ""
-                    }`}
+                    className={`hidden md:inline-block transition-transform ${dropdownOpen ? "rotate-180" : ""
+                      }`}
                   >
                     ▼
                   </span>
