@@ -115,18 +115,12 @@ export default function AdminCategoriesPage() {
       const category = categories.find((c) => c._id === categoryId);
       if (!category) return;
 
-      const parentId = category.parentId?._id || category.parentId;
       const updateData = {
         name: category.name,
         slug: category.slug,
         description: category.description,
         isActive: !currentStatus,
       };
-
-      // Only include parentId if it exists
-      if (parentId) {
-        updateData.parentId = parentId;
-      }
 
       const updated = await categoryApi.update(categoryId, updateData);
 

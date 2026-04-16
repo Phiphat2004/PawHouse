@@ -69,7 +69,7 @@ export default function ProductTable({
                 Giá
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tồn kho
+                Mã SKU
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trạng thái
@@ -144,30 +144,24 @@ export default function ProductTable({
                     </div>
                     {product.compareAtPrice &&
                       product.compareAtPrice > product.price && (
-                        <div className="text-xs text-gray-500 line-through">
-                          {formatPrice(product.compareAtPrice)}
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-500 line-through">
+                            {formatPrice(product.compareAtPrice)}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600">
+                            -{Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                          </span>
                         </div>
                       )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          product.stock === 0
-                            ? "bg-red-100 text-red-800"
-                            : product.stock < 10
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {product.stock || 0}
+                    {product.sku ? (
+                      <span className="text-sm text-gray-900 font-mono font-medium">
+                        {product.sku}
                       </span>
-                      {product.sku && (
-                        <span className="text-xs text-gray-500 font-mono">
-                          {product.sku}
-                        </span>
-                      )}
-                    </div>
+                    ) : (
+                      "-"
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {canManage ? (

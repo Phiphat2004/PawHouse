@@ -173,8 +173,8 @@ export default function AdminProductDetailPage() {
               <button
                 onClick={handleToggleStatus}
                 className={`px-6 py-3 rounded-lg font-medium transition-all ${product.isActive
-                    ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                  ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                  : "bg-green-100 text-green-700 hover:bg-green-200"
                   }`}
               >
                 {product.isActive ? "Tạm ngưng" : "Kích hoạt"}
@@ -289,12 +289,17 @@ export default function AdminProductDetailPage() {
                   </p>
                   {product.compareAtPrice &&
                     product.compareAtPrice > product.price && (
-                      <p className="mt-1 text-sm text-gray-500 line-through">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(product.compareAtPrice)}
-                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <p className="text-sm text-gray-500 line-through">
+                          Giá gốc: {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(product.compareAtPrice)}
+                        </p>
+                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600">
+                          -Giảm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                        </span>
+                      </div>
                     )}
                 </div>
                 <div>
@@ -302,10 +307,10 @@ export default function AdminProductDetailPage() {
                   <div className="mt-1 flex items-center gap-2">
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-lg font-bold ${product.stock === 0
-                          ? "bg-red-100 text-red-800"
-                          : product.stock < 10
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
+                        ? "bg-red-100 text-red-800"
+                        : product.stock < 10
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
                         }`}
                     >
                       {product.stock || 0}
@@ -402,30 +407,6 @@ export default function AdminProductDetailPage() {
               </div>
             </div>
 
-            {/* Statistics Card */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Thống kê</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Số lượng hình ảnh</span>
-                  <span className="font-bold text-gray-900">
-                    {product.images?.length || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Số danh mục</span>
-                  <span className="font-bold text-gray-900">
-                    {product.categoryIds?.length || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">Độ dài mô tả</span>
-                  <span className="font-bold text-gray-900">
-                    {product.description?.length || 0} ký tự
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

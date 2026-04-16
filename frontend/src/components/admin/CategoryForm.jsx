@@ -10,7 +10,6 @@ export default function CategoryForm({
     name: "",
     slug: "",
     description: "",
-    parentId: "",
     isActive: true,
   });
   const [errors, setErrors] = useState({});
@@ -22,7 +21,6 @@ export default function CategoryForm({
         name: category.name || "",
         slug: category.slug || "",
         description: category.description || "",
-        parentId: category.parentId?._id || category.parentId || "",
         isActive: category.isActive !== undefined ? category.isActive : true,
       });
     }
@@ -82,11 +80,6 @@ export default function CategoryForm({
         isActive: formData.isActive,
       };
 
-      // Only include parentId if it has a value
-      if (formData.parentId) {
-        submitData.parentId = formData.parentId;
-      }
-
       await onSubmit(submitData);
     } catch (error) {
       setErrors({ submit: error.message });
@@ -95,8 +88,7 @@ export default function CategoryForm({
     }
   };
 
-  // Filter out current category and its descendants from parent options
-  const availableParents = categories.filter((c) => c._id !== category?._id);
+  // Removed availableParents
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -170,25 +162,7 @@ export default function CategoryForm({
             />
           </div>
 
-          {/* Danh mục cha */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              📂 Danh mục cha
-            </label>
-            <select
-              name="parentId"
-              value={formData.parentId}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            >
-              <option value="">-- Không có (danh mục gốc) --</option>
-              {availableParents.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
+
 
           {/* Trạng thái */}
           <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">

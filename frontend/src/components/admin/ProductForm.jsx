@@ -14,9 +14,8 @@ export default function ProductForm({
     categoryIds: [],
     images: [],
     isActive: true,
-    price: 0,
-    compareAtPrice: 0,
-    stock: 0,
+    originalPrice: 0,
+    discountPercentage: 0,
     sku: "",
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -36,9 +35,8 @@ export default function ProductForm({
           ) || [],
         images: product.images || [],
         isActive: product.isActive !== false,
-        price: product.price || 0,
-        compareAtPrice: product.compareAtPrice || 0,
-        stock: product.stock || 0,
+        originalPrice: product.compareAtPrice || product.price || 0,
+        discountPercentage: product.compareAtPrice ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100) : 0,
         sku: product.sku || "",
       });
     }
@@ -141,16 +139,12 @@ export default function ProductForm({
       newErrors.sku = "Vui lòng nhập mã SKU";
     }
 
-    if (!formData.price || formData.price <= 0) {
-      newErrors.price = "Giá sản phẩm phải lớn hơn 0";
+    if (!formData.originalPrice || formData.originalPrice <= 0) {
+      newErrors.originalPrice = "Giá gốc sản phẩm phải lớn hơn 0";
     }
 
-    if (formData.stock === "" || formData.stock < 0) {
-      newErrors.stock = "Số lượng tồn kho không được âm";
-    }
-
-    if (formData.compareAtPrice > 0 && formData.compareAtPrice <= formData.price) {
-      newErrors.compareAtPrice = "Giá so sánh phải lớn hơn giá bán";
+    if (formData.discountPercentage < 0 || formData.discountPercentage > 100) {
+      newErrors.discountPercentage = "Phần trăm giảm giá phải từ 0 đến 100";
     }
 
     if (formData.images.length + selectedFiles.length === 0) {
@@ -167,14 +161,38 @@ export default function ProductForm({
 
     setLoading(true);
     try {
+      const originalP = Number(formData.originalPrice);
+      const discountP = Number(formData.discountPercentage);
+      let compareAtPrice = 0;
+      let price = originalP;
+
+      if (discountP > 0) {
+        compareAtPrice = originalP;
+        price = Math.round(originalP * (1 - discountP / 100));
+      }
+
+      const payload = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        brand: formData.brand,
+        categoryIds: formData.categoryIds,
+        images: formData.images,
+        isActive: formData.isActive,
+        sku: formData.sku,
+        price,
+        compareAtPrice,
+        stock: product?.stock || 0
+      };
+
       const data = new FormData();
-      Object.keys(formData).forEach(key => {
+      Object.keys(payload).forEach(key => {
         if (key === 'categoryIds') {
-          formData.categoryIds.forEach(id => data.append('categoryIds[]', id));
+          payload.categoryIds.forEach(id => data.append('categoryIds[]', id));
         } else if (key === 'images') {
-          data.append('images', JSON.stringify(formData.images));
+          data.append('images', JSON.stringify(payload.images));
         } else {
-          data.append(key, formData[key]);
+          data.append(key, payload[key]);
         }
       });
       
@@ -336,67 +354,50 @@ export default function ProductForm({
                   )}
                 </div>
 
-                {/* Stock */}
+                {/* Original Price */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số lượng tồn kho <span className="text-red-500">*</span>
+                    Giá gốc (VNĐ) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
-                    name="stock"
-                    value={formData.stock}
+                    name="originalPrice"
+                    value={formData.originalPrice}
                     onChange={handleChange}
                     min="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.stock ? "border-red-500" : "border-gray-300"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.originalPrice ? "border-red-500" : "border-gray-300"
                       }`}
                     placeholder="0"
                   />
-                  {errors.stock && (
-                    <p className="mt-1 text-sm text-red-500">{errors.stock}</p>
+                  {errors.originalPrice && (
+                    <p className="mt-1 text-sm text-red-500">{errors.originalPrice}</p>
                   )}
                 </div>
 
-                {/* Price */}
+                {/* Discount Percentage */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giá bán (VNĐ) <span className="text-red-500">*</span>
+                    Phần trăm giảm giá (%)
                   </label>
                   <input
                     type="number"
-                    name="price"
-                    value={formData.price}
+                    name="discountPercentage"
+                    value={formData.discountPercentage}
                     onChange={handleChange}
                     min="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.price ? "border-red-500" : "border-gray-300"
+                    max="100"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.discountPercentage ? "border-red-500" : "border-gray-300"
                       }`}
                     placeholder="0"
                   />
-                  {errors.price && (
-                    <p className="mt-1 text-sm text-red-500">{errors.price}</p>
+                  {errors.discountPercentage && (
+                    <p className="mt-1 text-sm text-red-500">{errors.discountPercentage}</p>
                   )}
-                </div>
-
-                {/* Compare At Price */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giá so sánh (VNĐ)
-                  </label>
-                  <input
-                    type="number"
-                    name="compareAtPrice"
-                    value={formData.compareAtPrice}
-                    onChange={handleChange}
-                    min="0"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.compareAtPrice ? "border-red-500" : "border-gray-300"
-                      }`}
-                    placeholder="0"
-                  />
-                  {errors.compareAtPrice && (
-                    <p className="mt-1 text-sm text-red-500">{errors.compareAtPrice}</p>
+                  {formData.originalPrice > 0 && formData.discountPercentage > 0 && (
+                     <p className="mt-1 text-xs text-green-600 font-medium">
+                       Giá bán thực tế: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Math.round(formData.originalPrice * (1 - formData.discountPercentage / 100)))}
+                     </p>
                   )}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Giá gốc để hiển thị giảm giá (phải lớn hơn giá bán)
-                  </p>
                 </div>
               </div>
             </div>

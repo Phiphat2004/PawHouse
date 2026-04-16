@@ -109,18 +109,12 @@ export default function AdminCategoryDetailPage() {
   const handleToggleStatus = async () => {
     if (!canManage) return;
     try {
-      const parentId = category.parentId?._id || category.parentId;
       const updateData = {
         name: category.name,
         slug: category.slug,
         description: category.description,
         isActive: !category.isActive,
       };
-
-      // Only include parentId if it exists
-      if (parentId) {
-        updateData.parentId = parentId;
-      }
 
       await categoryApi.update(id, updateData);
       setCategory({ ...category, isActive: !category.isActive });
@@ -237,28 +231,7 @@ export default function AdminCategoryDetailPage() {
               </div>
             </div>
 
-            {/* Parent Category */}
-            {category.parentId && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  🔗 Danh mục cha
-                </h2>
-                <Link
-                  to={`/quan-tri/danh-muc/${typeof category.parentId === "string"
-                      ? category.parentId
-                      : category.parentId._id
-                    }`}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
-                >
-                  <span className="text-xl">📂</span>
-                  <span>
-                    {typeof category.parentId === "string"
-                      ? category.parentId
-                      : category.parentId.name}
-                  </span>
-                </Link>
-              </div>
-            )}
+
 
             {/* Products in Category */}
             <div className="bg-white rounded-lg shadow-md p-6">
