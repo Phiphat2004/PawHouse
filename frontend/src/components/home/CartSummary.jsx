@@ -80,7 +80,7 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
               <GiftOutlined className="text-orange-500" />
               Tổng số sản phẩm
             </span>
-            <span className="font-semibold text-gray-900">{selectedItems.length > 0 ? selectedItems.length : count}</span>
+            <span className="font-semibold text-gray-900">{count}</span>
           </div>
         </div>
 
