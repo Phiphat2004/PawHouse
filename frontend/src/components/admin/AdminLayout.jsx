@@ -95,7 +95,7 @@ export default function AdminLayout({ children }) {
   ];
 
   const adminOnlyMenuItems = [
-    { icon: "👥", label: "Tài Khoản", path: "/quan-tri/tai-khoan" },
+    { icon: "👥", label: "Tài Khoản", path: "/quan-tri/khach-hang" },
   ];
 
   const visibleMenuItems = user?.isAdmin
