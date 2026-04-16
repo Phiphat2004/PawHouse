@@ -3,21 +3,34 @@ import { useNavigate } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import UserPostForm from "../components/user/UserPostForm";
 import { STORAGE_KEYS } from "../utils/constants";
+import { isAdminUser, isStaffUser } from "../utils/role";
 
 export default function CreatePostPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in
+    // Only admin/staff can create posts
     const userData = localStorage.getItem(STORAGE_KEYS.USER);
     if (!userData) {
-      // Redirect to login if not logged in
       alert("Vui lòng đăng nhập để tạo bài viết");
       navigate("/login");
       return;
     }
-    setUser(JSON.parse(userData));
+
+    try {
+      const parsedUser = JSON.parse(userData);
+      const canCreate = isAdminUser(parsedUser) || isStaffUser(parsedUser);
+      if (!canCreate) {
+        alert("Bạn không có quyền tạo bài viết. Chỉ nhân viên hoặc admin mới được đăng bài.");
+        navigate("/cong-dong");
+        return;
+      }
+      setUser(parsedUser);
+    } catch {
+      alert("Không thể xác định quyền tài khoản. Vui lòng đăng nhập lại.");
+      navigate("/login");
+    }
   }, [navigate]);
 
   const handleSuccess = () => {
@@ -34,12 +47,12 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="font-['Inter',sans-serif] bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50 min-h-screen">
+    <div className="font-['Inter',sans-serif] bg-linear-to-br from-orange-50 via-amber-50 to-orange-50 min-h-screen">
       <Header />
 
       {/* Hero Section with Animation */}
       <div className="relative overflow-hidden pt-24 pb-8">
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-amber-500/10"></div>
+        <div className="absolute inset-0 bg-linear-to-r from-orange-500/10 to-amber-500/10"></div>
         <div className="absolute top-20 left-10 w-72 h-72 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
         <div className="absolute top-40 right-10 w-72 h-72 bg-amber-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
@@ -50,7 +63,7 @@ export default function CreatePostPage() {
             <span className="text-sm font-semibold text-orange-600">Chia sẻ câu chuyện của bạn</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 animate-fade-in-up">
-            <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
               Tạo bài viết mới
             </span>
           </h1>

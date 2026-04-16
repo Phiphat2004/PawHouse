@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { postApi } from "../services/api";
 import { STORAGE_KEYS } from "../utils/constants";
+import { isAdminUser, isStaffUser } from "../utils/role";
 
 export default function CommunityPage() {
   const navigate = useNavigate();
@@ -11,13 +12,20 @@ export default function CommunityPage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [canCreatePost, setCanCreatePost] = useState(false);
 
   useEffect(() => {
     loadPosts();
-    // Check if user is logged in
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    setIsLoggedIn(!!token);
+
+    try {
+      const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+      const rawUser = localStorage.getItem(STORAGE_KEYS.USER);
+      const user = rawUser ? JSON.parse(rawUser) : null;
+      const canCreate = !!token && (isAdminUser(user) || isStaffUser(user));
+      setCanCreatePost(canCreate);
+    } catch {
+      setCanCreatePost(false);
+    }
   }, []);
 
   const loadPosts = async () => {
@@ -66,7 +74,7 @@ export default function CommunityPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-orange-500 to-amber-500 text-white py-24 pt-32 mt-16">
+      <section className="relative bg-linear-to-r from-orange-500 to-amber-500 text-white py-24 pt-32 mt-16">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pb-16">
           <h1 className="text-4xl lg:text-6xl font-bold mb-4">
@@ -94,7 +102,7 @@ export default function CommunityPage() {
                 />
               </div>
             </div>
-            {isLoggedIn && (
+            {canCreatePost && (
               <button
                 onClick={() => navigate("/cong-dong/tao-bai-viet")}
                 className="whitespace-nowrap bg-orange-500 text-white px-6 py-4 rounded-full font-semibold hover:bg-orange-600 transition flex items-center gap-2"
@@ -152,13 +160,13 @@ export default function CommunityPage() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         onError={(e) => {
                           e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = '<div class="h-48 w-full bg-gradient-to-br from-orange-200 to-amber-200 flex items-center justify-center"><span class="text-7xl">🐾</span></div>';
+                          e.target.parentElement.innerHTML = '<div class="h-48 w-full bg-linear-to-br from-orange-200 to-amber-200 flex items-center justify-center"><span class="text-7xl">🐾</span></div>';
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                      <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent"></div>
                     </div>
                   ) : (
-                    <div className="h-48 bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center">
+                    <div className="h-48 bg-linear-to-br from-orange-400 to-amber-400 flex items-center justify-center">
                       <span className="text-6xl">🐾</span>
                     </div>
                   )}

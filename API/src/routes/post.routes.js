@@ -29,7 +29,10 @@ const createPostValidation = [
   body("content").trim().notEmpty().withMessage("Nội dung là bắt buộc"),
   body("slug").optional().trim(),
   body("excerpt").optional().trim(),
-  body("coverImageUrl").optional().isURL().withMessage("URL ảnh không hợp lệ"),
+  body("coverImageUrl")
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage("URL ảnh không hợp lệ"),
   body("status")
     .optional()
     .isIn(["draft", "published", "hidden"])
@@ -52,7 +55,10 @@ const updatePostValidation = [
     .withMessage("Nội dung không được rỗng"),
   body("slug").optional().trim(),
   body("excerpt").optional().trim(),
-  body("coverImageUrl").optional().isURL().withMessage("URL ảnh không hợp lệ"),
+  body("coverImageUrl")
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage("URL ảnh không hợp lệ"),
   body("status")
     .optional()
     .isIn(["draft", "published", "hidden"])
@@ -79,7 +85,7 @@ router.get("/", ...protectRoute(["admin", "staff"]), postController.getAll);
 // create and will receive normal responses.
 router.post(
   "/",
-  authenticate,
+  ...protectRoute(["admin", "staff"]),
   createPostValidation,
   handleValidationErrors,
   postController.create,
@@ -88,7 +94,7 @@ router.post(
 // Image upload endpoint used by Create Post page
 router.post(
   "/upload",
-  authenticate,
+  ...protectRoute(["admin", "staff"]),
   upload.single("file"),
   postController.uploadImage,
 );
@@ -97,12 +103,16 @@ router.post(
 router.get("/slug/:slug", optionalAuth, postController.getBySlug);
 
 // Authenticated user: get own posts
-router.get("/my-posts", authenticate, postController.getMyPosts);
+router.get(
+  "/my-posts",
+  ...protectRoute(["admin", "staff"]),
+  postController.getMyPosts,
+);
 
 // Authenticated user update own post
 router.put(
   "/my-posts/:id",
-  authenticate,
+  ...protectRoute(["admin", "staff"]),
   updatePostValidation,
   handleValidationErrors,
   postController.updateMyPost,
@@ -111,7 +121,7 @@ router.put(
 // Authenticated user delete own post
 router.delete(
   "/my-posts/:id",
-  authenticate,
+  ...protectRoute(["admin", "staff"]),
   idValidation,
   handleValidationErrors,
   postController.deleteMyPost,
@@ -128,7 +138,7 @@ router.get(
 // Admin toggle status (admin only)
 router.put(
   "/:id/toggle-status",
-  ...protectRoute(["admin", "staff"]),
+  ...protectRoute(["admin"]),
   idValidation,
   handleValidationErrors,
   postController.toggleStatus,

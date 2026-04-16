@@ -392,3 +392,58 @@ exports.sendOtpEmail = async (toEmail, otp, type = "verification") => {
 
   return { devMode: true, otp };
 };
+
+/**
+ * Notify admin that a staff post is waiting for approval.
+ * @param {object} payload
+ * @param {string} payload.toEmail
+ * @param {string} payload.adminName
+ * @param {string} payload.authorName
+ * @param {string} payload.postTitle
+ * @param {string} payload.postSlug
+ * @param {string} payload.action
+ */
+exports.sendPostPendingApprovalEmail = async ({
+  toEmail,
+  adminName = "Admin",
+  authorName = "Nhân viên",
+  postTitle,
+  postSlug,
+  action = "Tạo mới",
+}) => {
+  if (!toEmail || !postTitle) return;
+
+  const reviewUrl = `${config.clientUrl || "http://localhost:3000"}/quan-tri/cong-dong`;
+  const publicUrl = postSlug
+    ? `${config.clientUrl || "http://localhost:3000"}/cong-dong/${postSlug}`
+    : null;
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:#374151;font-size:20px;">Bài viết chờ duyệt</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">
+      Xin chào <strong>${adminName}</strong>,
+      có một bài viết mới đang chờ bạn duyệt từ nhân viên.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+      <tbody>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Hành động</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${action}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Người gửi</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${authorName}</td></tr>
+        <tr><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Tiêu đề bài viết</td><td style="padding:12px 14px;color:#374151;font-size:14px;font-weight:600;">${postTitle}</td></tr>
+        <tr style="background:#f9f7f5;"><td style="padding:12px 14px;color:#6b7280;font-size:13px;">Trạng thái</td><td style="padding:12px 14px;color:#f59e0b;font-size:14px;font-weight:700;">Chờ duyệt</td></tr>
+      </tbody>
+    </table>
+    <p style="margin:20px 0 0;font-size:14px;color:#6b7280;">
+      Vui lòng vào trang quản lý cộng đồng để duyệt bài viết.
+    </p>
+    <p style="margin:20px 0 0;">
+      <a href="${reviewUrl}" style="display:inline-block;background:#846551;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Mở quản lý cộng đồng</a>
+    </p>
+    ${publicUrl ? `<p style="margin:10px 0 0;font-size:12px;color:#9ca3af;">Slug công khai dự kiến: ${publicUrl}</p>` : ""}
+  `;
+
+  await sendEmail({
+    to: toEmail,
+    subject: `[PawCare] Bài viết chờ duyệt: ${postTitle}`,
+    html: baseLayout(body),
+  });
+};

@@ -28,6 +28,7 @@ import {
   AdminCategoriesPage,
   AdminCategoryDetailPage,
   AdminPostsPage,
+  AdminPostDetailPage,
   AdminOrdersPage,
   AdminOrderDetailPage,
   CreateStockEntryPage,
@@ -37,6 +38,7 @@ import {
   AccountManagementPage,
   AdminProfilePage,
   AdminCareAppointmentsPage,
+  AdminEditProfilePage,
 } from "./pages";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 
@@ -164,6 +166,7 @@ export default function App() {
           element={<AdminCategoryDetailPage />}
         />
         <Route path="/quan-tri/cong-dong" element={<AdminPostsPage />} />
+        <Route path="/quan-tri/cong-dong/:slug" element={<AdminPostDetailPage />} />
         <Route path="/quan-tri/don-hang" element={<AdminOrdersPage />} />
         <Route path="/quan-tri/don-hang/:id" element={<AdminOrderDetailPage />} />
         <Route path="/quan-tri/ton-kho" element={<StockListPage />} />
@@ -180,6 +183,7 @@ export default function App() {
         />
         <Route path="/quan-tri/lich-cham-soc" element={<AdminCareAppointmentsPage />} />
         <Route path="/quan-tri/tai-khoan" element={<AdminProfilePage />} />
+        <Route path="/quan-tri/tai-khoan/chinh-sua" element={<AdminEditProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

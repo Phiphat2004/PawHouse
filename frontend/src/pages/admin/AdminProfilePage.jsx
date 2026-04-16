@@ -85,7 +85,7 @@ export default function AdminProfilePage() {
           </div>
 
           <Link
-            to={ROUTES.EDIT_PROFILE}
+            to={ROUTES.ADMIN_EDIT_PROFILE}
             className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-2.5 font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:shadow-orange-500/30"
           >
             <Settings size={18} />

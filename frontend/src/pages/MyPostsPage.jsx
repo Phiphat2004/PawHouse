@@ -5,6 +5,7 @@ import UserPostCard from "../components/user/UserPostCard";
 import UserPostForm from "../components/user/UserPostForm";
 import { postApi } from "../services/api";
 import { STORAGE_KEYS } from "../utils/constants";
+import { isAdminUser, isStaffUser } from "../utils/role";
 
 export default function MyPostsPage() {
   const navigate = useNavigate();
@@ -16,13 +17,30 @@ export default function MyPostsPage() {
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    // Check if user is logged in
+    // Only admin/staff can manage own posts
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    if (!token) {
-      alert("Vui lòng đăng nhập để xem bài viết của bạn");
+    const userData = localStorage.getItem(STORAGE_KEYS.USER);
+
+    if (!token || !userData) {
+      alert("Vui lòng đăng nhập để tiếp tục");
       navigate("/login");
       return;
     }
+
+    try {
+      const parsedUser = JSON.parse(userData);
+      const canManagePosts = isAdminUser(parsedUser) || isStaffUser(parsedUser);
+      if (!canManagePosts) {
+        alert("Bạn không có quyền quản lý bài viết. Tài khoản customer chỉ có thể xem cộng đồng.");
+        navigate("/cong-dong");
+        return;
+      }
+    } catch {
+      alert("Không thể xác định quyền tài khoản. Vui lòng đăng nhập lại.");
+      navigate("/login");
+      return;
+    }
+
     loadPosts();
   }, [navigate]);
 

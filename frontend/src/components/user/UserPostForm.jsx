@@ -84,17 +84,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
     setImageError(false);
 
     try {
-      const token = localStorage.getItem('pawhouse_token') || JSON.parse(localStorage.getItem('pawhouse_user') || '{}')?.token || null;
-      const form = new FormData();
-      form.append('file', file);
-
-      const res = await fetch('/api/posts/upload', {
-        method: 'POST',
-        body: form,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) throw new Error('Upload thất bại');
-      const data = await res.json();
+      const data = await postApi.uploadImage(file);
       // replace local preview with remote url
       setFormData(prev => ({ ...prev, coverImageUrl: data.url }));
       // revoke local preview URL if present
