@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChevronDown, Check } from "lucide-react"
+import { DownOutlined, CheckOutlined } from "@ant-design/icons"
 
 const SelectContext = React.createContext({})
 
@@ -98,7 +98,7 @@ const SelectTrigger = React.forwardRef(({ className, children, ...props }, ref) 
             {...props}
         >
             {children}
-            <ChevronDown className={`h-4 w-4 opacity-50 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            <DownOutlined className={`h-4 w-4 opacity-50 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
     )
 })
@@ -156,7 +156,7 @@ const SelectItem = React.forwardRef(({ className, children, value, ...props }, r
             {...props}
         >
             <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-                {isSelected && <Check className="h-4 w-4 text-orange-600" />}
+                {isSelected && <CheckOutlined className="h-4 w-4 text-orange-600" />}
             </span>
             <span className="truncate">{children}</span>
         </div>

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import { DatePicker, TimePicker } from "antd";
 import { Header, Footer } from "../components/layout";
 import { careAppointmentApi } from "../services/api";
 import { STORAGE_KEYS } from "../utils/constants";
@@ -24,15 +26,6 @@ const serviceTypeOptions = [
 
 const BUSINESS_START_HOUR = 8;
 const BUSINESS_END_HOUR = 20;
-const timeOptions = Array.from(
-  { length: (BUSINESS_END_HOUR - BUSINESS_START_HOUR) * 2 + 1 },
-  (_, i) => {
-    const totalMinutes = BUSINESS_START_HOUR * 60 + i * 30;
-    const hour = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
-    const minute = String(totalMinutes % 60).padStart(2, "0");
-    return `${hour}:${minute}`;
-  },
-);
 
 const statusLabel = {
   pending: "Chờ duyệt",
@@ -84,7 +77,44 @@ export default function CareAppointmentsPage() {
     fetchMyAppointments();
   }, [navigate, fetchMyAppointments]);
 
-  const minDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const toTimeValue = (timeStr) => {
+    if (!timeStr) return null;
+    const [h, m] = String(timeStr).split(":").map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return dayjs().hour(h).minute(m).second(0);
+  };
+
+  const disabledDate = (current) => {
+    if (!current) return false;
+    return current.startOf("day").isBefore(dayjs().startOf("day"));
+  };
+
+  const getDisabledTime = (dateStr) => {
+    const today = dayjs().format("YYYY-MM-DD");
+    const isToday = dateStr === today;
+    const now = dayjs();
+    const currentHour = now.hour();
+    const currentMinute = now.minute();
+
+    return {
+      disabledHours: () =>
+        Array.from({ length: 24 }, (_, h) => h).filter(
+          (h) =>
+            h < BUSINESS_START_HOUR ||
+            h > BUSINESS_END_HOUR ||
+            (isToday && h < currentHour),
+        ),
+      disabledMinutes: (hour) => {
+        const minuteOptions = Array.from({ length: 60 }, (_, m) => m);
+        return minuteOptions.filter((m) => {
+          if (hour === BUSINESS_END_HOUR && m > 0) return true;
+          if (m % 30 !== 0) return true;
+          if (isToday && hour === currentHour && m <= currentMinute) return true;
+          return false;
+        });
+      },
+    };
+  };
 
   const handleChange = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -236,17 +266,37 @@ export default function CareAppointmentsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn *</label>
-                <input type="date" min={minDate} value={form.appointmentDate} onChange={handleChange("appointmentDate")} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                <DatePicker
+                  className="w-full"
+                  format="DD/MM/YYYY"
+                  value={form.appointmentDate ? dayjs(form.appointmentDate) : null}
+                  onChange={(value) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      appointmentDate: value ? value.format("YYYY-MM-DD") : "",
+                    }))
+                  }
+                  disabledDate={disabledDate}
+                  placeholder="Chọn ngày"
+                />
               </div>
               <div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu *</label>
-                  <select value={form.startTime} onChange={handleChange("startTime")} className="w-32 border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                    <option value="">-- Chọn giờ --</option>
-                    {timeOptions.map((time) => (
-                      <option key={time} value={time}>{time}</option>
-                    ))}
-                  </select>
+                  <TimePicker
+                    className="w-40"
+                    format="HH:mm"
+                    minuteStep={30}
+                    value={toTimeValue(form.startTime)}
+                    onChange={(value) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        startTime: value ? value.format("HH:mm") : "",
+                      }))
+                    }
+                    disabledTime={() => getDisabledTime(form.appointmentDate)}
+                    placeholder="Chọn giờ"
+                  />
                 </div>
               </div>
               <div>
@@ -321,24 +371,34 @@ export default function CareAppointmentsPage() {
                               <option key={option} value={option}>{option}</option>
                             ))}
                           </select>
-                          <input
-                            type="date"
-                            min={minDate}
-                            value={editForm.appointmentDate}
-                            onChange={handleEditChange("appointmentDate")}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                          <DatePicker
+                            className="w-full"
+                            format="DD/MM/YYYY"
+                            value={editForm.appointmentDate ? dayjs(editForm.appointmentDate) : null}
+                            onChange={(value) =>
+                              setEditForm((prev) => ({
+                                ...prev,
+                                appointmentDate: value ? value.format("YYYY-MM-DD") : "",
+                              }))
+                            }
+                            disabledDate={disabledDate}
+                            placeholder="Chọn ngày"
                           />
                           <div>
-                            <select
-                              value={editForm.startTime}
-                              onChange={handleEditChange("startTime")}
-                              className="w-32 border border-gray-300 rounded-lg px-3 py-2 bg-white"
-                            >
-                              <option value="">-- Chọn giờ --</option>
-                              {timeOptions.map((time) => (
-                                <option key={time} value={time}>{time}</option>
-                              ))}
-                            </select>
+                            <TimePicker
+                              className="w-40"
+                              format="HH:mm"
+                              minuteStep={30}
+                              value={toTimeValue(editForm.startTime)}
+                              onChange={(value) =>
+                                setEditForm((prev) => ({
+                                  ...prev,
+                                  startTime: value ? value.format("HH:mm") : "",
+                                }))
+                              }
+                              disabledTime={() => getDisabledTime(editForm.appointmentDate)}
+                              placeholder="Chọn giờ"
+                            />
                           </div>
                           <textarea
                             rows={2}

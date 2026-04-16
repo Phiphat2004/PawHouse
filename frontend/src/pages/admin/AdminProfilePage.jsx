@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { User, Mail, Shield, BadgeCheck, Calendar, Camera, Settings } from 'lucide-react'
+import {
+  UserOutlined,
+  MailOutlined,
+  SafetyOutlined,
+  CheckCircleOutlined,
+  CalendarOutlined,
+  CameraOutlined,
+  SettingOutlined,
+} from '@ant-design/icons'
 import { AdminLayout } from '@/components/admin'
 import { authApi } from '@/utils/services/api'
 import { ROUTES, STORAGE_KEYS } from '@/utils/constants'
@@ -88,7 +96,7 @@ export default function AdminProfilePage() {
             to={ROUTES.ADMIN_EDIT_PROFILE}
             className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-2.5 font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:shadow-orange-500/30"
           >
-            <Settings size={18} />
+            <SettingOutlined className="text-[18px]" />
             Chỉnh sửa thông tin
           </Link>
         </div>
@@ -122,7 +130,7 @@ export default function AdminProfilePage() {
               <p className="mt-1 text-sm text-gray-500">{user?.email}</p>
 
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
-                <BadgeCheck size={16} />
+                <CheckCircleOutlined className="text-[16px]" />
                 {accountTag}
               </div>
             </div>
@@ -147,7 +155,7 @@ export default function AdminProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
-                  <User size={20} />
+                  <UserOutlined className="text-[20px]" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">Họ và tên</p>
                 <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.profile?.fullName || 'Chưa cập nhật'}</p>
@@ -155,7 +163,7 @@ export default function AdminProfilePage() {
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                  <Mail size={20} />
+                  <MailOutlined className="text-[20px]" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">Email</p>
                 <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.email || 'Chưa cập nhật'}</p>
@@ -163,7 +171,7 @@ export default function AdminProfilePage() {
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
-                  <Shield size={20} />
+                  <SafetyOutlined className="text-[20px]" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">Vai trò</p>
                 <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : roles.join(', ') || 'admin'}</p>
@@ -171,7 +179,7 @@ export default function AdminProfilePage() {
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                  <Calendar size={20} />
+                  <CalendarOutlined className="text-[20px]" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">Ngày tạo</p>
                 <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : formatDate(user?.createdAt)}</p>
@@ -180,7 +188,7 @@ export default function AdminProfilePage() {
 
             <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2">
-                <Camera size={18} className="text-orange-600" />
+                <CameraOutlined className="text-orange-600 text-[18px]" />
                 <h3 className="text-lg font-bold text-gray-900">{accountSectionTitle}</h3>
               </div>
 

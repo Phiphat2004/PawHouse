@@ -1,5 +1,6 @@
 // frontend/src/components/home/CartItem.jsx
 //Lê Nhựt Hào
+import { CloseOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useState, useEffect } from "react";
 
 export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQuantityChange }) {
@@ -51,6 +52,21 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                 />
             </div>
 
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => onDecrease(itemId)}
+                    className="px-3 py-1 border rounded hover:bg-gray-100 transition inline-flex items-center"
+                >
+                    <MinusOutlined />
+                </button>
+                <span className="w-12 text-center font-medium">{item?.quantity || 1}</span>
+                <button
+                    onClick={() => onIncrease(itemId)}
+                    className="px-3 py-1 border rounded hover:bg-gray-100 transition inline-flex items-center"
+                >
+                    <PlusOutlined />
+                </button>
+            </div>
             {/* Product Details */}
             <div className="flex-1 flex flex-col justify-between pt-1">
                 <div className="pr-8">
@@ -94,6 +110,14 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                     </div>
                 </div>
             </div>
+
+            <button
+                onClick={() => onRemove(itemId)}
+                className="text-gray-400 hover:text-red-500 text-xl transition"
+                title="Xóa sản phẩm"
+            >
+                <CloseOutlined />
+            </button>
         </div>
     );
 }

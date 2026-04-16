@@ -93,7 +93,6 @@ export default function StaffLayout({ children }) {
 
   const menuItemsAfterStock = [
     { icon: "🌐", label: "Cộng đồng", path: "/quan-tri/cong-dong" },
-    { icon: "💬", label: "Liên hệ", path: "/quan-tri/lien-he" },
   ];
 
   const stockSubMenu = [

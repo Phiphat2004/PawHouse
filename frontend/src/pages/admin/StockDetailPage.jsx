@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { stockApi } from '../../services/api';
 import { UpdateStockModal, DeleteStockRecordModal } from '../../components/admin';
@@ -21,12 +21,7 @@ export default function StockDetailPage() {
     pages: 0
   });
 
-  useEffect(() => {
-    loadStockDetail();
-    loadMovements(1);
-  }, [productId]);
-
-  const loadStockDetail = async () => {
+  const loadStockDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await stockApi.getProductStock(productId);
@@ -38,9 +33,9 @@ export default function StockDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
-  const loadMovements = async (page = 1) => {
+  const loadMovements = useCallback(async (page = 1) => {
     try {
       setMovementsLoading(true);
       const response = await stockApi.getMovements({
@@ -49,13 +44,18 @@ export default function StockDetailPage() {
         limit: pagination.limit
       });
       setMovements(response.movements || []);
-      setPagination(response.pagination || pagination);
+      setPagination((prev) => response.pagination || prev);
     } catch (error) {
       console.error('Error loading movements:', error);
     } finally {
       setMovementsLoading(false);
     }
-  };
+  }, [pagination.limit, productId]);
+
+  useEffect(() => {
+    loadStockDetail();
+    loadMovements(1);
+  }, [loadMovements, loadStockDetail]);
 
   const handlePageChange = (newPage) => {
     loadMovements(newPage);
@@ -81,7 +81,7 @@ export default function StockDetailPage() {
   const getMovementTypeLabel = (type) => {
     const types = {
       'IN': 'Nhập kho',
-      'OUT': 'Đang giao hàng',
+      'OUT': 'Xuất kho',
       'ADJUSTMENT': 'Điều chỉnh',
       'TRANSFER': 'Chuyển kho',
       'RETURN': 'Trả hàng',
@@ -110,7 +110,7 @@ export default function StockDetailPage() {
     if (movement?.statusLabel) return movement.statusLabel;
     const map = {
       RESERVE: 'Chờ xác nhận',
-      OUT: 'Đang giao hàng',
+      OUT: movement?.referenceType === 'ORDER' ? 'Đang giao hàng' : 'Xuất kho',
       FULFILL: 'Đã giao hàng',
       RELEASE: 'Đã hủy',
       IN: 'Nhập kho',
@@ -143,7 +143,7 @@ export default function StockDetailPage() {
           </div>
           <div className="mt-4">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/quan-tri/ton-kho')}
               className="text-orange-600 hover:text-orange-700 font-medium"
             >
               ← Quay lại
@@ -158,7 +158,7 @@ export default function StockDetailPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-lg p-8 border border-gray-200">
+        <div className="mb-8 bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl shadow-lg p-8 border border-gray-200">
           <div className="flex items-center gap-4 mb-6">
             <Link
               to="/quan-tri/ton-kho"
@@ -173,7 +173,7 @@ export default function StockDetailPage() {
           
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-4 shadow-lg">
+              <div className="bg-linear-to-br from-orange-500 to-orange-600 rounded-2xl p-4 shadow-lg">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -186,7 +186,7 @@ export default function StockDetailPage() {
             <div>
               <button
                 onClick={() => setIsUpdateModalOpen(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 transition-all transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-linear-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 transition-all transform hover:-translate-y-0.5"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -321,7 +321,7 @@ export default function StockDetailPage() {
                         Ngày giờ
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Loại giao dịch
+                        Trạng thái
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Kho hàng

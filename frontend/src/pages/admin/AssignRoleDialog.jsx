@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AccountRole } from './types/account';
-import { User, Crown, Briefcase } from 'lucide-react';
+import { UserOutlined, CrownOutlined, SolutionOutlined } from '@ant-design/icons';
 
 const AssignRoleDialog = ({ account, onClose, onAssign }) => {
     const [selectedRole, setSelectedRole] = useState(AccountRole.USER);
@@ -33,19 +33,19 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
         {
             value: AccountRole.USER,
             label: 'Người dùng',
-            icon: User,
+            icon: UserOutlined,
             description: 'Tài khoản cơ bản với quyền hạn giới hạn',
         },
         {
             value: AccountRole.STAFF,
             label: 'Nhân viên',
-            icon: Briefcase,
+            icon: SolutionOutlined,
             description: 'Có quyền quản trị vận hành, không quản lý tài khoản',
         },
         {
             value: AccountRole.ADMIN,
             label: 'Quản trị viên',
-            icon: Crown,
+            icon: CrownOutlined,
             description: 'Toàn quyền truy cập tất cả tính năng và cài đặt',
         },
     ];
