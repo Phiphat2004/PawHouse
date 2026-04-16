@@ -266,7 +266,7 @@ export default function AdminOrdersPage() {
 
               <Button
                 variant="outline"
-                className="h-11 rounded-xl border-slate-200 px-4 text-slate-600 hover:bg-slate-50"
+                className="h-10 rounded-xl border-slate-200 px-3 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-50"
                 onClick={() => {
                   setSearchQuery("");
                   setStatusFilter("all");
@@ -312,7 +312,6 @@ export default function AdminOrdersPage() {
                       NGÀY ĐẶT
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold text-center">
-                      THAO TÁC
                       THAO TÁC
                     </TableHead>
                   </TableRow>
