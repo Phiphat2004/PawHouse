@@ -53,12 +53,12 @@ export default function CartPage() {
       } else {
         setLoading(true);
       }
-      
+
       setError(null);
-      
+
       // Fetch fresh data
       const cartData = await updateCartCount(true);
-      
+
       if (cartData && cartData.items && cartData.items.length > 0) {
         setCart(cartData);
         // items is array of CartItem objects with: _id, product_id, quantity, added_at
@@ -109,6 +109,24 @@ export default function CartPage() {
 
       const newQuantity = Math.max(1, item.quantity - 1);
       await cartApi.updateQuantity(itemId, newQuantity);
+      await fetchCart(); // Refresh cart
+      updateCartCount(); // Update cart count in header
+    } catch (err) {
+      console.error("Failed to update quantity:", err);
+      alert(err.data?.message || "Không thể cập nhật số lượng");
+    }
+  };
+
+  // Handle specific quantity change
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    try {
+      const item = cartItems.find((i) => i._id === itemId);
+      // Wait for it
+      if (!item) return;
+      if (newQuantity === item.quantity) return;
+
+      const validQuantity = Math.max(1, newQuantity);
+      await cartApi.updateQuantity(itemId, validQuantity);
       await fetchCart(); // Refresh cart
       updateCartCount(); // Update cart count in header
     } catch (err) {
@@ -282,6 +300,7 @@ export default function CartPage() {
                         onIncrease={handleIncrease}
                         onDecrease={handleDecrease}
                         onRemove={handleRemove}
+                        onQuantityChange={handleQuantityChange}
                       />
                     </div>
                   </div>

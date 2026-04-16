@@ -224,7 +224,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
               </div>
             )}
             
-            {/* Warehouse - Hiển thị cố định (Kho Xuân Ngân) */}
+            {/* Warehouse - Hiển thị cố định */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 <span className="text-lg">🏢</span>
@@ -234,7 +234,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                 <span className="text-2xl">🏢</span>
                 <div>
                   <span className="text-amber-800 font-bold text-base">
-                    {stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name || 'Kho Xuân Ngân'}
+                    {stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name || 'Chưa có kho'}
                   </span>
                   {(stockLevels[0]?.warehouseId?.code || allWarehouses[0]?.code) && (
                     <span className="ml-2 text-sm text-amber-600">
@@ -243,7 +243,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                   )}
                 </div>
               </div>
-              <p className="text-sm text-gray-500 mt-2">Kho mặc định — không thể thay đổi</p>
+              <p className="text-sm text-gray-500 mt-2">{stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name ? 'Kho mặc định — không thể thay đổi' : 'Chưa có kho'}</p>
               {selectedWarehouseStock && (
                 <div className="mt-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl shadow-sm">
                   <div className="space-y-2">

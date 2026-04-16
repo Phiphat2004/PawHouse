@@ -6,6 +6,7 @@ import { AdminLayout, UpdateStockModal } from '../../components/admin';
 
 export default function StockListPage() {
   const [stockLevels, setStockLevels] = useState([]);
+  const [reservedByProduct, setReservedByProduct] = useState({});
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,6 +21,25 @@ export default function StockListPage() {
     loadData();
   }, []);
 
+  // Keep stock list synchronized with order status updates from other admin/user tabs
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key === 'stockMovementUpdated') {
+        fetchStockLevels();
+      }
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [filters.warehouseId]);
+
+  // Poll to reduce delay in case no storage event is fired on this tab
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchStockLevels();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [filters.warehouseId]);
+
   const loadData = async () => {
     setLoading(true);
     await Promise.all([fetchStockLevels(), fetchWarehouses()]);
@@ -32,10 +52,21 @@ export default function StockListPage() {
       if (filters.warehouseId) {
         params.warehouseId = filters.warehouseId;
       }
-      
-      const response = await stockApi.getStockLevels(params);
-      console.log('Stock levels response:', response);
-      console.log('Stock levels data:', response?.stockLevels);
+
+      const [response, reserveResponse] = await Promise.all([
+        stockApi.getStockLevels(params),
+        // Use same authoritative source as stock history mapping
+        stockApi.getMovements({ type: 'RESERVE', page: 1, limit: 2000 })
+      ]);
+
+      const reserveMap = {};
+      for (const movement of reserveResponse?.movements || []) {
+        const productId = movement.productId?._id || movement.productId;
+        if (!productId) continue;
+        reserveMap[String(productId)] = (reserveMap[String(productId)] || 0) + (Number(movement.quantity) || 0);
+      }
+
+      setReservedByProduct(reserveMap);
       setStockLevels(response?.stockLevels || []);
       setError('');
     } catch (error) {
@@ -140,7 +171,18 @@ export default function StockListPage() {
   }, {});
 
   // Convert grouped object to array
-  const aggregatedStockLevels = Object.values(groupedStockLevels);
+  const aggregatedStockLevels = Object.values(groupedStockLevels).map((item) => {
+    // With all warehouses view, sync reserved/available by order-driven reserve movements
+    if (!filters.warehouseId) {
+      const syncedReserved = reservedByProduct[String(item.productId?._id)] || 0;
+      return {
+        ...item,
+        reservedQuantity: syncedReserved,
+        availableQuantity: Math.max((item.quantity || 0) - syncedReserved, 0),
+      };
+    }
+    return item;
+  });
 
   // Calculate total stock
   const totalStock = aggregatedStockLevels.reduce((sum, item) => sum + (item.quantity || 0), 0);

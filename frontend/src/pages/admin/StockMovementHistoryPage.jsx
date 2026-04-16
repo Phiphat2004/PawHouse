@@ -37,6 +37,26 @@ export default function StockMovementHistoryPage() {
     loadInitialData();
   }, []);
 
+  // Poll for new movements every 5 seconds to reflect recent reservations/fulfillments
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchMovements();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [filters, pagination.page, pagination.limit]);
+
+  // Listen to cross-tab storage events so other tabs (checkout) can notify us to refresh immediately
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key === 'stockMovementUpdated') {
+        // Always re-fetch authoritative data from API (order-synced)
+        fetchMovements();
+      }
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [filters, pagination.page, pagination.limit]);
+
   useEffect(() => {
     fetchMovements();
   }, [pagination.page, pagination.limit]);
@@ -63,7 +83,7 @@ export default function StockMovementHistoryPage() {
       if (filters.type) params.type = filters.type;
 
       const response = await stockApi.getMovements(params);
-      
+
       setMovements(response?.movements || []);
       
       if (response?.pagination) {
@@ -150,7 +170,7 @@ export default function StockMovementHistoryPage() {
       case 'IN':
         return { bg: 'bg-green-100', text: 'text-green-800', icon: '⬆️', label: 'Nhập kho' };
       case 'OUT':
-        return { bg: 'bg-red-100', text: 'text-red-800', icon: '⬇️', label: 'Xuất kho' };
+        return { bg: 'bg-red-100', text: 'text-red-800', icon: '⬇️', label: 'Đang giao hàng' };
       case 'ADJUSTMENT':
         return { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⚖️', label: 'Điều chỉnh' };
       case 'TRANSFER':
@@ -160,25 +180,28 @@ export default function StockMovementHistoryPage() {
       case 'RESERVE':
         return { bg: 'bg-orange-100', text: 'text-orange-800', icon: '🔒', label: 'Tạm giữ đơn' };
       case 'RELEASE':
-        return { bg: 'bg-teal-100', text: 'text-teal-800', icon: '🔓', label: 'Trả lại (Hủy đơn)' };
+        return { bg: 'bg-teal-100', text: 'text-teal-800', icon: '🔓', label: 'Đã hủy' };
       case 'FULFILL':
-        return { bg: 'bg-red-100', text: 'text-red-800', icon: '✅', label: 'Hoàn thành đơn' };
+        return { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✅', label: 'Đã giao hàng' };
       default:
         return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '📦', label: type };
     }
   };
 
-  const getReferenceTypeLabel = (refType) => {
-    const labels = {
-      'PURCHASE': '📥 Mua hàng',
-      'SALE': '💰 Bán hàng',
-      'ADJUSTMENT': '⚙️ Điều chỉnh',
-      'TRANSFER': '🔄 Chuyển kho',
-      'RETURN': '↩️ Trả hàng',
-      'ORDER': '🛒 Đơn hàng',
-      'OTHER': '📋 Khác'
+  const getShortReason = (movement) => {
+    if (movement?.statusLabel) return movement.statusLabel;
+
+    const map = {
+      RESERVE: 'Chờ xác nhận',
+      OUT: 'Đang giao hàng',
+      FULFILL: 'Đã giao hàng',
+      RELEASE: 'Đã hủy',
+      IN: 'Nhập kho',
+      RETURN: 'Hoàn trả',
+      ADJUSTMENT: 'Điều chỉnh',
+      TRANSFER: 'Chuyển kho',
     };
-    return labels[refType] || refType || '-';
+    return map[movement?.type] || movement?.reason || '-';
   };
 
   // Filter movements by search term (client-side for current page)
@@ -453,9 +476,6 @@ export default function StockMovementHistoryPage() {
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Số lượng
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Tham chiếu
-                  </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Lý do
                   </th>
@@ -473,7 +493,7 @@ export default function StockMovementHistoryPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredMovements.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="px-6 py-12 text-center">
+                    <td colSpan="8" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -541,19 +561,9 @@ export default function StockMovementHistoryPage() {
                             );
                           })()}
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                          <div className="text-xs lg:text-sm text-gray-900">
-                            {getReferenceTypeLabel(movement.referenceType)}
-                          </div>
-                          {movement.referenceId && (
-                            <div className="text-xs text-gray-500">
-                              ID: {movement.referenceId.substring(0, 8)}...
-                            </div>
-                          )}
-                        </td>
                         <td className="px-4 lg:px-6 py-4">
-                          <div className="text-xs lg:text-sm text-gray-900 max-w-[150px] lg:max-w-xs truncate" title={movement.reason}>
-                            {movement.reason || '-'}
+                          <div className="text-xs lg:text-sm text-gray-900 max-w-[150px] lg:max-w-xs truncate" title={getShortReason(movement)}>
+                            {getShortReason(movement)}
                           </div>
                         </td>
                         <td className="px-4 lg:px-6 py-4 whitespace-nowrap">

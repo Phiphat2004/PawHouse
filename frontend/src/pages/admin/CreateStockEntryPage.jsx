@@ -35,7 +35,7 @@ export default function CreateStockEntryPage() {
       const response = await api.get('/stock/warehouses');
       const list = response?.warehouses || response?.data?.warehouses || [];
       setWarehouses(list);
-      // Tự động chọn kho đầu tiên (Kho Xuân Ngân)
+      // Tự động chọn kho đầu tiên nếu có
       if (list.length > 0) {
         setFormData(prev => ({ ...prev, warehouseId: list[0]._id }));
       }
@@ -389,7 +389,7 @@ export default function CreateStockEntryPage() {
                   </div>
                 </div>
 
-                {/* Kho - Hiển thị cố định (Kho CanTho) */}
+                {/* Kho - Hiển thị cố định */}
                 <div>
                   <label className="flex items-center gap-2 text-gray-700 font-bold mb-3 text-lg">
                     <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -400,13 +400,13 @@ export default function CreateStockEntryPage() {
                   <div className="w-full border-2 border-amber-300 rounded-xl py-4 px-5 bg-amber-50 flex items-center gap-3">
                     <span className="text-2xl">🏢</span>
                     <div>
-                      <span className="text-amber-800 font-bold text-base">{warehouses[0]?.name || 'Kho Xuân Ngân'}</span>
+                      <span className="text-amber-800 font-bold text-base">{warehouses[0]?.name || 'Chưa có kho'}</span>
                       {warehouses[0]?.code && (
                         <span className="ml-2 text-sm text-amber-600">({warehouses[0].code})</span>
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Kho mặc định — không thể thay đổi</p>
+                  <p className="text-sm text-gray-500 mt-2">{warehouses[0]?.name ? 'Kho mặc định — không thể thay đổi' : 'Chưa có kho'}</p>
                 </div>
 
                 {/* Quantity */}
@@ -509,7 +509,7 @@ export default function CreateStockEntryPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-orange-500 mt-0.5">•</span>
-                    <span>Kho mặc định: Kho Xuân Ngân</span>
+                    <span>{warehouses[0]?.name ? `Kho mặc định: ${warehouses[0].name}` : 'Chưa có kho'}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-orange-500 mt-0.5">•</span>
