@@ -180,7 +180,7 @@ export default function CheckoutPage() {
     );
 
   const subtotal = calculateSubtotal();
-  const shippingFee = 30000;
+  const shippingFee = 0;
   const finalTotal = subtotal + shippingFee;
 
   return (
@@ -384,7 +384,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-gray-600 text-sm">
                   <span>Phí vận chuyển:</span>
-                  <span>{shippingFee.toLocaleString("vi-VN")}₫</span>
+                  <span>{shippingFee === 0 ? "Miễn phí" : `${shippingFee.toLocaleString("vi-VN")}₫`}</span>
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
                   <span>Tổng cộng:</span>
