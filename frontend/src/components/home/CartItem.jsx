@@ -1,39 +1,80 @@
 // frontend/src/components/home/CartItem.jsx
-//Lê Nhựt Hào
-import { CloseOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 
-export default function CartItem({item, onIncrease, onDecrease, onRemove }) {
+export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQuantityChange }) {
     const itemId = item?._id || item?.id;
-    
+    const [localQuantity, setLocalQuantity] = useState(item?.quantity || 1);
+
+    useEffect(() => {
+        setLocalQuantity(item?.quantity || 1);
+    }, [item?.quantity]);
+
+    const handleInputChange = (e) => {
+        setLocalQuantity(e.target.value);
+    };
+
+    const handleInputBlur = () => {
+        let val = parseInt(localQuantity);
+        if (isNaN(val) || val < 1) val = 1;
+        setLocalQuantity(val);
+        if (val !== item?.quantity && onQuantityChange) {
+            onQuantityChange(itemId, val);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.target.blur();
+        }
+    };
+
     return (
-        <div className="grid grid-cols-5 items-center py-4 border-b">
-            <div className="col-span-2 flex items-center gap-4">
+        <div className="flex bg-[#f9f9f9] rounded-2xl p-4 relative w-full border border-gray-100">
+            {/* Trash Icon */}
+            <button
+                onClick={() => onRemove(itemId)}
+                className="absolute top-4 right-4 text-red-500 hover:text-red-700 transition"
+                title="Xóa sản phẩm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-[22px] w-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+
+            {/* Product Image */}
+            <div className="w-[100px] h-[100px] bg-white rounded-xl overflow-hidden flex-shrink-0 mr-5 border border-gray-100 flex items-center justify-center">
                 <img
                     src={item?.product_id?.images?.[0]?.url || item?.product_id?.image || "/placeholder.png"}
                     alt={item?.product_id?.name || "Product"}
-                    className="w-20 h-20 object-cover rounded-md border"
+                    className="w-full h-full object-contain p-1 mix-blend-multiply" 
                 />
-                <div>
-                    <p className="font-medium text-gray-800">{item?.product_id?.name || "Sản phẩm"}</p>
-                    <p className="text-sm text-gray-500">
-                        {item?.product_id?.price?.toLocaleString("vi-VN") || 0}₫ / Sản phẩm
-                    </p>
-                </div>
             </div>
+
+            {/* Product Details */}
+            <div className="flex-1 flex flex-col justify-between pt-1">
+                <div className="pr-8">
+                    <h3 className="font-bold text-gray-900 text-[17px] leading-tight mb-1">
+                        {item?.product_id?.name || "Sản phẩm"}
+                    </h3>
+                </div>
+                
+                <div className="flex justify-between items-end mt-2">
+                    <div className="font-bold text-[22px] text-gray-900">
+                        {item?.product_id?.price?.toLocaleString("vi-VN") || 0}₫
+                    </div>
 
             <div className="flex items-center gap-2">
                 <button
                     onClick={() => onDecrease(itemId)}
-                    className="px-3 py-1 border rounded hover:bg-gray-100 transition inline-flex items-center"
+                    className="px-3 py-1 border rounded hover:bg-gray-100 transition"
                 >
-                    <MinusOutlined />
+                    -
                 </button>
                 <span className="w-12 text-center font-medium">{item?.quantity || 1}</span>
                 <button
                     onClick={() => onIncrease(itemId)}
-                    className="px-3 py-1 border rounded hover:bg-gray-100 transition inline-flex items-center"
+                    className="px-3 py-1 border rounded hover:bg-gray-100 transition"
                 >
-                    <PlusOutlined />
+                    +
                 </button>
             </div>
 
@@ -46,7 +87,7 @@ export default function CartItem({item, onIncrease, onDecrease, onRemove }) {
                 className="text-gray-400 hover:text-red-500 text-xl transition"
                 title="Xóa sản phẩm"
             >
-                <CloseOutlined />
+                ×
             </button>
         </div>
     );

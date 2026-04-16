@@ -52,6 +52,10 @@ export default function AdminOrderDetailPage() {
     try {
       setUpdatingStatus(true);
       await orderApi.updateOrderStatus(id, newStatus, "Cập nhật từ trang quản trị");
+      // Notify stock history pages (other tabs/routes) to refetch immediately
+      try {
+        localStorage.setItem('stockMovementUpdated', JSON.stringify({ t: Date.now(), orderId: id, status: newStatus }));
+      } catch {}
       toast.success("Cập nhật trạng thái đơn hàng thành công");
       // Refresh toàn bộ order để statusHistory được cập nhật
       await fetchOrderDetail();

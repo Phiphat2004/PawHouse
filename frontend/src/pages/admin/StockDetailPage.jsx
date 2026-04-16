@@ -81,10 +81,13 @@ export default function StockDetailPage() {
   const getMovementTypeLabel = (type) => {
     const types = {
       'IN': 'Nhập kho',
-      'OUT': 'Xuất kho',
+      'OUT': 'Đang giao hàng',
       'ADJUSTMENT': 'Điều chỉnh',
       'TRANSFER': 'Chuyển kho',
-      'RETURN': 'Trả hàng'
+      'RETURN': 'Trả hàng',
+      'RESERVE': 'Chờ xác nhận',
+      'RELEASE': 'Đã hủy',
+      'FULFILL': 'Đã giao hàng'
     };
     return types[type] || type;
   };
@@ -95,9 +98,27 @@ export default function StockDetailPage() {
       'OUT': 'bg-red-100 text-red-800',
       'ADJUSTMENT': 'bg-yellow-100 text-yellow-800',
       'TRANSFER': 'bg-blue-100 text-blue-800',
-      'RETURN': 'bg-purple-100 text-purple-800'
+      'RETURN': 'bg-purple-100 text-purple-800',
+      'RESERVE': 'bg-orange-100 text-orange-800',
+      'RELEASE': 'bg-teal-100 text-teal-800',
+      'FULFILL': 'bg-emerald-100 text-emerald-800'
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getMovementReason = (movement) => {
+    if (movement?.statusLabel) return movement.statusLabel;
+    const map = {
+      RESERVE: 'Chờ xác nhận',
+      OUT: 'Đang giao hàng',
+      FULFILL: 'Đã giao hàng',
+      RELEASE: 'Đã hủy',
+      IN: 'Nhập kho',
+      RETURN: 'Hoàn trả',
+      ADJUSTMENT: 'Điều chỉnh',
+      TRANSFER: 'Chuyển kho'
+    };
+    return map[movement?.type] || movement?.reason || '-';
   };
 
   if (loading) {
@@ -247,7 +268,12 @@ export default function StockDetailPage() {
                   {stockData.byWarehouse.map((warehouse, index) => (
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        Kho #{index + 1}
+                        <div className="font-medium text-gray-900">
+                          {warehouse.warehouseId?.name || 'Chưa có kho'}
+                        </div>
+                        {warehouse.warehouseId?.code && (
+                          <div className="text-xs text-gray-500">({warehouse.warehouseId.code})</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -323,7 +349,7 @@ export default function StockDetailPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {movement.warehouseId?.name || 'N/A'}
+                          {movement.warehouseId?.name || 'Chưa có kho'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`text-sm font-semibold ${movement.type === 'IN' ? 'text-green-600' : 'text-red-600'}`}>
@@ -331,7 +357,7 @@ export default function StockDetailPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {movement.reason || '-'}
+                          {getMovementReason(movement)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
