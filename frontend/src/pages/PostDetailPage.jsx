@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { postApi } from "../services/api";
+import { isAdminUser, isStaffUser } from "../utils/role";
 
 export default function PostDetailPage() {
   const { slug } = useParams();
@@ -12,9 +13,18 @@ export default function PostDetailPage() {
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [readingProgress, setReadingProgress] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [canViewUnpublished, setCanViewUnpublished] = useState(false);
   const contentRef = useRef(null);
 
   useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("pawhouse_user");
+      const user = rawUser ? JSON.parse(rawUser) : null;
+      setCanViewUnpublished(isAdminUser(user) || isStaffUser(user));
+    } catch {
+      setCanViewUnpublished(false);
+    }
+
     loadPost();
     loadRelatedPosts();
   }, [slug]);
@@ -89,13 +99,7 @@ export default function PostDetailPage() {
     try {
       setLoading(true);
       const data = await postApi.getBySlug(slug);
-      
-      // Check if post is published
-      if (data.post.status !== "published") {
-        setError("Bài viết không tồn tại hoặc chưa được xuất bản");
-        return;
-      }
-      
+
       setPost(data.post);
     } catch (err) {
       setError(err.message || "Không thể tải bài viết");
@@ -256,6 +260,12 @@ export default function PostDetailPage() {
 
                 {/* Author Card */}
                 <div className="mb-8 pb-8 border-b border-gray-100">
+                  {post.status !== "published" && canViewUnpublished && (
+                    <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                      Bài viết này đang ở trạng thái <strong>{post.status}</strong> và chưa hiển thị công khai cho khách hàng.
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                       <div className="relative">

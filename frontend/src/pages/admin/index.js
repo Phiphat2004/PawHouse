@@ -4,6 +4,7 @@ export { default as AdminProductDetailPage } from "./AdminProductDetailPage";
 export { default as AdminCategoriesPage } from "./AdminCategoriesPage";
 export { default as AdminCategoryDetailPage } from "./AdminCategoryDetailPage";
 export { default as AdminPostsPage } from "./AdminPostsPage";
+export { default as AdminPostDetailPage } from "./AdminPostDetailPage";
 export { default as AdminOrdersPage } from "./AdminOrdersPage";
 export { default as AdminOrderDetailPage } from "./AdminOrderDetailPage";
 export { default as CreateStockEntryPage } from "./CreateStockEntryPage";

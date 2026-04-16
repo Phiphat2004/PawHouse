@@ -28,6 +28,7 @@ import {
   AdminCategoriesPage,
   AdminCategoryDetailPage,
   AdminPostsPage,
+  AdminPostDetailPage,
   AdminOrdersPage,
   AdminOrderDetailPage,
   CreateStockEntryPage,
@@ -164,6 +165,7 @@ export default function App() {
           element={<AdminCategoryDetailPage />}
         />
         <Route path="/quan-tri/cong-dong" element={<AdminPostsPage />} />
+        <Route path="/quan-tri/cong-dong/:slug" element={<AdminPostDetailPage />} />
         <Route path="/quan-tri/don-hang" element={<AdminOrdersPage />} />
         <Route path="/quan-tri/don-hang/:id" element={<AdminOrderDetailPage />} />
         <Route path="/quan-tri/ton-kho" element={<StockListPage />} />

@@ -1,4 +1,12 @@
-export default function PostTable({ posts, onEdit, onDelete, onToggleStatus }) {
+import { Link } from "react-router-dom";
+
+export default function PostTable({
+  posts,
+  canApprove = false,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+}) {
   const getStatusBadge = (status) => {
     const badges = {
       draft: {
@@ -132,21 +140,30 @@ export default function PostTable({ posts, onEdit, onDelete, onToggleStatus }) {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onToggleStatus(post._id, post.status)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        post.status === "published"
-                          ? "text-orange-600 hover:bg-orange-50"
-                          : "text-green-600 hover:bg-green-50"
-                      }`}
-                      title={
-                        post.status === "published"
-                          ? "Chuyển sang bản nháp"
-                          : "Xuất bản"
-                      }
+                    <Link
+                      to={`/quan-tri/cong-dong/${post.slug}`}
+                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="Xem chi tiết"
                     >
-                      {post.status === "published" ? "📥" : "📤"}
-                    </button>
+                      👁️
+                    </Link>
+                    {canApprove && (
+                      <button
+                        onClick={() => onToggleStatus(post._id, post.status)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          post.status === "published"
+                            ? "text-orange-600 hover:bg-orange-50"
+                            : "text-green-600 hover:bg-green-50"
+                        }`}
+                        title={
+                          post.status === "published"
+                            ? "Chuyển sang bản nháp"
+                            : "Xuất bản"
+                        }
+                      >
+                        {post.status === "published" ? "📥" : "📤"}
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(post)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

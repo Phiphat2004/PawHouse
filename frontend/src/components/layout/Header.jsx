@@ -215,13 +215,15 @@ export default function Header() {
                         🗓️ Lịch chăm sóc
                       </Link>
 
-                      <Link
-                        to="/cong-dong/bai-viet-cua-toi"
-                        onClick={() => setDropdownOpen(false)}
-                        className="block px-4 py-2 hover:bg-orange-50"
-                      >
-                        📝 Bài viết của tôi
-                      </Link>
+                      {(user.isAdmin || user.isStaff) && (
+                        <Link
+                          to="/cong-dong/bai-viet-cua-toi"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block px-4 py-2 hover:bg-orange-50"
+                        >
+                          📝 Bài viết của tôi
+                        </Link>
+                      )}
 
                       {(user.isAdmin || user.isStaff) && (
                         <Link

@@ -3,6 +3,7 @@ import { AdminLayout } from "../../components/admin";
 import PostTable from "../../components/admin/PostTable";
 import PostForm from "../../components/admin/PostForm";
 import { postApi } from "../../services/api";
+import { isAdminUser } from "../../utils/role";
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState([]);
@@ -12,8 +13,17 @@ export default function AdminPostsPage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [canApprove, setCanApprove] = useState(false);
 
   useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem("pawhouse_user");
+      const user = rawUser ? JSON.parse(rawUser) : null;
+      setCanApprove(isAdminUser(user));
+    } catch {
+      setCanApprove(false);
+    }
+
     loadPosts();
   }, []);
 
@@ -79,6 +89,11 @@ export default function AdminPostsPage() {
   };
 
   const handleToggleStatus = async (postId, currentStatus) => {
+    if (!canApprove) {
+      alert("Chỉ admin mới có quyền duyệt/xuất bản bài viết.");
+      return;
+    }
+
     try {
       const updated = await postApi.toggleStatus(postId);
       setPosts(
@@ -119,6 +134,7 @@ export default function AdminPostsPage() {
       <AdminLayout>
         <PostForm
           post={editingPost}
+          canApprove={canApprove}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
         />
@@ -141,7 +157,7 @@ export default function AdminPostsPage() {
           </div>
           <button
             onClick={handleCreate}
-            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
+            className="px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
           >
             + Tạo bài viết mới
           </button>
@@ -231,6 +247,7 @@ export default function AdminPostsPage() {
         {/* Table */}
         <PostTable
           posts={filteredPosts}
+          canApprove={canApprove}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleStatus={handleToggleStatus}

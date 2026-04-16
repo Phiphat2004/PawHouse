@@ -1,7 +1,8 @@
-const { Post } = require('../models');
-const postService = require('../services/post.service');
-const cloudinary = require('cloudinary').v2;
-const config = require('../config');
+const { Post, User } = require("../models");
+const postService = require("../services/post.service");
+const emailService = require("../services/email.service");
+const cloudinary = require("cloudinary").v2;
+const config = require("../config");
 
 // Configure Cloudinary
 cloudinary.config({
@@ -9,6 +10,42 @@ cloudinary.config({
   api_key: config.cloudinary.apiKey,
   api_secret: config.cloudinary.apiSecret,
 });
+
+async function notifyAdminsPendingApproval({
+  post,
+  actor,
+  action = "Tạo mới",
+}) {
+  try {
+    const admins = await User.find({
+      roles: "admin",
+      status: "active",
+      is_banned: { $ne: true },
+      is_deleted: { $ne: true },
+    }).select("email profile.fullName");
+
+    if (!admins.length) return;
+
+    const actorName = actor?.profile?.fullName || actor?.email || "Nhân viên";
+
+    await Promise.allSettled(
+      admins
+        .filter((admin) => admin.email)
+        .map((admin) =>
+          emailService.sendPostPendingApprovalEmail({
+            toEmail: admin.email,
+            adminName: admin?.profile?.fullName || "Admin",
+            authorName: actorName,
+            postTitle: post.title,
+            postSlug: post.slug,
+            action,
+          }),
+        ),
+    );
+  } catch (err) {
+    console.error("Error notifying admins for pending post:", err.message);
+  }
+}
 
 // Keep only the create handler for now. Other handlers removed intentionally
 // so frontend can be deployed incrementally. If you want to re-enable any
@@ -25,26 +62,42 @@ const postController = {
       // If a non-empty search string is provided, delegate to searchPosts to
       // use the robust search fallback (regex) implemented in service.
       if (search && String(search).trim()) {
-        const result = await postService.searchPosts({ q: search, page, limit, tagId, status: 'published' });
+        const result = await postService.searchPosts({
+          q: search,
+          page,
+          limit,
+          tagId,
+          status: "published",
+        });
         return res.json(result);
       }
 
-      const query = { status: 'published' };
+      const query = { status: "published" };
       if (tagId) query.tagIds = tagId;
 
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const [posts, total] = await Promise.all([
         Post.find(query)
-          .populate('authorId', 'email profile')
-          .populate('tagIds', 'name slug')
+          .populate("authorId", "email profile")
+          .populate("tagIds", "name slug")
           .sort({ publishedAt: -1, createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit)),
-        Post.countDocuments(query)
+        Post.countDocuments(query),
       ]);
 
-      res.json({ posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } });
-    } catch (error) { next(error); }
+      res.json({
+        posts,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 
   /**
@@ -54,19 +107,26 @@ const postController = {
    */
   async uploadImage(req, res, next) {
     try {
-      if (!req.file || !req.file.buffer) return res.status(400).json({ error: 'No file uploaded' });
+      if (!req.file || !req.file.buffer)
+        return res.status(400).json({ error: "No file uploaded" });
 
-      const streamUpload = (buffer) => new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream({ resource_type: 'image', folder: 'pawhouse/posts' }, (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
+      const streamUpload = (buffer) =>
+        new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { resource_type: "image", folder: "pawhouse/posts" },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            },
+          );
+          stream.end(buffer);
         });
-        stream.end(buffer);
-      });
 
       const result = await streamUpload(req.file.buffer);
       return res.json({ url: result.secure_url, public_id: result.public_id });
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   },
 
   /**
@@ -76,10 +136,18 @@ const postController = {
   async search(req, res, next) {
     try {
       const { q, page = 1, limit = 20, tagId } = req.query;
-      const status = 'published';
-      const result = await postService.searchPosts({ q, page, limit, tagId, status });
+      const status = "published";
+      const result = await postService.searchPosts({
+        q,
+        page,
+        limit,
+        tagId,
+        status,
+      });
       res.json(result);
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   },
 
   /**
@@ -88,26 +156,52 @@ const postController = {
    */
   async getAll(req, res, next) {
     try {
-      const { page = 1, limit = 20, search, status, authorId, tagId } = req.query;
+      const {
+        page = 1,
+        limit = 20,
+        search,
+        status,
+        authorId,
+        tagId,
+      } = req.query;
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      const isStaff = userRoles.includes("staff");
       const query = {};
       if (search) query.$text = { $search: search };
       if (status) query.status = status;
-      if (authorId) query.authorId = authorId;
+
+      if (isStaff && !isAdmin) {
+        query.authorId = req.user._id;
+      } else if (authorId) {
+        query.authorId = authorId;
+      }
+
       if (tagId) query.tagIds = tagId;
 
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const [posts, total] = await Promise.all([
         Post.find(query)
-          .populate('authorId', 'email profile')
-          .populate('tagIds', 'name slug')
+          .populate("authorId", "email profile")
+          .populate("tagIds", "name slug")
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit)),
-        Post.countDocuments(query)
+        Post.countDocuments(query),
       ]);
 
-      res.json({ posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } });
-    } catch (error) { next(error); }
+      res.json({
+        posts,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   },
   /**
    * Create post (authenticated users)
@@ -115,15 +209,23 @@ const postController = {
    */
   async create(req, res, next) {
     try {
-      const { title, slug, excerpt, content, coverImageUrl, status, tagIds } = req.body;
-      if (!title || !content) return res.status(400).json({ error: 'Tiêu đề và nội dung là bắt buộc' });
+      const { title, slug, excerpt, content, coverImageUrl, status, tagIds } =
+        req.body;
+      if (!title || !content)
+        return res
+          .status(400)
+          .json({ error: "Tiêu đề và nội dung là bắt buộc" });
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      const isStaff = userRoles.includes("staff");
 
       let finalSlug = slug;
       if (!finalSlug) {
         finalSlug = await postService.generateUniqueSlug(title);
       } else {
         const existingPost = await Post.findOne({ slug: finalSlug });
-        if (existingPost) return res.status(400).json({ error: 'Slug đã tồn tại' });
+        if (existingPost)
+          return res.status(400).json({ error: "Slug đã tồn tại" });
       }
 
       const postData = {
@@ -132,34 +234,60 @@ const postController = {
         excerpt,
         content,
         coverImageUrl,
-        status: req.user.roles?.includes('admin') && status === 'published' ? 'published' : 'draft',
+        status: isAdmin && status === "published" ? "published" : "draft",
         authorId: req.user.userId || req.user._id,
-        tagIds: tagIds || []
+        tagIds: tagIds || [],
       };
-      if (postData.status === 'published') postData.publishedAt = new Date();
+      if (postData.status === "published") postData.publishedAt = new Date();
 
       const post = await Post.create(postData);
       const populatedPost = await Post.findById(post._id)
-        .populate('authorId', 'email profile')
-        .populate('tagIds', 'name slug');
-      res.status(201).json({ post: populatedPost });
-    } catch (error) { next(error); }
-  }
-  ,
+        .populate("authorId", "email profile")
+        .populate("tagIds", "name slug");
 
+      if (isStaff && !isAdmin) {
+        await notifyAdminsPendingApproval({
+          post: populatedPost,
+          actor: req.user,
+          action: "Tạo mới",
+        });
+      }
+
+      res.status(201).json({ post: populatedPost });
+    } catch (error) {
+      next(error);
+    }
+  },
   /**
    * Update post (admin only)
    * PUT /api/posts/:id
    */
   async update(req, res, next) {
     try {
-      const { title, slug, excerpt, content, coverImageUrl, status, tagIds } = req.body;
+      const { title, slug, excerpt, content, coverImageUrl, status, tagIds } =
+        req.body;
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      const isStaff = userRoles.includes("staff");
+      const requesterId = req.user.userId || req.user._id;
       const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
+
+      if (
+        isStaff &&
+        !isAdmin &&
+        post.authorId.toString() !== requesterId.toString()
+      ) {
+        return res
+          .status(403)
+          .json({ error: "Bạn chỉ có thể chỉnh sửa bài viết của chính mình" });
+      }
 
       if (slug && slug !== post.slug) {
         const existingPost = await Post.findOne({ slug });
-        if (existingPost) return res.status(400).json({ error: 'Slug đã tồn tại' });
+        if (existingPost)
+          return res.status(400).json({ error: "Slug đã tồn tại" });
       }
 
       if (title !== undefined) post.title = title;
@@ -168,45 +296,68 @@ const postController = {
       if (content !== undefined) post.content = content;
       if (coverImageUrl !== undefined) post.coverImageUrl = coverImageUrl;
       if (tagIds !== undefined) post.tagIds = tagIds;
-      if (status !== undefined) {
+      if (isStaff && !isAdmin) {
+        post.status = "draft";
+        post.publishedAt = null;
+      } else if (status !== undefined) {
         post.status = status;
-        if (status === 'published' && !post.publishedAt) post.publishedAt = new Date();
+        if (status === "published" && !post.publishedAt)
+          post.publishedAt = new Date();
       }
 
       await post.save();
       const updatedPost = await Post.findById(post._id)
-        .populate('authorId', 'email profile')
-        .populate('tagIds', 'name slug');
-      res.json({ post: updatedPost });
-    } catch (error) { next(error); }
-  }
-  ,
+        .populate("authorId", "email profile")
+        .populate("tagIds", "name slug");
 
+      if (isStaff && !isAdmin) {
+        await notifyAdminsPendingApproval({
+          post: updatedPost,
+          actor: req.user,
+          action: "Cập nhật",
+        });
+      }
+
+      res.json({ post: updatedPost });
+    } catch (error) {
+      next(error);
+    }
+  },
   /**
    * Toggle post status (admin only)
    * PUT /api/posts/:id/toggle-status
    */
   async toggleStatus(req, res, next) {
     try {
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      if (!isAdmin) {
+        return res
+          .status(403)
+          .json({ error: "Chỉ admin mới có quyền duyệt/xuất bản bài viết" });
+      }
+
       const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
 
       // Toggle between 'published' and 'draft'
-      if (post.status === 'published') {
-        post.status = 'draft';
+      if (post.status === "published") {
+        post.status = "draft";
       } else {
-        post.status = 'published';
+        post.status = "published";
         if (!post.publishedAt) post.publishedAt = new Date();
       }
 
       await post.save();
       const updatedPost = await Post.findById(post._id)
-        .populate('authorId', 'email profile')
-        .populate('tagIds', 'name slug');
+        .populate("authorId", "email profile")
+        .populate("tagIds", "name slug");
       res.json({ post: updatedPost });
-    } catch (error) { next(error); }
-  }
-,
+    } catch (error) {
+      next(error);
+    }
+  },
   /**
    * Update own post (user)
    * PUT /api/posts/my-posts/:id
@@ -215,10 +366,16 @@ const postController = {
     try {
       const { title, excerpt, content, coverImageUrl, tagIds } = req.body;
       const userId = req.user.userId || req.user._id;
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isStaff = userRoles.includes("staff");
+      const isAdmin = userRoles.includes("admin");
       const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
       if (post.authorId.toString() !== userId.toString()) {
-        return res.status(403).json({ error: 'Bạn không có quyền chỉnh sửa bài viết này' });
+        return res
+          .status(403)
+          .json({ error: "Bạn không có quyền chỉnh sửa bài viết này" });
       }
 
       if (title !== undefined) {
@@ -229,17 +386,26 @@ const postController = {
       if (content !== undefined) post.content = content;
       if (coverImageUrl !== undefined) post.coverImageUrl = coverImageUrl;
       if (tagIds !== undefined) post.tagIds = tagIds;
-      post.status = 'draft'; // Reset to draft for admin review
+      post.status = "draft"; // Reset to draft for admin review
 
       await post.save();
       const updatedPost = await Post.findById(post._id)
-        .populate('authorId', 'email profile')
-        .populate('tagIds', 'name slug');
-      res.json({ post: updatedPost });
-    } catch (error) { next(error); }
-  }
-  ,
+        .populate("authorId", "email profile")
+        .populate("tagIds", "name slug");
 
+      if (isStaff && !isAdmin) {
+        await notifyAdminsPendingApproval({
+          post: updatedPost,
+          actor: req.user,
+          action: "Cập nhật",
+        });
+      }
+
+      res.json({ post: updatedPost });
+    } catch (error) {
+      next(error);
+    }
+  },
   /**
    * Get current user's posts
    * GET /api/posts/my-posts
@@ -254,16 +420,26 @@ const postController = {
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const [posts, total] = await Promise.all([
         Post.find(query)
-          .populate('authorId', 'email profile')
-          .populate('tagIds', 'name slug')
+          .populate("authorId", "email profile")
+          .populate("tagIds", "name slug")
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(parseInt(limit)),
-        Post.countDocuments(query)
+        Post.countDocuments(query),
       ]);
 
-      res.json({ posts, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / parseInt(limit)) } });
-    } catch (error) { next(error); }
+      res.json({
+        posts,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 
   /**
@@ -273,13 +449,27 @@ const postController = {
   async getById(req, res, next) {
     try {
       const post = await Post.findById(req.params.id)
-        .populate('authorId', 'email profile')
-        .populate('tagIds', 'name slug');
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+        .populate("authorId", "email profile")
+        .populate("tagIds", "name slug");
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
+
+      const requesterId = req.user?.userId || req.user?._id;
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      const isOwner =
+        requesterId &&
+        post.authorId?._id?.toString() === requesterId.toString();
+      if (post.status !== "published" && !isAdmin && !isOwner) {
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
+      }
+
       post.viewCount = (post.viewCount || 0) + 1;
       await post.save();
       res.json({ post });
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   },
 
   /**
@@ -289,19 +479,28 @@ const postController = {
   async getBySlug(req, res, next) {
     try {
       const post = await Post.findOne({ slug: req.params.slug })
-        .populate('authorId', 'email profile')
-        .populate('tagIds', 'name slug');
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
-      if (post.status !== 'published' && (!req.user || !req.user.roles?.includes('admin'))) {
-        return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+        .populate("authorId", "email profile")
+        .populate("tagIds", "name slug");
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
+
+      const requesterId = req.user?.userId || req.user?._id;
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      const isOwner =
+        requesterId &&
+        post.authorId?._id?.toString() === requesterId.toString();
+
+      if (post.status !== "published" && !isAdmin && !isOwner) {
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
       }
       post.viewCount = (post.viewCount || 0) + 1;
       await post.save();
       res.json({ post });
-    } catch (error) { next(error); }
-  }
-,
-
+    } catch (error) {
+      next(error);
+    }
+  },
   /**
    * Delete own post (user)
    * DELETE /api/posts/my-posts/:id
@@ -310,13 +509,18 @@ const postController = {
     try {
       const userId = req.user.userId || req.user._id;
       const post = await Post.findById(req.params.id);
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
       if (post.authorId.toString() !== userId.toString()) {
-        return res.status(403).json({ error: 'Bạn không có quyền xóa bài viết này' });
+        return res
+          .status(403)
+          .json({ error: "Bạn không có quyền xóa bài viết này" });
       }
       await Post.findByIdAndDelete(req.params.id);
-      res.json({ message: 'Xóa bài viết thành công' });
-    } catch (error) { next(error); }
+      res.json({ message: "Xóa bài viết thành công" });
+    } catch (error) {
+      next(error);
+    }
   },
 
   /**
@@ -325,11 +529,31 @@ const postController = {
    */
   async delete(req, res, next) {
     try {
-      const post = await Post.findByIdAndDelete(req.params.id);
-      if (!post) return res.status(404).json({ error: 'Không tìm thấy bài viết' });
-      res.json({ message: 'Xóa bài viết thành công' });
-    } catch (error) { next(error); }
-  }
+      const userRoles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+      const isAdmin = userRoles.includes("admin");
+      const isStaff = userRoles.includes("staff");
+      const requesterId = req.user.userId || req.user._id;
+
+      const post = await Post.findById(req.params.id);
+      if (!post)
+        return res.status(404).json({ error: "Không tìm thấy bài viết" });
+
+      if (
+        isStaff &&
+        !isAdmin &&
+        post.authorId.toString() !== requesterId.toString()
+      ) {
+        return res
+          .status(403)
+          .json({ error: "Bạn chỉ có thể xóa bài viết của chính mình" });
+      }
+
+      await Post.findByIdAndDelete(req.params.id);
+      res.json({ message: "Xóa bài viết thành công" });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 module.exports = postController;

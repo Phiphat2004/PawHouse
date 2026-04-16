@@ -39,7 +39,12 @@ async function request(endpoint, options = {}) {
     let errorMessage = "Request failed";
     try {
       const data = await res.json();
-      errorMessage = data.error || data.message || errorMessage;
+      errorMessage =
+        data.error ||
+        data.message ||
+        (Array.isArray(data.errors) && data.errors.length > 0
+          ? data.errors[0].msg
+          : errorMessage);
     } catch {
       errorMessage = `HTTP ${res.status}: ${res.statusText}`;
     }
@@ -55,6 +60,8 @@ export const api = {
   get: (endpoint, options) => request(endpoint, options),
   post: (endpoint, body) =>
     request(endpoint, { method: "POST", body: JSON.stringify(body) }),
+  postForm: (endpoint, formData) =>
+    request(endpoint, { method: "POST", body: formData, headers: {} }),
   put: (endpoint, body) =>
     request(endpoint, { method: "PUT", body: JSON.stringify(body) }),
   putForm: (endpoint, formData) =>
@@ -128,6 +135,11 @@ export const postApi = {
   update: (id, data) => api.put(`/posts/${id}`, data),
   delete: (id) => api.delete(`/posts/${id}`),
   toggleStatus: (id) => api.put(`/posts/${id}/toggle-status`, {}),
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.postForm("/posts/upload", formData);
+  },
 
   // User's own posts
   getMyPosts: (params) => api.get("/posts/my-posts", { params }),
