@@ -57,8 +57,8 @@ export const updateCartCount = async (forceRefresh = false) => {
     cachedCartData = cart;
     
     if (cart && cart.items) {
-      // Count total items (sum of all quantities)
-      cartItemCount = cart.items.reduce((total, item) => total + (item.quantity || 0), 0);
+      // Count total number of products
+      cartItemCount = cart.items.length;
     } else {
       cartItemCount = 0;
     }
@@ -80,8 +80,10 @@ export const updateCartCount = async (forceRefresh = false) => {
 export const getCachedCart = () => cachedCartData;
 
 // Optimistic update for adding to cart
-export const optimisticAddToCart = (quantity = 1) => {
-  cartItemCount += quantity;
+export const optimisticAddToCart = (quantity = 1, isNewItem = false) => {
+  if (isNewItem) {
+    cartItemCount += 1;
+  }
   notifyListeners();
 };
 
