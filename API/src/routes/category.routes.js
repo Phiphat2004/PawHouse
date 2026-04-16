@@ -18,18 +18,10 @@ const handleValidationErrors = (req, res, next) => {
 const createCategoryValidation = [
   body("name").trim().notEmpty().withMessage("Category name is required"),
   body("slug").trim().notEmpty().withMessage("Category slug is required"),
-  body("parentId")
-    .optional()
-    .isMongoId()
-    .withMessage("Invalid parent category ID"),
 ];
 
 const updateCategoryValidation = [
   param("id").isMongoId().withMessage("Invalid category ID"),
-  body("parentId")
-    .optional()
-    .isMongoId()
-    .withMessage("Invalid parent category ID"),
 ];
 
 const getCategoryByIdValidation = [

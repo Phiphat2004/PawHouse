@@ -1,4 +1,4 @@
-// Lê Nhựt Hào
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { productApi } from "../../services/api";

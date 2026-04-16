@@ -37,7 +37,7 @@ export default function CategoryTable({
                 Slug
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Danh mục cha
+                Số lượng sản phẩm
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trạng thái
@@ -79,8 +79,8 @@ export default function CategoryTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {category.parentId?.name || "-"}
+                  <div className="text-sm font-semibold text-gray-900 bg-gray-100 inline-block px-3 py-1 rounded-full">
+                    {category.productCount || 0} sản phẩm
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

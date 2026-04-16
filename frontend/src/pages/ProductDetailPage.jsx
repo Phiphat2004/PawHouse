@@ -11,7 +11,7 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useAddToCart();
-  
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,18 +37,18 @@ export default function ProductDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Check if id is a valid ObjectId or a slug
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
       let response;
-      
+
       if (isObjectId) {
         response = await productApi.getById(id);
       } else {
         // It's a slug
         response = await productApi.getBySlug(id);
       }
-      
+
       if (response.product) {
         setProduct(response.product);
       } else {

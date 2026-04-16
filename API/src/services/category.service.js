@@ -14,16 +14,26 @@ async function getAllCategories({ isActive, search }) {
     ];
   }
 
-  return Category.find(query) 
-    .populate("parentId", "name slug")
-    .sort({ name: 1 });
+  const categories = await Category.find(query).lean().sort({ name: 1 });
+
+  const { Product } = require("../models");
+  await Promise.all(
+    categories.map(async (category) => {
+      category.productCount = await Product.countDocuments({
+        categoryIds: category._id,
+        isDeleted: false,
+      });
+    })
+  );
+
+  return categories;
 }
 
 async function getCategoryById(id) {
-  return Category.findById(id).populate("parentId", "name slug");
+  return Category.findById(id);
 }
 
-async function updateCategory(id, { parentId, name, slug, description, isActive }, userRoles) {
+async function updateCategory(id, { name, slug, description, isActive }, userRoles) {
   // Check if user is admin
   if (!userRoles?.includes("admin")) {
     const error = new Error("Không có quyền thực hiện");
@@ -43,9 +53,9 @@ async function updateCategory(id, { parentId, name, slug, description, isActive 
 
   const category = await Category.findByIdAndUpdate(
     id,
-    { parentId, name, slug, description, isActive },
+    { name, slug, description, isActive },
     { new: true, runValidators: true },
-  ).populate("parentId", "name slug");
+  );
 
   if (!category) {
     const error = new Error("Không tìm thấy danh mục");
@@ -71,13 +81,7 @@ async function deleteCategory(id, userRoles) {
     throw error;
   }
 
-  // Check if category has children
-  const childCategories = await Category.countDocuments({ parentId: id });
-  if (childCategories > 0) {
-    const error = new Error(`Không thể xóa danh mục có ${childCategories} danh mục con. Vui lòng xóa các danh mục con trước.`);
-    error.status = 400;
-    throw error;
-  }
+
 
   // Check if category has products
   const { Product } = require("../models");
@@ -96,7 +100,7 @@ async function deleteCategory(id, userRoles) {
 }
 
 async function createCategory(data, userRoles) {
-  const { parentId, name, slug, description, isActive } = data;
+  const { name, slug, description, isActive } = data;
 
   // Check if user is admin
   if (!userRoles?.includes("admin")) {
@@ -117,7 +121,7 @@ async function createCategory(data, userRoles) {
   }
 
   const category = new Category({
-    parentId,
+
     name,
     slug: finalSlug,
     description,
@@ -125,7 +129,7 @@ async function createCategory(data, userRoles) {
   });
 
   await category.save();
-  await category.populate("parentId", "name slug");
+
   return category;
 }
 
