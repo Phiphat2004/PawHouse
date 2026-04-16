@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import {
+  CalendarOutlined,
+  ClockCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
@@ -7,6 +9,14 @@ import {
   InboxOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function PostTable({
   posts,
@@ -37,23 +47,27 @@ export default function PostTable({
     const badge = badges[status] || badges.draft;
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}
+        className={`inline-flex items-center whitespace-nowrap px-3 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}
       >
         {badge.label}
       </span>
     );
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "Chưa xuất bản";
+  const formatDateParts = (dateString) => {
+    if (!dateString) return null;
     const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return {
+      time: date.toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      date: date.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+    };
   };
 
   const truncateText = (text, maxLength = 100) => {
@@ -79,32 +93,36 @@ export default function PostTable({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <Table className="min-w-full divide-y divide-gray-200">
+        <TableHeader className="bg-gray-50">
+          <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
+            <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Bài viết
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHead>
+            <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tác giả
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHead>
+            <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 Trạng thái
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHead>
+            <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ngày xuất bản
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHead>
+            <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Thao tác
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {posts.map((post) => (
-              <tr key={post._id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="bg-white divide-y divide-gray-200">
+          {posts.map((post) => {
+            const published = formatDateParts(post.publishedAt);
+            const created = formatDateParts(post.createdAt);
+            const displayTitle = (post.title || "").trim();
+            const displayExcerpt = (post.excerpt || "").trim();
+            return (
+              <TableRow key={post._id} className="hover:bg-gray-50 transition-colors">
+                <TableCell className="px-6 py-4">
                   <div className="flex items-start gap-3">
                     {post.coverImageUrl && (
                       <img
@@ -118,35 +136,69 @@ export default function PostTable({
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
-                        {post.title}
+                        {displayTitle || "(Không có tiêu đề)"}
                       </p>
-                      {post.excerpt && (
+                      {displayExcerpt && (
                         <p className="text-sm text-gray-500">
-                          {truncateText(post.excerpt, 80)}
+                          {truncateText(displayExcerpt, 80)}
                         </p>
                       )}
-                      
                     </div>
                   </div>
-                </td>
-                <td className="px-6 py-4">
+                </TableCell>
+                <TableCell className="px-6 py-4">
                   <div className="text-sm">
                     <p className="font-medium text-gray-900">
                       {post.authorId?.profile?.fullName || "N/A"}
                     </p>
                     <p className="text-gray-500">{post.authorId?.email}</p>
                   </div>
-                </td>
-                <td className="px-6 py-4">{getStatusBadge(post.status)}</td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">
-                   Ngày xuất bản: {formatDate(post.publishedAt)}
+                </TableCell>
+                <TableCell className="px-6 py-4 min-w-[130px]">{getStatusBadge(post.status)}</TableCell>
+                <TableCell className="px-6 py-4">
+                  <div className="space-y-1.5 min-w-[180px]">
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        Ngày xuất bản
+                      </p>
+                      {published ? (
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-900">
+                          <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap">
+                            <ClockCircleOutlined className="text-slate-500 text-[11px]" />
+                            {published.time}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-slate-700 whitespace-nowrap">
+                            <CalendarOutlined className="text-slate-500 text-[11px]" />
+                            {published.date}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs text-amber-700 font-medium">Chưa xuất bản</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        Ngày tạo
+                      </p>
+                      {created ? (
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-900">
+                          <span className="inline-flex items-center gap-1 font-semibold whitespace-nowrap">
+                            <ClockCircleOutlined className="text-slate-500 text-[11px]" />
+                            {created.time}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-slate-700 whitespace-nowrap">
+                            <CalendarOutlined className="text-slate-500 text-[11px]" />
+                            {created.date}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-600">-</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                   Ngày tạo: {formatDate(post.createdAt)}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
+                </TableCell>
+                <TableCell className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <Link
                       to={`/quan-tri/cong-dong/${post.slug}`}
@@ -187,12 +239,12 @@ export default function PostTable({
                       <DeleteOutlined />
                     </button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }
