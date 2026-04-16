@@ -165,7 +165,7 @@ async function createOrder(userId, orderData) {
       orderId: order._id,
       method: paymentMethod,
       status: "pending",
-      amount: total
+      amount: total,
     });
     await payment.save();
   }
@@ -288,17 +288,17 @@ async function getOrderById(orderId, userId) {
   if (Payment) {
     payment = await Payment.findOne({ orderId: order._id }).lean();
   }
-  
+
   if (!payment) {
     payment = {
       method: "cash",
       status: orderObj.status === "completed" ? "paid" : "pending",
-      amount: orderObj.total || 0
+      amount: orderObj.total || 0,
     };
   } else if (orderObj.status === "completed" && payment.status !== "paid") {
     payment.status = "paid";
   }
-  
+
   orderObj.payment = payment;
 
   return orderObj;
@@ -522,6 +522,13 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     throw error;
   }
 
+  const normalizedNote = typeof note === "string" ? note.trim() : "";
+  if (newStatus === "cancelled" && !normalizedNote) {
+    const error = new Error("Vui lòng nhập lý do hủy đơn");
+    error.status = 400;
+    throw error;
+  }
+
   const previousStatus = order.status;
 
   const validTransitions = {
@@ -535,9 +542,11 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   };
 
   const allowedNextStatuses = validTransitions[previousStatus] || [];
-  
+
   if (!allowedNextStatuses.includes(newStatus)) {
-    const error = new Error(`Không thể chuyển trạng thái từ '${previousStatus}' sang '${newStatus}'`);
+    const error = new Error(
+      `Không thể chuyển trạng thái từ '${previousStatus}' sang '${newStatus}'`,
+    );
     error.status = 400;
     throw error;
   }
@@ -547,7 +556,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     from: previousStatus,
     to: newStatus,
     changedBy: adminId,
-    note: note || `Đơn hàng được cập nhật sang ${newStatus}`,
+    note: normalizedNote || `Đơn hàng được cập nhật sang ${newStatus}`,
     at: new Date(),
   });
 
@@ -555,15 +564,16 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   // Update payment status to 'paid' when order is marked as 'completed' (Đã giao hàng)
   if (newStatus === "completed") {
-    const Payment = require("../models").Payment || require("../models/Payment");
+    const Payment =
+      require("../models").Payment || require("../models/Payment");
     if (Payment) {
       await Payment.findOneAndUpdate(
         { orderId: order._id },
-        { 
+        {
           $set: { status: "paid", paidAt: new Date(), amount: order.total },
-          $setOnInsert: { method: "cash" }
+          $setOnInsert: { method: "cash" },
         },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, new: true, setDefaultsOnInsert: true },
       );
     }
   }

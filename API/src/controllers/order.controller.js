@@ -16,7 +16,7 @@ exports.createOrder = async (req, res, next) => {
     res.status(201).json({
       message: "Tạo đơn hàng thành công",
       order: result.order || result,
-      reservedMovements: result.reservedMovements || []
+      reservedMovements: result.reservedMovements || [],
     });
   } catch (error) {
     next(error);
@@ -117,6 +117,7 @@ exports.cancelOrder = async (req, res, next) => {
 exports.updateOrderStatus = async (req, res, next) => {
   try {
     const { status, note } = req.body;
+    const normalizedNote = typeof note === "string" ? note.trim() : "";
 
     if (!status) {
       return res
@@ -124,11 +125,15 @@ exports.updateOrderStatus = async (req, res, next) => {
         .json({ message: "Trạng thái đơn hàng là bắt buộc" });
     }
 
+    if (status === "cancelled" && !normalizedNote) {
+      return res.status(400).json({ message: "Vui lòng nhập lý do hủy đơn" });
+    }
+
     const order = await orderService.updateOrderStatus(
       req.params.id,
       status,
       req.user._id,
-      note,
+      normalizedNote,
     );
 
     res.json({
