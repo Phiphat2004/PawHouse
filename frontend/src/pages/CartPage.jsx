@@ -1,4 +1,4 @@
-// Lê Nhựt Hào
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Footer } from "../components/layout";

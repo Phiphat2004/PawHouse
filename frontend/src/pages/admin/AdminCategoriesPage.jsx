@@ -45,7 +45,7 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleCreate = () => { 
+  const handleCreate = () => {
     if (!canManage) return;
     setEditingCategory(null);
     setShowForm(true);
@@ -69,11 +69,11 @@ export default function AdminCategoriesPage() {
       setCategories(categories.filter((c) => c._id !== categoryId));
       setShowDeleteModal(false);
       setCategoryToDelete(null);
-      addToast("✅ Xóa danh mục thành công!", "success");
+      addToast("Xóa danh mục thành công!", "success");
     } catch (err) {
       const errorMessage =
         err.response?.data?.error || err.message || "Lỗi khi xóa danh mục";
-      addToast(`❌ ${errorMessage}`, "error");
+      addToast(errorMessage, "error");
       throw err; // Re-throw to let modal handle the error
     }
   };
@@ -92,9 +92,11 @@ export default function AdminCategoriesPage() {
             c._id === editingCategory._id ? updated.category || updated : c,
           ),
         );
+        addToast("Cập nhật danh mục thành công!", "success");
       } else {
         const created = await categoryApi.create(formData);
         setCategories([created.category || created, ...categories]);
+        addToast("Thêm danh mục thành công!", "success");
       }
       setShowForm(false);
       setEditingCategory(null);
@@ -129,9 +131,9 @@ export default function AdminCategoriesPage() {
           c._id === categoryId ? updated.category || updated : c,
         ),
       );
-      addToast("✅ Cập nhật trạng thái thành công!", "success");
+      addToast("Cập nhật trạng thái thành công!", "success");
     } catch (err) {
-      addToast(`❌ Lỗi khi cập nhật trạng thái: ${err.message}`, "error");
+      addToast(`Lỗi khi cập nhật trạng thái: ${err.message}`, "error");
     }
   };
 
@@ -193,7 +195,7 @@ export default function AdminCategoriesPage() {
             </button>
           ) : (
             <span className="rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-500">
-            Chế độ chỉ xem
+              Chế độ chỉ xem
             </span>
           )}
         </div>
@@ -203,15 +205,12 @@ export default function AdminCategoriesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  🔍
-                </span>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Tìm kiếm theo tên, slug hoặc mô tả..."
-                  className="w-full pl-12 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
                 {searchTerm && (
                   <button
@@ -268,7 +267,6 @@ export default function AdminCategoriesPage() {
                   {categories.length}
                 </p>
               </div>
-              <div className="text-4xl">📂</div>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -279,7 +277,6 @@ export default function AdminCategoriesPage() {
                   {categories.filter((c) => c.isActive).length}
                 </p>
               </div>
-              <div className="text-4xl">✅</div>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -290,7 +287,6 @@ export default function AdminCategoriesPage() {
                   {categories.filter((c) => !c.isActive).length}
                 </p>
               </div>
-              <div className="text-4xl">⏸️</div>
             </div>
           </div>
         </div>
@@ -299,7 +295,6 @@ export default function AdminCategoriesPage() {
         {filteredCategories.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12">
             <div className="text-center">
-              <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Không tìm thấy kết quả
               </h3>
