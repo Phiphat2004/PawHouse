@@ -110,16 +110,15 @@ export default function CategoryForm({
           {/* Tên danh mục */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-               Tên danh mục <span className="text-red-500">*</span>
+              Tên danh mục <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleNameChange}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${errors.name ? "border-red-500" : "border-gray-300"
+                }`}
               placeholder="Ví dụ: Thức ăn cho chó"
             />
             {errors.name && (
@@ -130,16 +129,15 @@ export default function CategoryForm({
           {/* Slug */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-               Slug <span className="text-red-500">*</span>
+              Slug <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="slug"
               value={formData.slug}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-xl font-mono text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${
-                errors.slug ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full px-4 py-3 border rounded-xl font-mono text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${errors.slug ? "border-red-500" : "border-gray-300"
+                }`}
               placeholder="thuc-an-cho-cho"
             />
             {errors.slug && (
@@ -150,7 +148,7 @@ export default function CategoryForm({
           {/* Mô tả */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-               Mô tả
+              Mô tả
             </label>
             <textarea
               name="description"
@@ -175,7 +173,7 @@ export default function CategoryForm({
                 className="w-5 h-5 text-orange-500 rounded focus:ring-2 focus:ring-orange-500"
               />
               <span className="text-sm font-semibold text-gray-700">
-                 Kích hoạt danh mục
+                Kích hoạt danh mục
               </span>
             </label>
           </div>

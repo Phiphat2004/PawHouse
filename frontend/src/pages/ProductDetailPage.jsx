@@ -130,9 +130,9 @@ export default function ProductDetailPage() {
   const comparePrice = product.compareAtPrice;
 
   return (
-    <div className="font-['Inter',sans-serif] bg-gray-50 min-h-screen">
+    <div className="font-['Inter',sans-serif] bg-gray-100 min-h-screen">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
         {toast && (
           <Toast
             type={toast.type}
@@ -143,74 +143,104 @@ export default function ProductDetailPage() {
         )}
 
         {/* Breadcrumb */}
-        <div className="mb-6 text-sm text-gray-600">
-          <Link to="/" className="hover:text-[#846551]">
+        <div className="mb-8 flex items-center gap-2 text-sm">
+          <Link to="/" className="text-gray-500 hover:text-[#ff4d2e] transition-colors">
             Trang chủ
           </Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-900">{product.name}</span>
+          <span className="text-gray-300">/</span>
+          <Link to="/san-pham" className="text-gray-500 hover:text-[#ff4d2e] transition-colors">
+            Sản phẩm
+          </Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-none">
+            {product.name}
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Product Image */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <img
-              src={productImage}
-              alt={product.name}
-              className="w-full aspect-square object-cover rounded-lg"
-            />
-          </div>
-
-          {/* Product Info */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {product.name}
-            </h1>
-
-            {/* Price */}
-            <div className="mb-6">
-              <div className="flex items-center gap-4">
-                <span className="text-3xl font-bold text-[#846551]">
-                  {price.toLocaleString("vi-VN")}₫
-                </span>
-                {comparePrice && comparePrice > price && (
-                  <span className="text-xl text-gray-400 line-through">
-                    {comparePrice.toLocaleString("vi-VN")}₫
-                  </span>
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            {/* Product Image Section */}
+            <div className="p-8 lg:p-12 bg-gray-50/50">
+              <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl bg-white group">
+                <img
+                  src={productImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                
+                {product.compareAtPrice > product.price && (
+                  <div className="absolute top-6 right-6 bg-[#ff4d2e] text-white font-bold px-4 py-1.5 rounded-full shadow-lg text-sm">
+                    Tiết kiệm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Description */}
-            {product.description && (
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Mô tả:</h3>
-                <p className="text-gray-600">{product.description}</p>
-              </div>
-            )}
+            {/* Product Info Section */}
+            <div className="p-8 lg:p-12 lg:border-l border-gray-100 flex flex-col">
+              {product.brand && (
+                <p className="text-[#ff4d2e] font-bold text-xs uppercase tracking-[0.2em] mb-4">
+                  Thương hiệu: {product.brand}
+                </p>
+              )}
 
-            {/* Stock */}
-            {product.stock !== undefined && (
-              <div className="mb-6">
-                <p className="text-sm text-gray-600">
-                  Còn lại: <span className="font-semibold">{product.stock}</span> sản phẩm
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                {product.name}
+              </h1>
+
+              {/* Price */}
+              <div className="mb-6 flex flex-wrap items-baseline gap-3">
+                <span className="text-3xl font-extrabold text-[#ff4d2e]">
+                  {price.toLocaleString("vi-VN")}₫
+                </span>
+                {comparePrice && comparePrice > price && (
+                  <span className="text-2xl text-gray-400 line-through decoration-2">
+                    {comparePrice.toLocaleString("vi-VN")}₫
+                  </span>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="mb-10 space-y-4">
+                <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Mô tả sản phẩm</h3>
+                <div className="h-[1px] bg-gray-100 w-24"></div>
+                <p className="text-gray-600 leading-relaxed text-lg italic">
+                  "{product.description || "Sản phẩm chất lượng cao từ PawHouse, sự lựa chọn tốt nhất cho thú cưng của bạn."}"
                 </p>
               </div>
-            )}
 
-            {/* Actions */}
-            <div className="flex gap-4">
-              <button
-                onClick={handleAddToCart}
-                disabled={!product || product.stock <= 0}
-                className="flex-1 bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {product?.stock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
-              </button>
+              {/* Metadata */}
+              <div className="mt-auto space-y-6">
+                <div className="flex items-center gap-4 text-sm">
+                  {product.categoryIds && product.categoryIds.length > 0 && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-[#ff4d2e] rounded-full font-bold">
+                      <span className="w-2 h-2 rounded-full bg-[#ff4d2e] animate-pulse"></span>
+                      {product.categoryIds[0].name || product.categoryIds[0]}
+                    </div>
+                  )}
+
+                  <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${
+                    product.stock > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${
+                      product.stock > 0 ? "bg-green-600" : "bg-red-600"
+                    }`}></span>
+                    {product.stock > 0 ? `Còn lại: ${product.stock} sản phẩm` : "Hết hàng"}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!product || product.stock <= 0}
+                  className="w-full bg-[#ff4d2e] text-white px-8 py-5 rounded-2xl hover:bg-[#e64529] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-bold text-xl shadow-xl shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                >
+                  {product?.stock <= 0 ? 'Hiện tại hết hàng' : 'Thêm vào giỏ hàng ngay'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
       </main>
       <Footer />
     </div>

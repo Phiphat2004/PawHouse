@@ -1,4 +1,9 @@
 import { Link } from "react-router-dom";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
 
 export default function ProductTable({
   products,
@@ -164,8 +169,8 @@ export default function ProductTable({
                           onToggleStatus(product._id, product.isActive)
                         }
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${product.isActive
-                            ? "bg-green-100 text-green-800 hover:bg-green-200"
-                            : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                           }`}
                       >
                         {product.isActive ? "Hoạt động" : "Tạm ngưng"}
@@ -173,8 +178,8 @@ export default function ProductTable({
                     ) : (
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${product.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
                           }`}
                       >
                         {product.isActive ? "Hoạt động" : "Tạm ngưng"}
@@ -189,7 +194,7 @@ export default function ProductTable({
                         className="text-blue-600 hover:text-blue-900 transition-colors"
                         title="Xem chi tiết"
                       >
-                        👁️
+                        <EyeOutlined />
                       </Link>
                       {canManage && (
                         <>
@@ -198,14 +203,14 @@ export default function ProductTable({
                             className="text-orange-600 hover:text-orange-900 transition-colors"
                             title="Chỉnh sửa"
                           >
-                            ✏️
+                            <EditOutlined />
                           </button>
                           <button
                             onClick={() => onDelete(product)}
                             className="text-red-600 hover:text-red-900 transition-colors"
                             title="Xóa"
                           >
-                            🗑️
+                            <DeleteOutlined />
                           </button>
                         </>
                       )}
@@ -240,8 +245,8 @@ export default function ProductTable({
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                   }`}
               >
                 ← Trước
@@ -289,8 +294,8 @@ export default function ProductTable({
                         key={pageNum}
                         onClick={() => onPageChange(pageNum)}
                         className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                            ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                            : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                          ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
+                          : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                           }`}
                       >
                         {pageNum}
@@ -305,8 +310,8 @@ export default function ProductTable({
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                   }`}
               >
                 Sau →
