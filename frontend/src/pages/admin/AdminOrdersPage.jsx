@@ -8,6 +8,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
@@ -255,42 +256,17 @@ export default function AdminOrdersPage() {
               </SelectContent>
             </Select>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Select
-                value={normalizeStatus(statusFilter)}
-                onValueChange={(value) => {
-                  setStatusFilter(value);
-                  setCurrentPage(1);
-                }}
-                disabled={loading}
-              >
-                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-white shadow-none sm:w-[240px]">
-                  <span className="truncate text-sm font-medium text-slate-700">
-                    {selectedStatus.label}
-                  </span>
-                </SelectTrigger>
-
-                <SelectContent>
-                  {statusOptions.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                className="h-10 rounded-xl border-slate-200 px-3 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-50"
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                  setCurrentPage(1);
-                }}
-              >
-                Đặt lại
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              className="h-11 rounded-xl border-slate-200 px-4 text-slate-600 hover:bg-slate-50"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+                setCurrentPage(1);
+              }}
+            >
+              Đặt lại
+            </Button>
           </div>
 
           <div className="mt-4">
