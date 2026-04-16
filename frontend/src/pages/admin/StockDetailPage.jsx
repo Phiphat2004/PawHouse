@@ -81,7 +81,7 @@ export default function StockDetailPage() {
   const getMovementTypeLabel = (type) => {
     const types = {
       'IN': 'Nhập kho',
-      'OUT': 'Đang giao hàng',
+      'OUT': 'Xuất kho',
       'ADJUSTMENT': 'Điều chỉnh',
       'TRANSFER': 'Chuyển kho',
       'RETURN': 'Trả hàng',
@@ -110,7 +110,7 @@ export default function StockDetailPage() {
     if (movement?.statusLabel) return movement.statusLabel;
     const map = {
       RESERVE: 'Chờ xác nhận',
-      OUT: 'Đang giao hàng',
+      OUT: movement?.referenceType === 'ORDER' ? 'Đang giao hàng' : 'Xuất kho',
       FULFILL: 'Đã giao hàng',
       RELEASE: 'Đã hủy',
       IN: 'Nhập kho',
@@ -321,7 +321,7 @@ export default function StockDetailPage() {
                         Ngày giờ
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Loại giao dịch
+                        Trạng thái
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Kho hàng

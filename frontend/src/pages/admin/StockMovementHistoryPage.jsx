@@ -152,7 +152,7 @@ export default function StockMovementHistoryPage() {
   };
 
   const handleDeleteMovement = async (movementId) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa bản ghi này? Lưu ý: Chỉ xóa lịch sử giao dịch, không ảnh hưởng đến tồn kho hiện tại.')) {
+    if (!confirm('Bạn có chắc chắn muốn xóa bản ghi này? Lưu ý: Chỉ xóa lịch sử tồn kho, không ảnh hưởng đến tồn kho hiện tại.')) {
       return;
     }
 
@@ -170,9 +170,9 @@ export default function StockMovementHistoryPage() {
       case 'IN':
         return { bg: 'bg-green-100', text: 'text-green-800', icon: '⬆️', label: 'Nhập kho' };
       case 'OUT':
-        return { bg: 'bg-red-100', text: 'text-red-800', icon: '⬇️', label: 'Đang giao hàng' };
+        return { bg: 'bg-red-100', text: 'text-red-800', icon: '⬇️', label: 'Xuất kho' };
       case 'ADJUSTMENT':
-        return { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: '⚖️', label: 'Điều chỉnh' };
+        return { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔄', label: 'Chuyển kho' };
       case 'TRANSFER':
         return { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔄', label: 'Chuyển kho' };
       case 'RETURN':
@@ -193,12 +193,12 @@ export default function StockMovementHistoryPage() {
 
     const map = {
       RESERVE: 'Chờ xác nhận',
-      OUT: 'Đang giao hàng',
+      OUT: movement?.referenceType === 'ORDER' ? 'Đang giao hàng' : 'Xuất kho',
       FULFILL: 'Đã giao hàng',
       RELEASE: 'Đã hủy',
       IN: 'Nhập kho',
       RETURN: 'Hoàn trả',
-      ADJUSTMENT: 'Điều chỉnh',
+      ADJUSTMENT: 'Chuyển kho',
       TRANSFER: 'Chuyển kho',
     };
     return map[movement?.type] || movement?.reason || '-';
@@ -255,7 +255,7 @@ export default function StockMovementHistoryPage() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 whitespace-nowrap">Lịch sử xuất nhập kho</h1>
-                <p className="mt-1 text-sm lg:text-base text-gray-600 whitespace-nowrap">Theo dõi tất cả các giao dịch xuất nhập kho</p>
+                <p className="mt-1 text-sm lg:text-base text-gray-600 whitespace-nowrap">Theo dõi tất cả các thay đổi xuất nhập kho</p>
               </div>
             </div>
             <div className="flex gap-3 flex-shrink-0">
@@ -328,7 +328,7 @@ export default function StockMovementHistoryPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 whitespace-nowrap">
-                Loại giao dịch
+                Trạng thái
               </label>
               <select
                 name="type"
@@ -336,15 +336,12 @@ export default function StockMovementHistoryPage() {
                 onChange={handleFilterChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               >
-                <option value="">Tất cả loại</option>
+                <option value="">Tất cả trạng thái</option>
                 <option value="IN">⬆️ Nhập kho</option>
                 <option value="OUT">⬇️ Xuất kho</option>
                 <option value="RESERVE">🔒 Tạm giữ đơn</option>
-                <option value="RELEASE">🔓 Trả lại (Hủy đơn)</option>
-                <option value="FULFILL">✅ Hoàn thành đơn</option>
-                <option value="RETURN">↩️ Hoàn trả kho (Refund)</option>
-                <option value="ADJUSTMENT">⚖️ Điều chỉnh</option>
-                <option value="TRANSFER">🔄 Chuyển kho</option>
+                <option value="RELEASE">🔓 Hủy đơn</option>
+                <option value="FULFILL">✅ Đã giao hàng</option>              
               </select>
             </div>
             
@@ -401,7 +398,7 @@ export default function StockMovementHistoryPage() {
                 </div>
               </div>
               <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Tổng giao dịch</p>
+                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Tổng bản ghi</p>
                 <p className="text-xl lg:text-2xl font-bold text-gray-900">{pagination.total}</p>
               </div>
             </div>
@@ -498,7 +495,7 @@ export default function StockMovementHistoryPage() {
                         <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
-                        <p className="text-gray-500 font-medium">Không có lịch sử giao dịch</p>
+                        <p className="text-gray-500 font-medium">Không có lịch sử tồn kho</p>
                       </div>
                     </td>
                   </tr>
