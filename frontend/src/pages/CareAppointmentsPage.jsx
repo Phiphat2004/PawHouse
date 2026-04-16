@@ -9,6 +9,7 @@ import {
   Empty,
   Input,
   Modal,
+  Pagination,
   Select,
   Skeleton,
   TimePicker,
@@ -45,6 +46,7 @@ const serviceTypeOptions = [
 
 const BUSINESS_START_HOUR = 8;
 const BUSINESS_END_HOUR = 20;
+const APPOINTMENT_PAGE_SIZE = 6;
 
 const statusLabel = {
   pending: "Chờ duyệt",
@@ -98,6 +100,13 @@ export default function CareAppointmentsPage() {
   const [editingId, setEditingId] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: APPOINTMENT_PAGE_SIZE,
+    total: 0,
+    pages: 1,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [canceling, setCanceling] = useState(false);
@@ -112,17 +121,40 @@ export default function CareAppointmentsPage() {
     setErrorPopup(message || "Đã xảy ra lỗi, vui lòng thử lại");
   };
 
-  const fetchMyAppointments = useCallback(async () => {
+  const fetchMyAppointments = useCallback(async (page = currentPage) => {
     try {
       setLoading(true);
-      const res = await careAppointmentApi.getMyAppointments({ limit: 20 });
+      const res = await careAppointmentApi.getMyAppointments({
+        page,
+        limit: APPOINTMENT_PAGE_SIZE,
+      });
+
+      const nextPagination =
+        res.pagination ||
+        {
+          page,
+          limit: APPOINTMENT_PAGE_SIZE,
+          total: (res.appointments || []).length,
+          pages: 1,
+        };
+
+      if (nextPagination.pages > 0 && page > nextPagination.pages) {
+        setCurrentPage(nextPagination.pages);
+        return;
+      }
+
       setAppointments(res.appointments || []);
+      setPagination(nextPagination);
     } catch (err) {
       showErrorPopup(err.message || "Không thể tải lịch chăm sóc");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -221,8 +253,9 @@ export default function CareAppointmentsPage() {
     try {
       setSubmitting(true);
       await careAppointmentApi.createAppointment(form);
+      setCurrentPage(1);
+      await fetchMyAppointments(1);
       setForm(initialForm);
-      await fetchMyAppointments();
     } catch (err) {
       showErrorPopup(err.message || "Không thể đặt lịch");
     } finally {
@@ -612,6 +645,18 @@ export default function CareAppointmentsPage() {
                   </div>
                   
                 ))}
+
+                {pagination.total > pagination.limit ? (
+                  <div className="pt-3 flex justify-end">
+                    <Pagination
+                      current={currentPage}
+                      pageSize={pagination.limit}
+                      total={pagination.total}
+                      onChange={handlePageChange}
+                      showSizeChanger={false}
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
             </Card>
