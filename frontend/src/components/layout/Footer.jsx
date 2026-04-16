@@ -32,6 +32,7 @@ export default function Footer() {
               <li><Link to="/cong-dong" className="hover:text-orange-500 transition-colors">Cộng đồng</Link></li>
               <li><Link to="/ve-chung-toi" className="hover:text-orange-500 transition-colors">Về chúng tôi</Link></li>
               <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Liên hệ</Link></li>
+              <li><Link to="/lich-cham-soc" className="hover:text-orange-500 transition-colors">Lịch chăm sóc</Link></li>
             </ul>
           </div>
 
@@ -49,10 +50,10 @@ export default function Footer() {
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-start gap-2">
                 <span className="mt-0.5">📍</span>
-                <span>Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội</span>
+                <span>Số 600 Nguyễn Văn Cừ nối dài, Phường An Bình, Quận Ninh Kiều, TP. Cần Thơ.</span>
               </li>
               <li className="flex items-center gap-2">
-                <span>📞</span> 0909 123 456
+                <span>📞</span> 0292 730 3636
               </li>
               <li className="flex items-center gap-2">
                 <span>✉️</span> support@pawhouse.vn
