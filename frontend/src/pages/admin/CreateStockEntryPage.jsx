@@ -406,7 +406,7 @@ export default function CreateStockEntryPage() {
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">{warehouses[0]?.name ? 'Kho mặc định — không thể thay đổi' : 'Chưa có kho'}</p>
+                  <p className="text-sm text-gray-500 mt-2">{warehouses[0]?.name ? '' : 'Chưa có kho'}</p>
                 </div>
 
                 {/* Quantity */}

@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { productApi, categoryApi } from "../services/api";
+import { useAddToCart } from "../hooks/useAddToCart";
+import { ShoppingCartOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -45,8 +48,7 @@ export default function ProductsPage() {
     const matchSearch =
       !searchTerm ||
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchCategory =
       !filterCategory ||
@@ -250,6 +252,8 @@ export default function ProductsPage() {
 }
 
 function ProductCard({ product }) {
+  const { addToCart, loading: cartLoading } = useAddToCart();
+
   const imageUrl =
     product.images && product.images.length > 0
       ? typeof product.images[0] === "string"
@@ -257,7 +261,6 @@ function ProductCard({ product }) {
         : product.images[0]?.url
       : null;
 
-  // Get price from variations or direct from product
   const productPrice = product.variations?.[0]?.price || product.price || 0;
   const comparePrice =
     product.variations?.[0]?.compareAtPrice || product.compareAtPrice || null;
@@ -266,18 +269,30 @@ function ProductCard({ product }) {
     ? Math.round(((comparePrice - productPrice) / comparePrice) * 100)
     : 0;
 
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const result = await addToCart(product._id, 1);
+    if (result.success) {
+      toast.success(result.message || "Đã thêm vào giỏ hàng!");
+    } else if (result.message !== "Cần đăng nhập") {
+      toast.error(result.message || "Có lỗi xảy ra");
+    }
+  };
+
   return (
     <Link
       to={`/san-pham/${product.slug}`}
-      className="group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+      className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full relative"
     >
-      {/* Product Image */}
-      <div className="relative aspect-square bg-gray-100 overflow-hidden">
+      {/* Product Image Container */}
+      <div className="relative aspect-square overflow-hidden bg-gray-50">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => {
               e.target.style.display = "none";
               e.target.nextElementSibling.style.display = "flex";
@@ -285,7 +300,7 @@ function ProductCard({ product }) {
           />
         ) : null}
         <div
-          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100"
+          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50"
           style={{ display: imageUrl ? "none" : "flex" }}
         >
           <span className="text-6xl">📦</span>
@@ -293,74 +308,59 @@ function ProductCard({ product }) {
 
         {/* Discount Badge */}
         {hasDiscount && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute top-3 right-3 bg-[#ff4d2e] text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-10">
             -{discountPercent}%
           </div>
         )}
+
+        {/* Floating Add to Cart Button (Bottom Right of Image) */}
+        <button
+          onClick={handleAddToCart}
+          disabled={cartLoading}
+          className="absolute bottom-3 right-3 w-10 h-10 bg-[#ff4d2e] text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#e64529] z-10"
+          title="Thêm vào giỏ hàng"
+        >
+          <ShoppingCartOutlined className="text-lg" />
+        </button>
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-grow">
         {/* Brand */}
         {product.brand && (
-          <p className="text-xs text-orange-600 font-semibold uppercase tracking-wide mb-1">
+          <p className="text-[10px] text-[#ff4d2e] font-bold uppercase tracking-widest mb-1.5">
             {product.brand}
           </p>
         )}
 
         {/* Product Name */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
+        <h3 className="text-lg font-semibold text-gray-800 mb-1 line-clamp-2 leading-snug group-hover:text-[#ff4d2e] transition-colors">
           {product.name}
         </h3>
 
         {/* Description */}
-        {product.description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-            {product.description}
-          </p>
-        )}
+        <p className="text-[13px] text-gray-500 line-clamp-2 mb-3 leading-tight h-8">
+          {product.description || "Khám phá các sản phẩm chất lượng từ PawHouse."}
+        </p>
 
-        {/* Price */}
-        <div className="mb-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-orange-600">
+        {/* Price & Category Section */}
+        <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-[#ff4d2e]">
               {productPrice.toLocaleString("vi-VN")}₫
             </span>
             {hasDiscount && (
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-[12px] text-gray-400 line-through">
                 {comparePrice.toLocaleString("vi-VN")}₫
               </span>
             )}
           </div>
-        </div>
 
-        {/* Categories */}
-        {product.categoryIds && product.categoryIds.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {product.categoryIds.slice(0, 2).map((cat, idx) => (
-              <span
-                key={cat._id || cat || idx}
-                className="inline-block px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full"
-              >
-                {cat.name}
-              </span>
-            ))}
-            {product.categoryIds.length > 2 && (
-              <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                +{product.categoryIds.length - 2}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* View Details Button */}
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <span className="text-orange-600 font-semibold group-hover:gap-2 inline-flex items-center transition-all">
-            Xem chi tiết
-            <span className="group-hover:translate-x-1 transition-transform">
-              →
+          {product.categoryIds && product.categoryIds.length > 0 && (
+            <span className="px-2.5 py-0.5 bg-[#fff5f2] text-[#ff4d2e] text-[10px] font-medium rounded-full">
+              {product.categoryIds[0].name || product.categoryIds[0]}
             </span>
-          </span>
+          )}
         </div>
       </div>
     </Link>

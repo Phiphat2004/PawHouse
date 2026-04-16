@@ -212,26 +212,10 @@ export default function ProductForm({
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">📦</span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">
-                {product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
-              </h2>
-              <p className="text-orange-100 text-sm">
-                {product
-                  ? "Cập nhật thông tin sản phẩm"
-                  : "Điền thông tin sản phẩm mới"}
-              </p>
-            </div>
+            <h2 className="text-2xl font-bold text-white">
+              {product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
+            </h2>
           </div>
-          <button
-            onClick={onCancel}
-            className="text-white hover:bg-white hover:bg-opacity-20 w-10 h-10 rounded-lg transition-all flex items-center justify-center text-2xl font-light"
-          >
-            ×
-          </button>
         </div>
 
         {/* Form Content */}
@@ -240,7 +224,6 @@ export default function ProductForm({
             {/* Basic Info Section */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-orange-500">📝</span>
                 Thông tin cơ bản
               </h3>
 
@@ -258,15 +241,12 @@ export default function ProductForm({
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.name
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.name
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 bg-white"
                         }`}
                       placeholder="Ví dụ: Thức ăn cho chó vị gà"
                     />
-                    <span className="absolute left-3 top-3.5 text-gray-400">
-                      🏷️
-                    </span>
                   </div>
                   {errors.name && (
                     <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
@@ -289,15 +269,12 @@ export default function ProductForm({
                       name="slug"
                       value={formData.slug}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all font-mono text-sm ${errors.slug
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all font-mono text-sm ${errors.slug
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 bg-white"
                         }`}
                       placeholder="thuc-an-cho-cho-vi-ga"
                     />
-                    <span className="absolute left-3 top-3.5 text-gray-400">
-                      🔗
-                    </span>
                   </div>
                   {errors.slug && (
                     <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
@@ -317,12 +294,9 @@ export default function ProductForm({
                       name="brand"
                       value={formData.brand}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white"
                       placeholder="Ví dụ: Royal Pet, SmartHeart..."
                     />
-                    <span className="absolute left-3 top-3.5 text-gray-400">
-                      🏢
-                    </span>
                   </div>
                 </div>
               </div>
@@ -331,7 +305,6 @@ export default function ProductForm({
             {/* Giá & Kho hàng */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-orange-500">💰</span>
                 Giá & Kho hàng
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -405,7 +378,6 @@ export default function ProductForm({
             {/* Description */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-orange-500">📄</span>
                 Mô tả sản phẩm
               </h3>
               <div className="relative">
@@ -426,7 +398,6 @@ export default function ProductForm({
             {/* Categories */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-orange-500">📂</span>
                 Danh mục <span className="text-red-500 text-sm">*</span>
               </h3>
               <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -478,7 +449,6 @@ export default function ProductForm({
             {/* Images */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-orange-500">🖼️</span>
                 Hình ảnh sản phẩm
               </h3>
 
@@ -515,7 +485,6 @@ export default function ProductForm({
                               className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
                               title="Gỡ ảnh này"
                             >
-                              <span className="text-lg font-bold leading-none">×</span>
                             </button>
                           </div>
                         ))}
@@ -556,7 +525,6 @@ export default function ProductForm({
                             className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
                             title="Xóa ảnh này"
                           >
-                            <span className="text-lg font-bold leading-none">×</span>
                           </button>
 
                           {/* Sorting controls */}
@@ -593,7 +561,6 @@ export default function ProductForm({
             {/* Status */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span className="text-orange-500">⚙️</span>
                 Cài đặt
               </h3>
               <label className="flex items-center gap-3 cursor-pointer p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-orange-200 transition-all">
@@ -618,34 +585,25 @@ export default function ProductForm({
         </form>
 
         {/* Footer Actions */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between gap-3">
-          <div className="text-sm text-gray-500">
-            {product ? "Cập nhật thông tin sản phẩm" : "Tạo sản phẩm mới"}
-          </div>
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
+              className="px-8 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
             >
-              ✕ Hủy
+              Hủy
             </button>
             <button
               type="submit"
               onClick={handleSubmit}
               disabled={loading}
-              className="px-8 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+              className="px-12 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center min-w-[140px]"
             >
               {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>Đang xử lý...</span>
-                </>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
               ) : (
-                <>
-                  <span>{product ? "💾" : "➕"}</span>
-                  <span>{product ? "Cập nhật" : "Tạo mới"}</span>
-                </>
+                <span>{product ? "Cập nhật" : "Thêm mới"}</span>
               )}
             </button>
           </div>

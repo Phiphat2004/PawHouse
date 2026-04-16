@@ -1,4 +1,19 @@
-const { Product, StockLevel, Warehouse } = require("../models");
+const mongoose = require("mongoose");
+const { Product, StockLevel } = require("../models");
+
+const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId("000000000000000000000001");
+const DEFAULT_WAREHOUSE = {
+  name: "Kho Cần Thơ",
+  code: "WH001",
+  address: {
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+  },
+  isActive: true,
+};
 
 /**
  * Get all products with pagination and filtering (Legacy Logic)
@@ -190,15 +205,15 @@ async function createProduct(data, userRoles, userId) {
 
   // Legacy StockLevel Initialization
   try {
-    const warehouse = await Warehouse.findOne();
-    if (warehouse && stock > 0) {
+    if (stock > 0) {
       await StockLevel.findOneAndUpdate(
-        { productId: product._id, warehouseId: warehouse._id },
+        { productId: product._id, warehouseId: DEFAULT_WAREHOUSE_ID },
         {
           $setOnInsert: {
             quantity: stock,
             reservedQuantity: 0,
             availableQuantity: stock,
+            warehouse: DEFAULT_WAREHOUSE,
           },
         },
         { upsert: true },
