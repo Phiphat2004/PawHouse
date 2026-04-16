@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SearchOutlined, InboxOutlined } from "@ant-design/icons";
 import { AdminLayout } from "../../components/admin";
 import { orderApi } from "../../services/api";
@@ -36,11 +36,7 @@ export default function AdminOrdersPage() {
     totalItems: 0,
   });
 
-  useEffect(() => {
-    fetchOrders();
-  }, [searchQuery, statusFilter, currentPage]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -61,10 +57,16 @@ export default function AdminOrdersPage() {
 
       setOrders(response.orders || []);
       if (response.pagination) {
+        const totalPages = response.pagination.pages || 1;
         setPagination({
-          totalPages: response.pagination.pages || 1,
+          totalPages,
           totalItems: response.pagination.total || 0,
         });
+
+        // Keep current page within valid range when filters shrink the result set.
+        if (currentPage > totalPages) {
+          setCurrentPage(totalPages);
+        }
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -72,7 +74,11 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const formatDate = (date) => {
     if (!date) return { date: "-", time: "" };
@@ -146,15 +152,17 @@ export default function AdminOrdersPage() {
               }}
               disabled={loading}
             >
-              <SelectTrigger className="w-[200px] bg-white border-gray-200">
+              <SelectTrigger className="w-50 bg-white border-gray-200">
                 <SelectValue placeholder="Tất cả trạng thái" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="pending">Chờ xác nhận</SelectItem>
                 <SelectItem value="confirmed">Đã xác nhận</SelectItem>
+                <SelectItem value="packing">Đang đóng gói</SelectItem>
                 <SelectItem value="shipping">Đang giao</SelectItem>
                 <SelectItem value="completed">Hoàn thành</SelectItem>
+                <SelectItem value="cancelled">Đã hủy</SelectItem>
                 <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
               </SelectContent>
             </Select>
@@ -173,7 +181,7 @@ export default function AdminOrdersPage() {
                 <TableHeader>
                   <TableRow className="bg-gray-50 hover:bg-gray-50">
                     <TableHead className="text-gray-700 font-semibold">
-                      MÃ ĐỞ N HÀNG
+                      MÃ ĐƠN HÀNG
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold">
                       KHÁCH HÀNG
@@ -191,7 +199,7 @@ export default function AdminOrdersPage() {
                       NGÀY ĐẶT
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold text-center">
-                      THÁO TÁC
+                      THAO TÁC
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -204,7 +212,7 @@ export default function AdminOrdersPage() {
                       }`}
                     >
                       <TableCell className="font-medium">
-                        {order.orderId || order._id}
+                        {order.orderCode || order.orderNumber || order._id}
                       </TableCell>
                       <TableCell className="text-gray-600">
                         {order.customerName ||

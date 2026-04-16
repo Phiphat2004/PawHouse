@@ -17,6 +17,27 @@ const statusLabel = {
   completed: "Hoàn tất",
 };
 
+const statusClassName = {
+  pending: "bg-amber-100 text-amber-700 border border-amber-200",
+  approved: "bg-sky-100 text-sky-700 border border-sky-200",
+  confirmed: "bg-blue-100 text-blue-700 border border-blue-200",
+  rejected: "bg-rose-100 text-rose-700 border border-rose-200",
+  cancelled: "bg-gray-100 text-gray-700 border border-gray-200",
+  checked_in: "bg-indigo-100 text-indigo-700 border border-indigo-200",
+  in_progress: "bg-violet-100 text-violet-700 border border-violet-200",
+  completed: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+};
+
+function renderStatusBadge(status) {
+  const label = statusLabel[status] || status;
+  const cls = statusClassName[status] || "bg-gray-100 text-gray-700 border border-gray-200";
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 const statusActions = {
   confirmed: { label: "Xác nhận", type: "confirm" },
   checked_in: { label: "Check-in", type: "progress" },
@@ -249,7 +270,7 @@ export default function AdminCareAppointmentsPage() {
                         <p>{new Date(item.appointmentDate).toLocaleDateString("vi-VN")}</p>
                         <p className="text-gray-500">{item.startTime}</p>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{statusLabel[item.status] || item.status}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{renderStatusBadge(item.status)}</td>
                       <td className="px-4 py-3 text-sm text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -337,9 +358,7 @@ export default function AdminCareAppointmentsPage() {
                 </div>
                 <div>
                   <p className="text-gray-500">Trạng thái</p>
-                  <p className="font-medium text-gray-900">
-                    {statusLabel[selectedAppointment.status] || selectedAppointment.status}
-                  </p>
+                  <div className="mt-1">{renderStatusBadge(selectedAppointment.status)}</div>
                 </div>
                 <div>
                   <p className="text-gray-500">Ngày hẹn</p>
