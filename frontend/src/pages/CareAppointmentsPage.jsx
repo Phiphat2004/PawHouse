@@ -1,7 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { DatePicker, TimePicker } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  DatePicker,
+  Empty,
+  Input,
+  Modal,
+  Select,
+  Skeleton,
+  Tag,
+  TimePicker,
+  Typography,
+} from "antd";
+import {
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+  InfoCircleOutlined,
+  ScissorOutlined,
+} from "@ant-design/icons";
 import { Header, Footer } from "../components/layout";
 import { careAppointmentApi } from "../services/api";
 import { STORAGE_KEYS } from "../utils/constants";
@@ -29,28 +50,20 @@ const BUSINESS_END_HOUR = 20;
 
 const statusLabel = {
   pending: "Chờ duyệt",
-  approved: "Đã xác nhận",
-  confirmed: "Đã xác nhận",
+  approved: "Đã duyệt",
   rejected: "Từ chối",
   cancelled: "Đã hủy",
-  checked_in: "Đã check-in",
-  in_progress: "Đang chăm sóc",
-  completed: "Hoàn tất",
 };
 
-const statusStyle = {
-  pending: "bg-amber-100 text-amber-800",
-  approved: "bg-emerald-100 text-emerald-800",
-  confirmed: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-red-100 text-red-800",
-  cancelled: "bg-gray-100 text-gray-700",
-  checked_in: "bg-cyan-100 text-cyan-800",
-  in_progress: "bg-blue-100 text-blue-800",
-  completed: "bg-violet-100 text-violet-800",
+const statusColorMap = {
+  pending: "gold",
+  approved: "green",
+  rejected: "red",
+  cancelled: "default",
 };
 
-const canCustomerEdit = (status) => status === "pending" || status === "approved" || status === "confirmed";
-const canCustomerCancel = (status) => status === "pending" || status === "approved" || status === "confirmed";
+const { Title, Paragraph, Text } = Typography;
+const { TextArea } = Input;
 
 export default function CareAppointmentsPage() {
   const navigate = useNavigate();
@@ -61,13 +74,6 @@ export default function CareAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [actionLoadingId, setActionLoadingId] = useState("");
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [cancelPopup, setCancelPopup] = useState({
-    open: false,
-    appointmentId: "",
-    reason: "",
-  });
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
@@ -225,7 +231,7 @@ export default function CareAppointmentsPage() {
 
     try {
       setSavingEdit(true);
-      await careAppointmentApi.rescheduleAppointment(editingId, editForm);
+      await careAppointmentApi.updateAppointment(editingId, editForm);
       await fetchMyAppointments();
       cancelEdit();
     } catch (err) {
@@ -235,215 +241,268 @@ export default function CareAppointmentsPage() {
     }
   };
 
-  const openCancelPopup = (item) => {
-    setSelectedAppointment(null);
-    setCancelPopup({
-      open: true,
-      appointmentId: item._id,
-      reason: "",
-    });
-  };
+  const selectPetOptions = petTypeOptions.map((option) => ({
+    value: option,
+    label: option,
+  }));
 
-  const closeCancelPopup = () => {
-    setCancelPopup({
-      open: false,
-      appointmentId: "",
-      reason: "",
-    });
-  };
+  const selectServiceOptions = serviceTypeOptions.map((option) => ({
+    value: option,
+    label: option,
+  }));
 
-  const submitCancelAppointment = async () => {
-    const reason = cancelPopup.reason.trim();
-    if (!reason) {
-      showErrorPopup("Bạn cần nhập lý do hủy lịch");
-      return;
-    }
-
-    try {
-      setActionLoadingId(cancelPopup.appointmentId);
-      await careAppointmentApi.cancelAppointment(cancelPopup.appointmentId, reason);
-      await fetchMyAppointments();
-      if (selectedAppointment?._id === cancelPopup.appointmentId) {
-        setSelectedAppointment(null);
-      }
-      closeCancelPopup();
-    } catch (err) {
-      showErrorPopup(err.message || "Không thể hủy lịch hẹn");
-    } finally {
-      setActionLoadingId("");
-    }
-  };
+  const totalPending = appointments.filter((item) => item.status === "pending").length;
+  const totalApproved = appointments.filter((item) => item.status === "approved").length;
 
   return (
-    <div className="font-['Inter',sans-serif] bg-gray-50 min-h-screen">
+    <div className="font-['Poppins','Segoe_UI',sans-serif] min-h-screen bg-[#f4f6fb] relative overflow-x-hidden">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute -top-28 -left-16 h-72 w-72 rounded-full bg-[#ffd8b1] blur-3xl" />
+        <div className="absolute top-40 -right-24 h-80 w-80 rounded-full bg-[#c6e6ff] blur-3xl" />
+      </div>
       <Header />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Đặt lịch chăm sóc thú cưng</h1>
-          <p className="text-gray-600 mt-2">Đặt lịch spa theo ngày và khung giờ, nhân viên sẽ duyệt và gửi email xác nhận.</p>
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28">
+        <div className="mb-7 rounded-3xl bg-gradient-to-r from-[#1f3a5f] via-[#31598c] to-[#4f7eb9] p-6 sm:p-8 text-white shadow-xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <Title level={2} className="!text-white !mb-1">
+                Đặt lịch chăm sóc thú cưng
+              </Title>
+              <Paragraph className="!text-blue-100 !mb-0 max-w-2xl">
+                Đặt lịch nhanh theo ngày và khung giờ phù hợp. Đội ngũ PawHouse sẽ xác nhận qua email ngay sau khi duyệt.
+              </Paragraph>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-white/15 backdrop-blur px-4 py-3 min-w-[140px]">
+                <Text className="!text-blue-100 text-xs">Chờ duyệt</Text>
+                <div className="text-2xl font-bold">{totalPending}</div>
+              </div>
+              <div className="rounded-2xl bg-white/15 backdrop-blur px-4 py-3 min-w-[140px]">
+                <Text className="!text-blue-100 text-xs">Đã duyệt</Text>
+                <div className="text-2xl font-bold">{totalApproved}</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <section className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Thông tin lịch hẹn</h2>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tên thú cưng *</label>
-                <input value={form.petName} onChange={handleChange("petName")} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Loại thú cưng *</label>
-                <select
-                  value={form.petType}
-                  onChange={handleChange("petType")}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
-                >
-                  <option value="">-- Chọn loại thú cưng --</option>
-                  {petTypeOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Dịch vụ *</label>
-                <select
-                  value={form.serviceType}
-                  onChange={handleChange("serviceType")}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
-                >
-                  <option value="">-- Chọn dịch vụ --</option>
-                  {serviceTypeOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn *</label>
-                <DatePicker
-                  className="w-full"
-                  format="DD/MM/YYYY"
-                  value={form.appointmentDate ? dayjs(form.appointmentDate) : null}
-                  onChange={(value) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      appointmentDate: value ? value.format("YYYY-MM-DD") : "",
-                    }))
-                  }
-                  disabledDate={disabledDate}
-                  placeholder="Chọn ngày"
-                />
-              </div>
-              <div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+          <section className="lg:col-span-2">
+            <Card
+              bordered={false}
+              className="rounded-3xl shadow-md"
+              styles={{ body: { padding: 24 } }}
+              title={
+                <div className="flex items-center gap-2 text-slate-800">
+                  <ScissorOutlined />
+                  <span className="font-semibold text-lg">Thông tin lịch hẹn</span>
+                </div>
+              }
+            >
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu *</label>
-                  <TimePicker
-                    className="w-40"
-                    format="HH:mm"
-                    minuteStep={30}
-                    value={toTimeValue(form.startTime)}
-                    onChange={(value) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        startTime: value ? value.format("HH:mm") : "",
-                      }))
-                    }
-                    disabledTime={() => getDisabledTime(form.appointmentDate)}
-                    placeholder="Chọn giờ"
+                  <Text strong>Tên thú cưng *</Text>
+                  <Input
+                    size="large"
+                    value={form.petName}
+                    onChange={handleChange("petName")}
+                    placeholder="Ví dụ: Mochi"
+                    className="mt-1"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
-                <textarea rows={3} value={form.note} onChange={handleChange("note")} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-              </div>
-              <button disabled={submitting} className="w-full bg-[#846551] text-white py-2.5 rounded-lg hover:bg-[#6d5041] disabled:opacity-50">
-                {submitting ? "Đang gửi lịch..." : "Đặt lịch"}
-              </button>
-            </form>
+
+                <div>
+                  <Text strong>Loại thú cưng *</Text>
+                  <Select
+                    size="large"
+                    value={form.petType || undefined}
+                    onChange={(value) => setForm((prev) => ({ ...prev, petType: value || "" }))}
+                    options={selectPetOptions}
+                    placeholder="Chọn loại thú cưng"
+                    className="mt-1 w-full"
+                  />
+                </div>
+
+                <div>
+                  <Text strong>Dịch vụ *</Text>
+                  <Select
+                    size="large"
+                    value={form.serviceType || undefined}
+                    onChange={(value) => setForm((prev) => ({ ...prev, serviceType: value || "" }))}
+                    options={selectServiceOptions}
+                    placeholder="Chọn dịch vụ"
+                    className="mt-1 w-full"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Text strong>Ngày hẹn *</Text>
+                    <DatePicker
+                      size="large"
+                      className="mt-1 w-full"
+                      format="DD/MM/YYYY"
+                      value={form.appointmentDate ? dayjs(form.appointmentDate) : null}
+                      onChange={(value) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          appointmentDate: value ? value.format("YYYY-MM-DD") : "",
+                        }))
+                      }
+                      disabledDate={disabledDate}
+                      placeholder="Chọn ngày"
+                    />
+                  </div>
+
+                  <div>
+                    <Text strong>Giờ bắt đầu *</Text>
+                    <TimePicker
+                      size="large"
+                      className="mt-1 w-full"
+                      format="HH:mm"
+                      minuteStep={30}
+                      value={toTimeValue(form.startTime)}
+                      onChange={(value) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          startTime: value ? value.format("HH:mm") : "",
+                        }))
+                      }
+                      disabledTime={() => getDisabledTime(form.appointmentDate)}
+                      placeholder="Chọn giờ"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Text strong>Ghi chú</Text>
+                  <TextArea
+                    rows={4}
+                    value={form.note}
+                    onChange={handleChange("note")}
+                    placeholder="Nhập thêm yêu cầu đặc biệt nếu có"
+                    className="mt-1"
+                  />
+                </div>
+
+                <Alert
+                  type="info"
+                  showIcon
+                  icon={<InfoCircleOutlined />}
+                  className="rounded-xl"
+                  message="Khung giờ phục vụ từ 08:00 đến 20:00, cách nhau 30 phút"
+                />
+
+                <Button
+                  htmlType="submit"
+                  loading={submitting}
+                  type="primary"
+                  size="large"
+                  className="!h-11 !rounded-xl !bg-[#2f5d9b] !font-medium"
+                  block
+                >
+                  {submitting ? "Đang gửi lịch..." : "Đặt lịch ngay"}
+                </Button>
+              </form>
+            </Card>
           </section>
 
-          <section className="lg:col-span-3 bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Lịch chăm sóc của bạn</h2>
+          <section className="lg:col-span-3">
+            <Card
+              bordered={false}
+              className="rounded-3xl shadow-md"
+              styles={{ body: { padding: 24 } }}
+              title={
+                <div className="flex items-center gap-2 text-slate-800">
+                  <CalendarOutlined />
+                  <span className="font-semibold text-lg">Lịch chăm sóc của bạn</span>
+                </div>
+              }
+            >
             {loading ? (
-              <p className="text-gray-500">Đang tải dữ liệu...</p>
+              <div className="space-y-4">
+                <Skeleton active paragraph={{ rows: 2 }} />
+                <Skeleton active paragraph={{ rows: 2 }} />
+              </div>
             ) : appointments.length === 0 ? (
-              <p className="text-gray-500">Bạn chưa có lịch hẹn nào.</p>
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Bạn chưa có lịch hẹn nào"
+              />
             ) : (
               <div className="space-y-3">
                 {appointments.map((item) => (
-                  <div key={item._id} className="border border-gray-200 rounded-xl p-4">
+                  <Card
+                    key={item._id}
+                    bordered={false}
+                    className="!rounded-2xl !bg-[#f8fbff] !shadow-sm"
+                    styles={{ body: { padding: 16 } }}
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div>
-                        <p className="text-gray-900 font-semibold">{item.petName} - {item.serviceType}</p>
-                        <p className="text-sm text-gray-600">{new Date(item.appointmentDate).toLocaleDateString("vi-VN")} | {item.startTime}</p>
-                        <p className="text-sm text-gray-500">Loại thú cưng: {item.petType}</p>
+                        <p className="text-slate-900 font-semibold text-base">{item.petName} - {item.serviceType}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarOutlined />
+                            {new Date(item.appointmentDate).toLocaleDateString("vi-VN")}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <ClockCircleOutlined />
+                            {item.startTime}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-500 mt-1">Loại thú cưng: {item.petType}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusStyle[item.status] || "bg-gray-100 text-gray-700"}`}>
-                          {statusLabel[item.status] || item.status}
-                        </span>
-                        <button
-                          onClick={() => setSelectedAppointment(item)}
-                          className="px-3 py-1 rounded-lg text-xs font-medium bg-sky-100 text-sky-700 hover:bg-sky-200"
+                        <Tag
+                          icon={item.status === "approved" ? <CheckCircleOutlined /> : undefined}
+                          color={statusColorMap[item.status] || "default"}
+                          className="!mr-0 !px-3 !py-1 !rounded-full"
                         >
-                          Chi tiết
-                        </button>
-                        {canCustomerEdit(item.status) && editingId !== item._id && (
-                          <button
+                          {statusLabel[item.status] || item.status}
+                        </Tag>
+                        {item.status === "pending" && editingId !== item._id && (
+                          <Button
+                            type="default"
+                            size="small"
+                            icon={<EditOutlined />}
                             onClick={() => startEdit(item)}
-                            className="px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
                           >
-                            Đổi lịch
-                          </button>
+                            Chỉnh sửa
+                          </Button>
                         )}
-                        {canCustomerCancel(item.status) ? (
-                          <button
-                            onClick={() => openCancelPopup(item)}
-                            disabled={actionLoadingId === item._id}
-                            className="px-3 py-1 rounded-lg text-xs font-medium bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50"
-                          >
-                            {actionLoadingId === item._id ? "Đang hủy..." : "Hủy lịch"}
-                          </button>
-                        ) : null}
                       </div>
                     </div>
-                    {item.note && <p className="mt-2 text-sm text-gray-600">Ghi chú: {item.note}</p>}
+                    {item.note && <p className="mt-2 text-sm text-slate-600">Ghi chú: {item.note}</p>}
 
                     {editingId === item._id && (
-                      <div className="mt-4 p-4 rounded-lg border border-blue-200 bg-blue-50/40 space-y-3">
-                        <h3 className="font-semibold text-gray-800">Đổi lịch hẹn</h3>
+                      <div className="mt-4 p-4 rounded-xl border border-blue-200 bg-white space-y-3">
+                        <h3 className="font-semibold text-slate-800">Chỉnh sửa lịch hẹn</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <input
+                          <Input
+                            size="large"
                             value={editForm.petName}
                             onChange={handleEditChange("petName")}
                             placeholder="Tên thú cưng"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
                           />
-                          <select
-                            value={editForm.petType}
-                            onChange={handleEditChange("petType")}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
-                          >
-                            <option value="">-- Chọn loại thú cưng --</option>
-                            {petTypeOptions.map((option) => (
-                              <option key={option} value={option}>{option}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={editForm.serviceType}
-                            onChange={handleEditChange("serviceType")}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white md:col-span-2"
-                          >
-                            <option value="">-- Chọn dịch vụ --</option>
-                            {serviceTypeOptions.map((option) => (
-                              <option key={option} value={option}>{option}</option>
-                            ))}
-                          </select>
+                          <Select
+                            size="large"
+                            value={editForm.petType || undefined}
+                            onChange={(value) => setEditForm((prev) => ({ ...prev, petType: value || "" }))}
+                            options={selectPetOptions}
+                            placeholder="Chọn loại thú cưng"
+                          />
+                          <Select
+                            size="large"
+                            value={editForm.serviceType || undefined}
+                            onChange={(value) =>
+                              setEditForm((prev) => ({ ...prev, serviceType: value || "" }))
+                            }
+                            options={selectServiceOptions}
+                            placeholder="Chọn dịch vụ"
+                            className="md:col-span-2"
+                          />
                           <DatePicker
+                            size="large"
                             className="w-full"
                             format="DD/MM/YYYY"
                             value={editForm.appointmentDate ? dayjs(editForm.appointmentDate) : null}
@@ -458,7 +517,8 @@ export default function CareAppointmentsPage() {
                           />
                           <div>
                             <TimePicker
-                              className="w-40"
+                              size="large"
+                              className="w-full"
                               format="HH:mm"
                               minuteStep={30}
                               value={toTimeValue(editForm.startTime)}
@@ -472,190 +532,53 @@ export default function CareAppointmentsPage() {
                               placeholder="Chọn giờ"
                             />
                           </div>
-                          <textarea
-                            rows={2}
+                          <TextArea
+                            rows={3}
                             value={editForm.note}
                             onChange={handleEditChange("note")}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white md:col-span-2"
                             placeholder="Ghi chú"
+                            className="md:col-span-2"
                           />
                         </div>
                         <div className="flex gap-2">
-                          <button
+                          <Button
                             onClick={saveEdit}
                             disabled={savingEdit}
-                            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                            type="primary"
+                            loading={savingEdit}
                           >
-                            {savingEdit ? "Đang lưu..." : "Lưu và gửi duyệt lại"}
-                          </button>
-                          <button
+                            Lưu thay đổi
+                          </Button>
+                          <Button
                             onClick={cancelEdit}
                             disabled={savingEdit}
-                            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
                           >
                             Hủy
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}
+            </Card>
           </section>
         </div>
       </main>
 
-      {selectedAppointment ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-5 py-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Chi tiết lịch chăm sóc</h3>
-              <button
-                onClick={() => setSelectedAppointment(null)}
-                className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200"
-              >
-                Đóng
-              </button>
-            </div>
-            <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500">Tên thú cưng</p>
-                <p className="font-medium text-gray-900">{selectedAppointment.petName}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Loại thú cưng</p>
-                <p className="font-medium text-gray-900">{selectedAppointment.petType}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Dịch vụ</p>
-                <p className="font-medium text-gray-900">{selectedAppointment.serviceType}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Trạng thái</p>
-                <p className="font-medium text-gray-900">{statusLabel[selectedAppointment.status] || selectedAppointment.status}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Ngày hẹn</p>
-                <p className="font-medium text-gray-900">{new Date(selectedAppointment.appointmentDate).toLocaleDateString("vi-VN")}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Khung giờ</p>
-                <p className="font-medium text-gray-900">{selectedAppointment.startTime}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Phương thức thanh toán</p>
-                <p className="font-medium text-gray-900">
-                  {selectedAppointment.paymentMethod === "online" ? "Online" : "Thanh toán tại cửa hàng"}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-500">Trạng thái thanh toán</p>
-                <p className="font-medium text-gray-900">
-                  {selectedAppointment.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="text-gray-500">Ghi chú</p>
-                <p className="font-medium text-gray-900 whitespace-pre-wrap">
-                  {selectedAppointment.note || "Không có ghi chú"}
-                </p>
-              </div>
-              {selectedAppointment.rejectionReason ? (
-                <div className="md:col-span-2">
-                  <p className="text-gray-500">Lý do từ chối</p>
-                  <p className="font-medium text-rose-700 whitespace-pre-wrap">
-                    {selectedAppointment.rejectionReason}
-                  </p>
-                </div>
-              ) : null}
-              {selectedAppointment.cancellationReason ? (
-                <div className="md:col-span-2">
-                  <p className="text-gray-500">Lý do hủy</p>
-                  <p className="font-medium text-amber-700 whitespace-pre-wrap">
-                    {selectedAppointment.cancellationReason}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-            <div className="border-t border-gray-200 px-5 py-4 flex justify-end gap-2">
-              {canCustomerCancel(selectedAppointment.status) ? (
-                <button
-                  onClick={() => openCancelPopup(selectedAppointment)}
-                  disabled={actionLoadingId === selectedAppointment._id}
-                  className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
-                >
-                  {actionLoadingId === selectedAppointment._id ? "Đang hủy..." : "Hủy lịch"}
-                </button>
-              ) : null}
-              <button
-                onClick={() => setSelectedAppointment(null)}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {cancelPopup.open ? (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-5 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">Hủy lịch hẹn</h3>
-            </div>
-            <div className="px-5 py-4 space-y-2">
-              <p className="text-sm text-gray-600">Vui lòng nhập lý do hủy lịch để cửa hàng hỗ trợ bạn tốt hơn.</p>
-              <textarea
-                rows={4}
-                value={cancelPopup.reason}
-                onChange={(e) =>
-                  setCancelPopup((prev) => ({ ...prev, reason: e.target.value }))
-                }
-                placeholder="Nhập lý do hủy..."
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-rose-400 focus:outline-none"
-              />
-            </div>
-            <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
-              <button
-                onClick={closeCancelPopup}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-              >
-                Đóng
-              </button>
-              <button
-                onClick={submitCancelAppointment}
-                disabled={actionLoadingId === cancelPopup.appointmentId}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
-              >
-                {actionLoadingId === cancelPopup.appointmentId ? "Đang hủy..." : "Xác nhận hủy"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {errorPopup ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-            <div className="border-b border-gray-200 px-5 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">Thông báo</h3>
-            </div>
-            <div className="px-5 py-4">
-              <p className="text-sm text-gray-700">{errorPopup}</p>
-            </div>
-            <div className="flex justify-end border-t border-gray-200 px-5 py-4">
-              <button
-                onClick={() => setErrorPopup("")}
-                className="rounded-lg bg-[#846551] px-4 py-2 text-sm font-medium text-white hover:bg-[#6d5041]"
-              >
-                Đã hiểu
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <Modal
+        title="Thông báo"
+        open={Boolean(errorPopup)}
+        onCancel={() => setErrorPopup("")}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setErrorPopup("")}>
+            Đã hiểu
+          </Button>,
+        ]}
+      >
+        <p>{errorPopup}</p>
+      </Modal>
 
       <Footer />
     </div>
