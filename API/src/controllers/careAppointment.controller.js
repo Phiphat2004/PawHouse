@@ -27,10 +27,43 @@ exports.getMyAppointments = async (req, res, next) => {
   }
 };
 
+exports.getMyAppointmentById = async (req, res, next) => {
+  try {
+    const appointment = await careAppointmentService.getMyAppointmentById(
+      req.user._id,
+      req.params.id,
+    );
+    res.json({ message: "Lấy chi tiết lịch hẹn thành công", appointment });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateMyAppointment = async (req, res, next) => {
   try {
-    const appointment = await careAppointmentService.updateMyAppointment(req.user._id, req.params.id, req.body);
-    res.json({ message: "Cập nhật lịch hẹn thành công", appointment });
+    const appointment = await careAppointmentService.updateMyAppointment(
+      req.user._id,
+      req.params.id,
+      req.body,
+    );
+    res.json({
+      message:
+        "Cập nhật lịch hẹn thành công. Nếu lịch đã duyệt, hệ thống sẽ chuyển về chờ duyệt lại.",
+      appointment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.cancelMyAppointment = async (req, res, next) => {
+  try {
+    const appointment = await careAppointmentService.cancelMyAppointment(
+      req.user._id,
+      req.params.id,
+      req.body,
+    );
+    res.json({ message: "Đã hủy lịch hẹn thành công", appointment });
   } catch (error) {
     next(error);
   }
@@ -53,7 +86,36 @@ exports.approveAppointment = async (req, res, next) => {
       req.params.id,
       req.user._id,
     );
-    res.json({ message: "Duyệt lịch hẹn thành công", appointment });
+    res.json({ message: "Xác nhận lịch hẹn thành công", appointment });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.rejectAppointment = async (req, res, next) => {
+  try {
+    const appointment = await careAppointmentService.rejectAppointment(
+      req.params.id,
+      req.user._id,
+      req.body,
+    );
+    res.json({ message: "Từ chối lịch hẹn thành công", appointment });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateAppointmentStatus = async (req, res, next) => {
+  try {
+    const appointment = await careAppointmentService.updateAppointmentStatus(
+      req.params.id,
+      req.user._id,
+      req.body,
+    );
+    res.json({
+      message: "Cập nhật trạng thái lịch hẹn thành công",
+      appointment,
+    });
   } catch (error) {
     next(error);
   }

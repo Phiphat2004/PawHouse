@@ -206,10 +206,19 @@ export const careAppointmentApi = {
   createAppointment: (data) => api.post("/care-appointments", data),
   getMyAppointments: (params = {}) =>
     api.get("/care-appointments/my", { params }),
+  getMyAppointmentById: (id) => api.get(`/care-appointments/my/${id}`),
   updateAppointment: (id, data) => api.patch(`/care-appointments/${id}`, data),
+  rescheduleAppointment: (id, data) =>
+    api.patch(`/care-appointments/${id}/reschedule`, data),
+  cancelAppointment: (id, reason) =>
+    api.patch(`/care-appointments/${id}/cancel`, { reason }),
   getAllAppointments: (params = {}) =>
     api.get("/care-appointments", { params }),
   approveAppointment: (id) => api.patch(`/care-appointments/${id}/approve`),
+  rejectAppointment: (id, reason = "") =>
+    api.patch(`/care-appointments/${id}/reject`, { reason }),
+  updateAppointmentStatus: (id, status) =>
+    api.patch(`/care-appointments/${id}/status`, { status }),
 };
 
 export default api;
