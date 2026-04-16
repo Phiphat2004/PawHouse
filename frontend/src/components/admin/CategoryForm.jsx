@@ -96,7 +96,7 @@ export default function CategoryForm({
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-4 rounded-t-2xl">
           <h2 className="text-2xl font-bold">
-            {category ? "✏️ Chỉnh sửa danh mục" : "➕ Thêm danh mục mới"}
+            {category ? " Chỉnh sửa danh mục" : " Thêm danh mục mới"}
           </h2>
         </div>
 
@@ -110,7 +110,7 @@ export default function CategoryForm({
           {/* Tên danh mục */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              📝 Tên danh mục <span className="text-red-500">*</span>
+               Tên danh mục <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -130,7 +130,7 @@ export default function CategoryForm({
           {/* Slug */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              🔗 Slug <span className="text-red-500">*</span>
+               Slug <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -150,7 +150,7 @@ export default function CategoryForm({
           {/* Mô tả */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              📄 Mô tả
+               Mô tả
             </label>
             <textarea
               name="description"
@@ -175,7 +175,7 @@ export default function CategoryForm({
                 className="w-5 h-5 text-orange-500 rounded focus:ring-2 focus:ring-orange-500"
               />
               <span className="text-sm font-semibold text-gray-700">
-                ✅ Kích hoạt danh mục
+                 Kích hoạt danh mục
               </span>
             </label>
           </div>
@@ -198,8 +198,8 @@ export default function CategoryForm({
               {loading
                 ? "⏳ Đang lưu..."
                 : category
-                  ? "💾 Cập nhật"
-                  : "➕ Thêm mới"}
+                  ? " Cập nhật"
+                  : " Thêm mới"}
             </button>
           </div>
         </form>

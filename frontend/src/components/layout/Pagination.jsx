@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 
 const Pagination = ({ page, totalPages, onPageChange }) => {
     const pages = [];
@@ -24,7 +24,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
                 className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Previous page"
             >
-                <ChevronLeft className="w-4 h-4" />
+                <LeftOutlined className="w-4 h-4" />
             </button>
 
             {startPage > 1 && (
@@ -70,7 +70,7 @@ const Pagination = ({ page, totalPages, onPageChange }) => {
                 className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Next page"
             >
-                <ChevronRight className="w-4 h-4" />
+                <RightOutlined className="w-4 h-4" />
             </button>
         </div>
     );

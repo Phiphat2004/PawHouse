@@ -180,7 +180,7 @@ export default function AdminCategoriesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              📂 Quản lý danh mục
+              Quản lý danh mục
             </h1>
             <p className="text-gray-600 mt-1">Quản lý các danh mục sản phẩm</p>
           </div>
@@ -189,11 +189,11 @@ export default function AdminCategoriesPage() {
               onClick={handleCreate}
               className="px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-amber-600 transition shadow-lg hover:shadow-xl"
             >
-              ➕ Thêm danh mục
+              Thêm danh mục
             </button>
           ) : (
             <span className="rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-500">
-              Chế độ chỉ xem
+            Chế độ chỉ xem
             </span>
           )}
         </div>

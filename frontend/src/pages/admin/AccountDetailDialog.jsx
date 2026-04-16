@@ -9,7 +9,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AccountRole, AccountStatus } from './types/account';
-import { Mail, User, Shield, Calendar, AlertCircle, Undo2 } from 'lucide-react';
+import {
+    MailOutlined,
+    UserOutlined,
+    SafetyOutlined,
+    CalendarOutlined,
+    ExclamationCircleOutlined,
+    UndoOutlined,
+} from '@ant-design/icons';
 
 const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
     if (!account) return null;
@@ -92,7 +99,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                     {/* Name */}
                     <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                            <User className="w-5 h-5 text-blue-600" />
+                            <UserOutlined className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="flex-1">
                             <p className="text-sm text-gray-500 mb-1">Họ tên</p>
@@ -103,7 +110,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                     {/* Email */}
                     <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                            <Mail className="w-5 h-5 text-green-600" />
+                            <MailOutlined className="w-5 h-5 text-green-600" />
                         </div>
                         <div className="flex-1">
                             <p className="text-sm text-gray-500 mb-1">Email</p>
@@ -114,7 +121,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                     {/* Role */}
                     <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                            <Shield className="w-5 h-5 text-purple-600" />
+                            <SafetyOutlined className="w-5 h-5 text-purple-600" />
                         </div>
                         <div className="flex-1">
                             <p className="text-sm text-gray-500 mb-1">Vai trò</p>
@@ -131,7 +138,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                                 account.status === AccountStatus.BANNED ? 'bg-red-100' : 'bg-gray-100'  // NEW: Gray for inactive
                                 }`}
                         >
-                            <AlertCircle
+                            <ExclamationCircleOutlined
                                 className={`w-5 h-5 ${account.status === AccountStatus.ACTIVE ? 'text-green-600' :
                                     account.status === AccountStatus.BANNED ? 'text-red-600' : 'text-gray-600'  // NEW: Gray for inactive
                                     }`}
@@ -148,7 +155,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                     {/* Created At */}
                     <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
-                            <Calendar className="w-5 h-5 text-orange-600" />
+                            <CalendarOutlined className="w-5 h-5 text-orange-600" />
                         </div>
                         <div className="flex-1">
                             <p className="text-sm text-gray-500 mb-1">Ngày tạo</p>
@@ -167,7 +174,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                             onClick={() => onRestore && onRestore(account)}
                             className="bg-sky-600 hover:bg-sky-700"
                         >
-                            <Undo2 className="w-4 h-4 mr-2" />
+                            <UndoOutlined className="w-4 h-4 mr-2" />
                             Khôi phục tài khoản
                         </Button>
                     )}

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header, Footer } from '../components/layout'
-import { Hero, Features, Categories, FeaturedProducts, Testimonials, CTA } from '../components/home'
+import { Hero, Categories, FeaturedProducts, Testimonials, CTA } from '../components/home'
 import { ROUTES, STORAGE_KEYS } from '../utils/constants'
 import { authApi } from '../services/api'
 
@@ -57,7 +57,6 @@ export default function HomePage() {
       <Header />
       <main>
         <Hero />
-        <Features />
         <Categories />
         <FeaturedProducts />
         <Testimonials />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { EditOutlined, RightOutlined } from '@ant-design/icons'
 import { postApi } from '../../services/api'
 
 function formatDate(dateString) {
@@ -40,7 +41,7 @@ export default function Testimonials() {
               <Link
                 key={post._id}
                 to={`/cong-dong/${post.slug || post._id}`}
-                className="group block p-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl hover:shadow-xl transition-all duration-300"
+                className="group block p-6 bg-linear-to-br from-orange-50 to-amber-50 rounded-2xl hover:shadow-xl transition-all duration-300"
               >
                 {post.coverImage && (
                   <img
@@ -56,7 +57,7 @@ export default function Testimonials() {
                   <p className="text-gray-600 text-sm line-clamp-2 mb-3">{post.excerpt}</p>
                 )}
                 <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>✍️ {post.author?.name || post.authorName || 'Ẩn danh'}</span>
+                  <span className="inline-flex items-center gap-1"><EditOutlined /> {post.author?.name || post.authorName || 'Ẩn danh'}</span>
                   {post.createdAt && <span>{formatDate(post.createdAt)}</span>}
                 </div>
               </Link>
@@ -69,7 +70,7 @@ export default function Testimonials() {
             to="/cong-dong"
             className="inline-flex items-center gap-2 px-8 py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-full hover:bg-orange-500 hover:text-white transition-all duration-300"
           >
-            Xem tất cả bài viết →
+            Xem tất cả bài viết <RightOutlined />
           </Link>
         </div>
       </div>

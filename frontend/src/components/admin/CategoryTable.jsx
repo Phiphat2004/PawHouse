@@ -1,4 +1,11 @@
 import { Link } from "react-router-dom";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FolderOpenOutlined,
+  FolderOutlined,
+} from "@ant-design/icons";
 
 export default function CategoryTable({
   categories,
@@ -15,7 +22,9 @@ export default function CategoryTable({
   if (categories.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-12 text-center">
-        <div className="text-6xl mb-4">📂</div>
+        <div className="text-5xl mb-4 text-orange-500">
+          <FolderOpenOutlined />
+        </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
           Chưa có danh mục nào
         </h3>
@@ -58,8 +67,8 @@ export default function CategoryTable({
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <span className="text-orange-600 text-xl">📁</span>
+                    <div className="h-10 w-10 shrink-0 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <FolderOutlined className="text-orange-600 text-lg" />
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
@@ -119,7 +128,7 @@ export default function CategoryTable({
                       className="text-blue-600 hover:text-blue-900 transition-colors"
                       title="Xem chi tiết"
                     >
-                      👁️
+                      <EyeOutlined />
                     </Link>
                     {canManage && (
                       <>
@@ -128,14 +137,14 @@ export default function CategoryTable({
                           className="text-orange-600 hover:text-orange-900 transition-colors"
                           title="Chỉnh sửa"
                         >
-                          ✏️
+                          <EditOutlined />
                         </button>
                         <button
                           onClick={() => onDelete(category)}
                           className="text-red-600 hover:text-red-900 transition-colors"
                           title="Xóa"
                         >
-                          🗑️
+                          <DeleteOutlined />
                         </button>
                       </>
                     )}

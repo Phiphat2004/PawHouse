@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
+import { DatePicker } from "antd";
 import { AdminLayout } from "../../components/admin";
 import { careAppointmentApi } from "../../services/api";
 import { toast } from "react-toastify";
@@ -14,8 +16,8 @@ const statusLabel = {
 export default function AdminCareAppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("pending");
-  const [date, setDate] = useState("");
+  const [status, setStatus] = useState("all");
+  const [dateRange, setDateRange] = useState(["", ""]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [errorPopup, setErrorPopup] = useState("");
 
@@ -26,9 +28,9 @@ export default function AdminCareAppointmentsPage() {
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
+      const statusParam = status === "all" ? undefined : status;
       const res = await careAppointmentApi.getAllAppointments({
-        status: status || undefined,
-        date: date || undefined,
+        status: statusParam,
         limit: 100,
       });
       setAppointments(res.appointments || []);
@@ -37,7 +39,19 @@ export default function AdminCareAppointmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, date]);
+  }, [status]);
+
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((item) => {
+      const appointmentDate = dayjs(item.appointmentDate).format("YYYY-MM-DD");
+      const [startDate, endDate] = dateRange;
+
+      if (startDate && appointmentDate < startDate) return false;
+      if (endDate && appointmentDate > endDate) return false;
+
+      return true;
+    });
+  }, [appointments, dateRange]);
 
   useEffect(() => {
     fetchAppointments();
@@ -75,16 +89,25 @@ export default function AdminCareAppointmentsPage() {
             <option value="rejected">Từ chối</option>
             <option value="cancelled">Đã hủy</option>
           </select>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2"
+          <DatePicker.RangePicker
+            className="min-w-70"
+            format="DD/MM/YYYY"
+            value={[
+              dateRange[0] ? dayjs(dateRange[0]) : null,
+              dateRange[1] ? dayjs(dateRange[1]) : null,
+            ]}
+            onChange={(values) => {
+              const nextStart = values?.[0] ? values[0].format("YYYY-MM-DD") : "";
+              const nextEnd = values?.[1] ? values[1].format("YYYY-MM-DD") : "";
+              setDateRange([nextStart, nextEnd]);
+            }}
+            placeholder={["Từ ngày", "Đến ngày"]}
+            allowClear
           />
           <button
             onClick={() => {
-              setStatus("pending");
-              setDate("");
+              setStatus("all");
+              setDateRange(["", ""]);
             }}
             className="px-4 py-2 bg-gray-100 rounded-lg text-gray-700"
           >
@@ -95,7 +118,7 @@ export default function AdminCareAppointmentsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Đang tải...</div>
-          ) : appointments.length === 0 ? (
+          ) : filteredAppointments.length === 0 ? (
             <div className="p-8 text-center text-gray-500">Không có lịch hẹn nào</div>
           ) : (
             <div className="overflow-x-auto">
@@ -111,7 +134,7 @@ export default function AdminCareAppointmentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {appointments.map((item) => (
+                  {filteredAppointments.map((item) => (
                     <tr key={item._id} className="border-b border-gray-100">
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <p className="font-medium text-gray-900">{item.customerId?.profile?.fullName || item.customerId?.email || "Khách hàng"}</p>
