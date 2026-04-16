@@ -49,11 +49,6 @@ export default function AdminOrdersPage() {
 
   const normalizeStatus = (value) => String(value || "").toLowerCase();
 
-  const selectedStatus =
-    statusOptions.find(
-      (item) => item.value === normalizeStatus(statusFilter)
-    ) || statusOptions[0];
-
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -218,21 +213,11 @@ export default function AdminOrdersPage() {
               }}
               disabled={loading}
             >
-              <SelectTrigger className="w-50 bg-white border-gray-200">
+              <SelectTrigger className="w-60 bg-white border-gray-200">
                 <SelectValue placeholder="Tất cả trạng thái" />
-              <SelectTrigger className="w-[240px] bg-white border-gray-200">
-                <span>{selectedStatus.label}</span>
               </SelectTrigger>
 
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="pending">Chờ xác nhận</SelectItem>
-                <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                <SelectItem value="packing">Đang đóng gói</SelectItem>
-                <SelectItem value="shipping">Đang giao</SelectItem>
-                <SelectItem value="completed">Hoàn thành</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
-                <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
                 {statusOptions.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}

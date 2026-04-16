@@ -11,13 +11,11 @@ import {
   Modal,
   Select,
   Skeleton,
-  Tag,
   TimePicker,
   Typography,
 } from "antd";
 import {
   CalendarOutlined,
-  CheckCircleOutlined,
   ClockCircleOutlined,
   EditOutlined,
   InfoCircleOutlined,
@@ -51,18 +49,46 @@ const BUSINESS_END_HOUR = 20;
 const statusLabel = {
   pending: "Chờ duyệt",
   approved: "Đã duyệt",
+  confirmed: "Đã xác nhận",
+  checked_in: "Đã check-in",
+  in_progress: "Đang chăm sóc",
+  completed: "Hoàn tất",
   rejected: "Từ chối",
   cancelled: "Đã hủy",
 };
 
-const statusColorMap = {
-  pending: "gold",
-  approved: "green",
-  rejected: "red",
-  cancelled: "default",
+const statusClassMap = {
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  confirmed: "bg-sky-50 text-sky-700 border-sky-200",
+  checked_in: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  in_progress: "bg-violet-50 text-violet-700 border-violet-200",
+  completed: "bg-teal-50 text-teal-700 border-teal-200",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
+  cancelled: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
-const { Title, Paragraph, Text } = Typography;
+function renderStatusBadge(status) {
+  const normalized = String(status || "").toLowerCase();
+  const label = statusLabel[normalized] || normalized || "Không xác định";
+  const className =
+    statusClassMap[normalized] || "bg-gray-100 text-gray-700 border-gray-200";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function canCancelAppointment(status) {
+  const normalized = String(status || "").toLowerCase();
+  return ["pending", "approved", "confirmed"].includes(normalized);
+}
+
+const { Text } = Typography;
 const { TextArea } = Input;
 
 export default function CareAppointmentsPage() {
@@ -74,6 +100,12 @@ export default function CareAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelPopup, setCancelPopup] = useState({
+    open: false,
+    appointmentId: "",
+    reason: "",
+  });
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
@@ -241,6 +273,44 @@ export default function CareAppointmentsPage() {
     }
   };
 
+  const openCancelPopup = (appointmentId) => {
+    setCancelPopup({
+      open: true,
+      appointmentId,
+      reason: "",
+    });
+  };
+
+  const closeCancelPopup = () => {
+    setCancelPopup({
+      open: false,
+      appointmentId: "",
+      reason: "",
+    });
+  };
+
+  const submitCancelAppointment = async () => {
+    const reason = String(cancelPopup.reason || "").trim();
+    if (!reason) {
+      showErrorPopup("Vui lòng nhập lý do hủy lịch");
+      return;
+    }
+
+    try {
+      setCanceling(true);
+      await careAppointmentApi.cancelAppointment(cancelPopup.appointmentId, reason);
+      await fetchMyAppointments();
+      closeCancelPopup();
+      if (editingId === cancelPopup.appointmentId) {
+        cancelEdit();
+      }
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể hủy lịch hẹn");
+    } finally {
+      setCanceling(false);
+    }
+  };
+
   const selectPetOptions = petTypeOptions.map((option) => ({
     value: option,
     label: option,
@@ -251,9 +321,6 @@ export default function CareAppointmentsPage() {
     label: option,
   }));
 
-  const totalPending = appointments.filter((item) => item.status === "pending").length;
-  const totalApproved = appointments.filter((item) => item.status === "approved").length;
-
   return (
     <div className="font-['Poppins','Segoe_UI',sans-serif] min-h-screen bg-[#f4f6fb] relative overflow-x-hidden">
       <div className="pointer-events-none absolute inset-0 opacity-60">
@@ -262,29 +329,6 @@ export default function CareAppointmentsPage() {
       </div>
       <Header />
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28">
-        <div className="mb-7 rounded-3xl bg-gradient-to-r from-[#1f3a5f] via-[#31598c] to-[#4f7eb9] p-6 sm:p-8 text-white shadow-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <Title level={2} className="!text-white !mb-1">
-                Đặt lịch chăm sóc thú cưng
-              </Title>
-              <Paragraph className="!text-blue-100 !mb-0 max-w-2xl">
-                Đặt lịch nhanh theo ngày và khung giờ phù hợp. Đội ngũ PawHouse sẽ xác nhận qua email ngay sau khi duyệt.
-              </Paragraph>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-white/15 backdrop-blur px-4 py-3 min-w-[140px]">
-                <Text className="!text-blue-100 text-xs">Chờ duyệt</Text>
-                <div className="text-2xl font-bold">{totalPending}</div>
-              </div>
-              <div className="rounded-2xl bg-white/15 backdrop-blur px-4 py-3 min-w-[140px]">
-                <Text className="!text-blue-100 text-xs">Đã duyệt</Text>
-                <div className="text-2xl font-bold">{totalApproved}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
           <section className="lg:col-span-2">
             <Card
@@ -383,14 +427,16 @@ export default function CareAppointmentsPage() {
                     className="mt-1"
                   />
                 </div>
-
-                <Alert
+                <div>
+                        <Alert
                   type="info"
                   showIcon
                   icon={<InfoCircleOutlined />}
                   className="rounded-xl"
                   message="Khung giờ phục vụ từ 08:00 đến 20:00, cách nhau 30 phút"
                 />
+                </div>
+                
 
                 <Button
                   htmlType="submit"
@@ -431,7 +477,8 @@ export default function CareAppointmentsPage() {
             ) : (
               <div className="space-y-3">
                 {appointments.map((item) => (
-                  <Card
+                  <div>
+                    <Card
                     key={item._id}
                     bordered={false}
                     className="!rounded-2xl !bg-[#f8fbff] !shadow-sm"
@@ -453,13 +500,7 @@ export default function CareAppointmentsPage() {
                         <p className="text-sm text-slate-500 mt-1">Loại thú cưng: {item.petType}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Tag
-                          icon={item.status === "approved" ? <CheckCircleOutlined /> : undefined}
-                          color={statusColorMap[item.status] || "default"}
-                          className="!mr-0 !px-3 !py-1 !rounded-full"
-                        >
-                          {statusLabel[item.status] || item.status}
-                        </Tag>
+                        {renderStatusBadge(item.status)}
                         {item.status === "pending" && editingId !== item._id && (
                           <Button
                             type="default"
@@ -470,6 +511,15 @@ export default function CareAppointmentsPage() {
                             Chỉnh sửa
                           </Button>
                         )}
+                        {canCancelAppointment(item.status) ? (
+                          <Button
+                            danger
+                            size="small"
+                            onClick={() => openCancelPopup(item._id)}
+                          >
+                            Hủy lịch
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                     {item.note && <p className="mt-2 text-sm text-slate-600">Ghi chú: {item.note}</p>}
@@ -559,6 +609,8 @@ export default function CareAppointmentsPage() {
                       </div>
                     )}
                   </Card>
+                  </div>
+                  
                 ))}
               </div>
             )}
@@ -566,6 +618,38 @@ export default function CareAppointmentsPage() {
           </section>
         </div>
       </main>
+
+      <Modal
+        title="Hủy lịch hẹn"
+        open={cancelPopup.open}
+        onCancel={closeCancelPopup}
+        footer={[
+          <Button key="close-cancel" onClick={closeCancelPopup} disabled={canceling}>
+            Đóng
+          </Button>,
+          <Button
+            key="confirm-cancel"
+            type="primary"
+            danger
+            loading={canceling}
+            onClick={submitCancelAppointment}
+          >
+            Xác nhận hủy
+          </Button>,
+        ]}
+      >
+        <div className="space-y-2">
+          <Text>Vui lòng nhập lý do hủy lịch:</Text>
+          <TextArea
+            rows={4}
+            value={cancelPopup.reason}
+            onChange={(e) =>
+              setCancelPopup((prev) => ({ ...prev, reason: e.target.value }))
+            }
+            placeholder="Nhập lý do hủy..."
+          />
+        </div>
+      </Modal>
 
       <Modal
         title="Thông báo"

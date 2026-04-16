@@ -4,27 +4,17 @@ import { orderApi, productApi } from '../../services/api'
 import { getAccounts } from '../../services/accountManagementService'
 
 function formatCurrency(amount) {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}tr`
-  if (amount >= 1_000) return `${Math.round(amount / 1_000)}k`
-  return `${amount}`
-}
-
-function calcTrend(current, previous) {
-  if (!previous || previous === 0) {
-    return current > 0 ? { trend: 'up', trendValue: '+100%' } : null
-  }
-  const pct = ((current - previous) / previous * 100).toFixed(1)
-  return {
-    trend: pct >= 0 ? 'up' : 'down',
-    trendValue: `${pct >= 0 ? '+' : ''}${pct}%`
-  }
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0)
 }
 
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState(null)
   const [productStats, setProductStats] = useState(null)
-  const [customerCount, setCustomerCount] = useState(0)
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
@@ -50,7 +40,7 @@ export default function AdminDashboardPage() {
           requests.push(getAccounts({ limit: 1 }))
         }
 
-        const [orderRes, prodRes, accountRes] = await Promise.allSettled(requests)
+        const [orderRes, prodRes] = await Promise.allSettled(requests)
 
         if (orderRes.status === 'fulfilled') {
           setStats(orderRes.value)
@@ -62,9 +52,6 @@ export default function AdminDashboardPage() {
             active: data.products?.filter(p => p.isActive).length || 0
           })
         }
-        if (accountRes && accountRes.status === 'fulfilled') {
-          setCustomerCount(accountRes.value.pagination?.totalItems || accountRes.value.accounts?.length || 0)
-        }
       } catch (err) {
         console.error('Dashboard fetch error:', err)
       } finally {
@@ -73,11 +60,6 @@ export default function AdminDashboardPage() {
     }
     fetchAll()
   }, [isAdmin])
-
-  // Revenue trend
-  const revenueTrend = stats ? calcTrend(stats.monthRevenue, stats.lastMonthRevenue) : null
-  // Order trend
-  const orderTrend = stats ? calcTrend(stats.monthOrderCount, stats.lastMonthOrderCount) : null
 
   // Pending orders count
   const pendingOrders = stats?.byStatus?.pending || 0
