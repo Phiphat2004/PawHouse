@@ -181,7 +181,7 @@ export default function ProductForm({
         isActive: formData.isActive,
         sku: formData.sku,
         price,
-        compareAtPrice,
+        compareAtPrice, // 0 = no discount (backend will remove it), >0 = has discount
         stock: product?.stock || 0
       };
 
@@ -195,7 +195,7 @@ export default function ProductForm({
           data.append(key, payload[key]);
         }
       });
-      
+
       selectedFiles.forEach(file => data.append('images', file));
 
       await onSubmit(data);
@@ -207,7 +207,7 @@ export default function ProductForm({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 animate-fadeIn backdrop-blur-sm bg-white/10">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-slideUp">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-5 flex items-center justify-between">
@@ -394,9 +394,9 @@ export default function ProductForm({
                     <p className="mt-1 text-sm text-red-500">{errors.discountPercentage}</p>
                   )}
                   {formData.originalPrice > 0 && formData.discountPercentage > 0 && (
-                     <p className="mt-1 text-xs text-green-600 font-medium">
-                       Giá bán thực tế: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Math.round(formData.originalPrice * (1 - formData.discountPercentage / 100)))}
-                     </p>
+                    <p className="mt-1 text-xs text-green-600 font-medium">
+                      Giá bán thực tế: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Math.round(formData.originalPrice * (1 - formData.discountPercentage / 100)))}
+                    </p>
                   )}
                 </div>
               </div>
@@ -501,7 +501,7 @@ export default function ProductForm({
                       />
                     </label>
                   </div>
-                  
+
                   {selectedFiles.length > 0 && (
                     <div className="bg-white p-3 rounded-lg border border-gray-200">
                       <p className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wider">Ảnh chuẩn bị tải lên ({selectedFiles.length}/5):</p>
@@ -522,7 +522,7 @@ export default function ProductForm({
                       </div>
                     </div>
                   )}
-                  
+
                   {errors.images && (
                     <p className="text-[11px] text-red-500 font-medium">⚠️ {errors.images}</p>
                   )}
@@ -541,7 +541,7 @@ export default function ProductForm({
                             alt={`Product ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
-                          
+
                           {/* Label for main image */}
                           {index === 0 && (
                             <div className="absolute top-2 left-2 bg-orange-500 text-white text-[9px] font-bold px-2 py-1 rounded shadow-md flex items-center gap-1">
