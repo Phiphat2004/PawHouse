@@ -22,7 +22,7 @@ export default function QuickActions() {
   const visibleActions = isAdmin
     ? [
         ...actions,
-        { icon: '👥', label: 'Quản lý khách hàng', color: 'from-green-500 to-emerald-500', path: '/quan-tri/khach-hang' },
+        { icon: '👥', label: 'Quản lý tài khoản', color: 'from-green-500 to-emerald-500', path: '/quan-tri/khach-hang' },
       ]
     : actions
 
