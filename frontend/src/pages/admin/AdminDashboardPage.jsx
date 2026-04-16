@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
         const [orderRes, prodRes, accountRes] = await Promise.allSettled(requests)
 
         if (orderRes.status === 'fulfilled') {
-          setStats(orderRes.value.data)
+          setStats(orderRes.value)
         }
         if (prodRes.status === 'fulfilled') {
           const data = prodRes.value
@@ -91,16 +91,16 @@ export default function AdminDashboardPage() {
             icon="💰"
             label="Doanh thu tháng này"
             value={loading ? '...' : `${formatCurrency(stats?.monthRevenue || 0)}`}
-            trend={revenueTrend?.trend}
-            trendValue={revenueTrend?.trendValue}
+            // trend={revenueTrend?.trend}
+            // trendValue={revenueTrend?.trendValue}
             color="orange"
           />
           <StatCard
             icon="🛍️"
             label="Đơn hàng tháng này"
             value={loading ? '...' : `${stats?.monthOrderCount || 0}`}
-            trend={orderTrend?.trend}
-            trendValue={orderTrend?.trendValue}
+            // trend={orderTrend?.trend}
+            // trendValue={orderTrend?.trendValue}
             color="blue"
           />
           <StatCard
@@ -117,28 +117,7 @@ export default function AdminDashboardPage() {
           />
         </div>
 
-        {/* Order Status Overview */}
-        {stats?.byStatus && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Tổng quan đơn hàng</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              {[
-                { key: 'pending', label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-700' },
-                { key: 'confirmed', label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700' },
-                { key: 'packing', label: 'Đang đóng gói', color: 'bg-indigo-100 text-indigo-700' },
-                { key: 'shipping', label: 'Đang giao', color: 'bg-purple-100 text-purple-700' },
-                { key: 'completed', label: 'Hoàn thành', color: 'bg-green-100 text-green-700' },
-                { key: 'cancelled', label: 'Đã hủy', color: 'bg-red-100 text-red-700' },
-                { key: 'refunded', label: 'Hoàn tiền', color: 'bg-gray-100 text-gray-700' },
-              ].map(s => (
-                <div key={s.key} className={`rounded-lg p-3 ${s.color} text-center`}>
-                  <div className="text-2xl font-bold">{stats.byStatus[s.key] || 0}</div>
-                  <div className="text-xs font-medium mt-1">{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* Revenue Chart & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

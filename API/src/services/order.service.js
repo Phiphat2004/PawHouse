@@ -308,26 +308,119 @@ async function getOrderById(orderId, userId) {
  * Get dashboard stats for orders
  */
 async function getDashboardStats() {
-  const [total, pending, shipping, completed, cancelled, revenue] =
-    await Promise.all([
-      Order.countDocuments(),
-      Order.countDocuments({ status: "pending" }),
-      Order.countDocuments({ status: "shipping" }),
-      Order.countDocuments({ status: "completed" }),
-      Order.countDocuments({ status: "cancelled" }),
-      Order.aggregate([
-        { $match: { status: "completed" } },
-        { $group: { _id: null, totalRevenue: { $sum: "$total" } } },
-      ]),
-    ]);
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-  return {
+  const startOfThisWeek = new Date(now);
+  startOfThisWeek.setDate(now.getDate() - 6);
+  startOfThisWeek.setHours(0, 0, 0, 0);
+
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  const [
     total,
     pending,
+    confirmed,
+    packing,
     shipping,
     completed,
     cancelled,
-    revenue: revenue?.[0]?.totalRevenue || 0,
+    refunded,
+    thisMonthOrders,
+    lastMonthOrders,
+    recentOrders,
+    totalRevenueAgg,
+    dailyRevenueAgg,
+    monthlyRevenueAgg
+  ] = await Promise.all([
+    Order.countDocuments(),
+    Order.countDocuments({ status: "pending" }),
+    Order.countDocuments({ status: "confirmed" }),
+    Order.countDocuments({ status: "packing" }),
+    Order.countDocuments({ status: "shipping" }),
+    Order.countDocuments({ status: "completed" }),
+    Order.countDocuments({ status: "cancelled" }),
+    Order.countDocuments({ status: "refunded" }),
+    Order.aggregate([
+      { $match: { createdAt: { $gte: startOfThisMonth } } },
+      { $group: { 
+          _id: null, 
+          count: { $sum: 1 }, 
+          revenue: { 
+            $sum: { $cond: [{ $eq: ["$status", "completed"] }, "$total", 0] } 
+          }
+      }}
+    ]),
+    Order.aggregate([
+      { $match: { createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } } },
+      { $group: { 
+          _id: null, 
+          count: { $sum: 1 }, 
+          revenue: { 
+            $sum: { $cond: [{ $eq: ["$status", "completed"] }, "$total", 0] } 
+          }
+      }}
+    ]),
+    Order.find().sort({ createdAt: -1 }).limit(5),
+    Order.aggregate([
+      { $match: { status: "completed" } },
+      { $group: { _id: null, totalRevenue: { $sum: "$total" } } },
+    ]),
+    Order.aggregate([
+      { $match: { status: "completed", createdAt: { $gte: startOfThisWeek } } },
+      { $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+07:00" } },
+          revenue: { $sum: "$total" },
+          count: { $sum: 1 }
+      }}
+    ]),
+    Order.aggregate([
+      { $match: { status: "completed", createdAt: { $gte: startOfYear } } },
+      { $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: "+07:00" } },
+          revenue: { $sum: "$total" },
+          count: { $sum: 1 }
+      }},
+      { $sort: { _id: 1 } }
+    ])
+  ]);
+
+  const topProductsAgg = await Order.aggregate([
+    { $match: { status: "completed" } },
+    { $unwind: "$items" },
+    { $group: {
+        _id: "$items.productId",
+        name: { $first: "$items.productName" },
+        image: { $first: "$items.image" },
+        soldAmount: { $sum: "$items.quantity" },
+        revenue: { $sum: "$items.lineTotal" }
+    }},
+    { $sort: { soldAmount: -1 } },
+    { $limit: 5 }
+  ]);
+
+  return {
+    monthRevenue: thisMonthOrders?.[0]?.revenue || 0,
+    lastMonthRevenue: lastMonthOrders?.[0]?.revenue || 0,
+    monthOrderCount: thisMonthOrders?.[0]?.count || 0,
+    lastMonthOrderCount: lastMonthOrders?.[0]?.count || 0,
+    byStatus: {
+      pending,
+      confirmed,
+      packing,
+      shipping,
+      completed,
+      cancelled,
+      refunded
+    },
+    revenue: totalRevenueAgg?.[0]?.totalRevenue || 0,
+    total,
+    recentOrders,
+    dailyRevenue: dailyRevenueAgg,
+    monthlyRevenue: monthlyRevenueAgg,
+    topProducts: topProductsAgg
   };
 }
 
