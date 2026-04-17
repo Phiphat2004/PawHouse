@@ -133,7 +133,10 @@ export default function ProductTable({
                   </td>
 
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs truncate">
+                    <div
+                      className="text-sm font-medium text-gray-900 max-w-[200px] truncate"
+                      title={getCategoryNames(product.categoryIds)}
+                    >
                       {getCategoryNames(product.categoryIds)}
                     </div>
                   </td>

@@ -406,31 +406,54 @@ export default function ProductForm({
                     Chưa có danh mục nào
                   </p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
-                    {categories.map((category) => (
-                      <label
-                        key={category._id}
-                        className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 transition-all ${formData.categoryIds.includes(category._id)
-                          ? "border-orange-500 bg-orange-50"
-                          : "border-gray-200 hover:border-orange-200 hover:bg-gray-50"
-                          }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.categoryIds.includes(category._id)}
-                          onChange={() => handleCategoryChange(category._id)}
-                          className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
-                        />
-                        <span
-                          className={`text-sm font-medium ${formData.categoryIds.includes(category._id)
-                            ? "text-orange-700"
-                            : "text-gray-700"
-                            }`}
-                        >
-                          {category.name}
-                        </span>
-                      </label>
-                    ))}
+                  <div className="max-h-64 overflow-y-auto pr-2 space-y-4">
+                    {categories
+                      .filter((c) => !c.parentCategory)
+                      .map((rootCat) => {
+                        const childCats = categories.filter(
+                          (c) => c.parentCategory === rootCat._id || c.parentCategory?._id === rootCat._id
+                        );
+
+                        return (
+                          <div key={rootCat._id} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <div className="font-semibold text-gray-800 mb-2 px-1 text-sm uppercase tracking-wider">
+                              {rootCat.name}
+                            </div>
+                            {childCats.length === 0 ? (
+                              <p className="text-xs text-gray-500 px-1 italic">Chưa có danh mục con</p>
+                            ) : (
+                              <div className="grid grid-cols-2 gap-2">
+                                {childCats.map((child) => (
+                                  <label
+                                    key={child._id}
+                                    className={`flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border-2 transition-all bg-white ${
+                                      formData.categoryIds.includes(child._id)
+                                        ? "border-orange-500 bg-orange-50"
+                                        : "border-gray-200 hover:border-orange-200"
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.categoryIds.includes(child._id)}
+                                      onChange={() => handleCategoryChange(child._id)}
+                                      className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 shrink-0"
+                                    />
+                                    <span
+                                      className={`text-sm font-medium ${
+                                        formData.categoryIds.includes(child._id)
+                                          ? "text-orange-700"
+                                          : "text-gray-700"
+                                      }`}
+                                    >
+                                      {child.name}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                   </div>
                 )}
               </div>

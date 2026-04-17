@@ -43,7 +43,7 @@ export default function CategoryTable({
                 Tên danh mục
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Slug
+                Danh mục cha
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Số lượng sản phẩm
@@ -71,20 +71,15 @@ export default function CategoryTable({
                       <FolderOutlined className="text-orange-600 text-lg" />
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 block">
                         {category.name}
                       </div>
-                      {category.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {category.description}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 font-mono">
-                    {category.slug}
+                  <div className="text-sm text-gray-500">
+                    {category.parentCategory ? category.parentCategory.name : "-"}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

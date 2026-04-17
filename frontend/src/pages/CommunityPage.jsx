@@ -74,13 +74,12 @@ export default function CommunityPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="relative bg-linear-to-r from-orange-500 to-amber-500 text-white py-24 pt-32 mt-16">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pb-16">
-          <h1 className="text-4xl lg:text-6xl font-bold mb-4">
+      <section className="bg-linear-to-r from-orange-500 to-amber-500 text-white pt-28 pb-10 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-2">
             🌐 Cộng đồng PawHouse
           </h1>
-          <p className="text-xl lg:text-2xl text-white/90 max-w-2xl mx-auto">
+          <p className="text-lg text-white/90 max-w-2xl mx-auto">
             Khám phá những câu chuyện, mẹo chăm sóc và kiến thức hữu ích về
             thú cưng
           </p>
@@ -88,7 +87,7 @@ export default function CommunityPage() {
       </section>
 
       {/* Search & Filter Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="flex-1 w-full">

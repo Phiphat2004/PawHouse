@@ -5,6 +5,7 @@ import { productApi } from "../../utils/services/api";
 import Toast from "../../components/layout/Toast";
 import ProductForm from "../../components/admin/ProductForm";
 import { hasWriteAccessForCatalog } from "../../utils/role";
+import { EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
 
 export default function AdminProductDetailPage() {
   const canManage = hasWriteAccessForCatalog();
@@ -169,27 +170,27 @@ export default function AdminProductDetailPage() {
             </div>
           </div>
           {canManage ? (
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={handleToggleStatus}
-                className={`px-6 py-3 rounded-lg font-medium transition-all ${product.isActive
-                  ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                  : "bg-green-100 text-green-700 hover:bg-green-200"
+                className={`px-4 py-2 rounded-lg font-medium border flex items-center justify-center gap-2 transition-all ${product.isActive
+                  ? "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
+                  : "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                   }`}
               >
-                {product.isActive ? "Tạm ngưng" : "Kích hoạt"}
+                {product.isActive ? <><PauseCircleOutlined /> Tạm ngưng</> : <><PlayCircleOutlined /> Kích hoạt</>}
               </button>
               <button
                 onClick={handleEditClick}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                Chỉnh sửa
+                <EditOutlined /> Chỉnh sửa
               </button>
               <button
                 onClick={handleDeleteClick}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+                className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                Xóa
+                <DeleteOutlined /> Xóa
               </button>
             </div>
           ) : (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { productApi, categoryApi } from "../services/api";
@@ -13,6 +13,30 @@ export default function ProductsPage() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState({});
+  const dropdownRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleNode = (id, e) => {
+    e.stopPropagation();
+    setExpandedNodes(prev => ({...prev, [id]: !prev[id]}));
+  };
+
+  const handleSelectCategory = (id) => {
+    setFilterCategory(id);
+    setIsDropdownOpen(false);
+  };
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -50,13 +74,17 @@ export default function ProductsPage() {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchCategory =
-      !filterCategory ||
-      product.categoryIds?.some((id) =>
-        typeof id === "string"
-          ? id === filterCategory
-          : id._id === filterCategory,
-      );
+    const matchCategory = !filterCategory || (() => {
+      const childCatIds = categories
+        .filter(c => c.parentCategory === filterCategory || c.parentCategory?._id === filterCategory)
+        .map(c => c._id);
+      const validIds = [filterCategory, ...childCatIds];
+      
+      return product.categoryIds?.some((id) => {
+        const pid = typeof id === "string" ? id : id._id;
+        return validIds.includes(pid);
+      });
+    })();
 
     return matchSearch && matchCategory;
   });
@@ -81,17 +109,19 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Sản phẩm của chúng tôi
+      {/* Hero Banner */}
+      <section className="bg-linear-to-r from-orange-500 to-amber-500 text-white pt-28 pb-10 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+            🛍️ Sản phẩm PawHouse
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-white/90 max-w-2xl mx-auto">
             Khám phá bộ sưu tập sản phẩm chăm sóc thú cưng chất lượng cao
           </p>
         </div>
+      </section>
 
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -111,20 +141,72 @@ export default function ProductsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Danh mục
               </label>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="">Tất cả danh mục</option>
-                {categories
-                  .filter((cat) => cat.isActive)
-                  .map((cat) => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </option>
-                  ))}
-              </select>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-left flex justify-between items-center transition-all shadow-sm hover:border-orange-300"
+                >
+                  <span className="truncate font-medium text-gray-700">
+                    {filterCategory 
+                      ? categories.find(c => c._id === filterCategory)?.name || "Đã chọn"
+                      : "Tất cả danh mục"}
+                  </span>
+                  <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto animate-fade-in-down">
+                    <div 
+                      onClick={() => handleSelectCategory("")}
+                      className={`px-4 py-3.5 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 ${!filterCategory ? "font-bold text-orange-600 bg-orange-50/50" : "text-gray-700"}`}
+                    >
+                      Tất cả danh mục
+                    </div>
+                    
+                    {categories.filter(c => !c.parentCategory && c.isActive).map(root => {
+                      const children = categories.filter(c => (c.parentCategory === root._id || c.parentCategory?._id === root._id) && c.isActive);
+                      const isExpanded = expandedNodes[root._id];
+                      
+                      return (
+                        <div key={root._id} className="border-b border-gray-50 last:border-0">
+                          <div className={`flex items-center justify-between px-2 hover:bg-gray-50 transition-colors ${filterCategory === root._id ? "bg-orange-50/30" : ""}`}>
+                            <div 
+                              onClick={() => handleSelectCategory(root._id)}
+                              className={`flex-grow cursor-pointer px-2 py-3 ${filterCategory === root._id ? "font-bold text-orange-600" : "font-semibold text-gray-800"}`}
+                            >
+                              {root.name}
+                            </div>
+                            
+                            {children.length > 0 && (
+                              <button 
+                                onClick={(e) => toggleNode(root._id, e)}
+                                className={`p-2 mr-1 rounded-full transition-colors ${isExpanded ? "text-orange-500 bg-orange-100/50" : "text-gray-400 hover:text-orange-500 hover:bg-orange-50"}`}
+                              >
+                                <svg className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                              </button>
+                            )}
+                          </div>
+                          
+                          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
+                            <div className="bg-gray-50/50 py-1 border-l-2 border-orange-200 ml-4 mb-2 mr-2 rounded-r-lg">
+                              {children.map(child => (
+                                <div
+                                  key={child._id}
+                                  onClick={() => handleSelectCategory(child._id)}
+                                  className={`px-4 py-2.5 cursor-pointer hover:bg-orange-100 hover:text-orange-700 transition-colors ${filterCategory === child._id ? "font-bold text-orange-600 bg-orange-100/50" : "text-gray-600"}`}
+                                >
+                                  {child.name}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
