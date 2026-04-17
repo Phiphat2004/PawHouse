@@ -1,12 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
-const {
-  User,
-  EmailVerificationOtp,
-  PasswordResetOtp,
-  Session,
-} = require("../models");
+const { User, OtpToken, Session } = require("../models");
 const { sendOtpEmail } = require("./email.service");
 
 function generateOtp() {
@@ -73,15 +68,19 @@ async function register({ fullName, email, password }) {
   }
 
   // Generate and send OTP
-  await EmailVerificationOtp.deleteMany({ email: email.toLowerCase() });
+  await OtpToken.deleteMany({
+    email: email.toLowerCase(),
+    type: "email_verification",
+  });
   const otp = generateOtp();
   const otpHash = await bcrypt.hash(otp, config.bcrypt.saltRounds);
   const expiresAt = new Date(
     Date.now() + config.otp.expiresMinutes * 60 * 1000,
   );
 
-  await EmailVerificationOtp.create({
+  await OtpToken.create({
     email: email.toLowerCase(),
+    type: "email_verification",
     otpHash,
     expiresAt,
   });
@@ -101,8 +100,9 @@ async function verifyOtp({ email, otp }) {
     throw { status: 400, message: "Email và mã OTP là bắt buộc" };
   }
 
-  const otpRecord = await EmailVerificationOtp.findOne({
+  const otpRecord = await OtpToken.findOne({
     email: email.toLowerCase(),
+    type: "email_verification",
     usedAt: null,
   }).sort({ createdAt: -1 });
 
@@ -148,15 +148,19 @@ async function resendOtp({ email }) {
     throw { status: 400, message: "Tài khoản đã được xác thực" };
   }
 
-  await EmailVerificationOtp.deleteMany({ email: email.toLowerCase() });
+  await OtpToken.deleteMany({
+    email: email.toLowerCase(),
+    type: "email_verification",
+  });
   const otp = generateOtp();
   const otpHash = await bcrypt.hash(otp, config.bcrypt.saltRounds);
   const expiresAt = new Date(
     Date.now() + config.otp.expiresMinutes * 60 * 1000,
   );
 
-  await EmailVerificationOtp.create({
+  await OtpToken.create({
     email: email.toLowerCase(),
+    type: "email_verification",
     otpHash,
     expiresAt,
   });
@@ -386,15 +390,19 @@ async function forgotPassword({ email }) {
     throw { status: 400, message: "Tài khoản chưa được xác thực" };
   }
 
-  await PasswordResetOtp.deleteMany({ email: email.toLowerCase() });
+  await OtpToken.deleteMany({
+    email: email.toLowerCase(),
+    type: "password_reset",
+  });
   const otp = generateOtp();
   const otpHash = await bcrypt.hash(otp, config.bcrypt.saltRounds);
   const expiresAt = new Date(
     Date.now() + config.otp.expiresMinutes * 60 * 1000,
   );
 
-  await PasswordResetOtp.create({
+  await OtpToken.create({
     email: email.toLowerCase(),
+    type: "password_reset",
     otpHash,
     expiresAt,
   });
@@ -413,8 +421,9 @@ async function verifyResetOtp({ email, otp }) {
     throw { status: 400, message: "Email và mã OTP là bắt buộc" };
   }
 
-  const otpRecord = await PasswordResetOtp.findOne({
+  const otpRecord = await OtpToken.findOne({
     email: email.toLowerCase(),
+    type: "password_reset",
     usedAt: null,
   }).sort({ createdAt: -1 });
 
