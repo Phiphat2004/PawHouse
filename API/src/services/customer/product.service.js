@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const { Product, StockLevel, Category } = require("../../models");
 
-const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId("000000000000000000000001");
+const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId(
+  "000000000000000000000001",
+);
 const DEFAULT_WAREHOUSE = {
   name: "Kho Cần Thơ",
   code: "WH001",
@@ -14,6 +16,34 @@ const DEFAULT_WAREHOUSE = {
   },
   isActive: true,
 };
+
+/**
+ * Get total stock quantity for a product from all warehouses
+ */
+async function getProductStock(productId) {
+  const stockLevels = await StockLevel.find({ productId });
+  return stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+}
+
+/**
+ * Enrich product with stock data from StockLevel
+ */
+async function enrichProductWithStock(product) {
+  if (!product) return product;
+  const stock = await getProductStock(product._id);
+  const productObj = product.toObject ? product.toObject() : product;
+  return { ...productObj, stock };
+}
+
+/**
+ * Enrich multiple products with stock data
+ */
+async function enrichProductsWithStock(products) {
+  const enriched = await Promise.all(
+    products.map((p) => enrichProductWithStock(p)),
+  );
+  return enriched;
+}
 
 /**
  * Get all products with pagination and filtering (Legacy Logic)
@@ -33,8 +63,10 @@ async function getAllProducts({
   }
 
   if (categoryId) {
-    const childCategories = await Category.find({ parentCategory: categoryId }).select("_id").lean();
-    const allIds = [categoryId, ...childCategories.map(c => c._id)];
+    const childCategories = await Category.find({ parentCategory: categoryId })
+      .select("_id")
+      .lean();
+    const allIds = [categoryId, ...childCategories.map((c) => c._id)];
     query.categoryIds = { $in: allIds };
   }
 
@@ -57,8 +89,10 @@ async function getAllProducts({
     Product.countDocuments(query),
   ]);
 
+  const enrichedProducts = await enrichProductsWithStock(products);
+
   return {
-    products,
+    products: enrichedProducts,
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -72,33 +106,36 @@ async function getAllProducts({
  * Get product by ID
  */
 async function getProductById(id) {
-  return Product.findOne({ _id: id, isDeleted: { $ne: true } }).populate(
-    "categoryIds",
-    "name slug",
-  );
+  const product = await Product.findOne({
+    _id: id,
+    isDeleted: { $ne: true },
+  }).populate("categoryIds", "name slug");
+  return enrichProductWithStock(product);
 }
 
 /**
  * Get product by slug
  */
 async function getProductBySlug(slug) {
-  return Product.findOne({ slug, isDeleted: { $ne: true } }).populate(
-    "categoryIds",
-    "name slug",
-  );
+  const product = await Product.findOne({
+    slug,
+    isDeleted: { $ne: true },
+  }).populate("categoryIds", "name slug");
+  return enrichProductWithStock(product);
 }
 
 /**
  * Search products (Regex-based search like Legacy)
  */
 async function searchProducts(q) {
-  return Product.find({
+  const products = await Product.find({
     name: { $regex: q, $options: "i" },
     isDeleted: { $ne: true },
   })
     .limit(50)
     .populate("categoryIds", "name slug")
     .sort({ createdAt: -1 });
+  return enrichProductsWithStock(products);
 }
 
 /**
@@ -139,10 +176,14 @@ async function createProduct(data, userRoles, userId) {
   const normalizedPrice = Number(price);
   const normalizedStock = Number(stock);
   // compareAtPrice=0 means "no discount" (will be saved as undefined)
-  const rawCompareAt = compareAtPrice === undefined || compareAtPrice === null || compareAtPrice === ""
-    ? undefined
-    : Number(compareAtPrice);
-  const normalizedCompareAtPrice = rawCompareAt === 0 ? undefined : rawCompareAt;
+  const rawCompareAt =
+    compareAtPrice === undefined ||
+    compareAtPrice === null ||
+    compareAtPrice === ""
+      ? undefined
+      : Number(compareAtPrice);
+  const normalizedCompareAtPrice =
+    rawCompareAt === 0 ? undefined : rawCompareAt;
 
   if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
     const error = new Error("Giá sản phẩm không hợp lệ");
@@ -197,7 +238,6 @@ async function createProduct(data, userRoles, userId) {
     images: images || [],
     isActive: isActive !== false,
     price: normalizedPrice,
-    stock: normalizedStock,
     sku: sku.toUpperCase(),
     compareAtPrice: normalizedCompareAtPrice,
     createdBy: userId,
@@ -205,16 +245,30 @@ async function createProduct(data, userRoles, userId) {
 
   await product.save();
 
-  // Legacy StockLevel Initialization
+  // Initialize StockLevel with initial stock quantity
   try {
-    if (stock > 0) {
+    if (normalizedStock > 0) {
       await StockLevel.findOneAndUpdate(
         { productId: product._id, warehouseId: DEFAULT_WAREHOUSE_ID },
         {
           $setOnInsert: {
-            quantity: stock,
+            quantity: normalizedStock,
             reservedQuantity: 0,
-            availableQuantity: stock,
+            availableQuantity: normalizedStock,
+            warehouse: DEFAULT_WAREHOUSE,
+          },
+        },
+        { upsert: true },
+      );
+    } else {
+      // Create StockLevel with 0 quantity if no initial stock
+      await StockLevel.findOneAndUpdate(
+        { productId: product._id, warehouseId: DEFAULT_WAREHOUSE_ID },
+        {
+          $setOnInsert: {
+            quantity: 0,
+            reservedQuantity: 0,
+            availableQuantity: 0,
             warehouse: DEFAULT_WAREHOUSE,
           },
         },
@@ -228,7 +282,8 @@ async function createProduct(data, userRoles, userId) {
     );
   }
 
-  return product.populate("categoryIds", "name slug");
+  await product.populate("categoryIds", "name slug");
+  return enrichProductWithStock(product);
 }
 
 /**
@@ -297,9 +352,12 @@ async function updateProduct(id, data, userRoles) {
   const normalizedPrice = price !== undefined ? Number(price) : undefined;
   const normalizedStock = stock !== undefined ? Number(stock) : undefined;
   // compareAtPrice=0 means "remove discount" (will be saved as undefined)
-  const rawCompareAt = compareAtPrice === undefined || compareAtPrice === null || compareAtPrice === ""
-    ? undefined
-    : Number(compareAtPrice);
+  const rawCompareAt =
+    compareAtPrice === undefined ||
+    compareAtPrice === null ||
+    compareAtPrice === ""
+      ? undefined
+      : Number(compareAtPrice);
   const normalizedCompareAtPrice = rawCompareAt === 0 ? null : rawCompareAt;
 
   if (
@@ -334,14 +392,42 @@ async function updateProduct(id, data, userRoles) {
   }
 
   if (normalizedPrice !== undefined) product.price = normalizedPrice;
-  if (normalizedStock !== undefined) product.stock = normalizedStock;
   if (sku !== undefined) product.sku = sku.toUpperCase();
   // null means "remove discount", undefined means "unchanged"
   if (compareAtPrice !== undefined)
-    product.compareAtPrice = normalizedCompareAtPrice === null ? undefined : normalizedCompareAtPrice;
+    product.compareAtPrice =
+      normalizedCompareAtPrice === null ? undefined : normalizedCompareAtPrice;
 
   await product.save();
-  return product.populate("categoryIds", "name slug");
+
+  // Update StockLevel if stock is provided
+  if (normalizedStock !== undefined) {
+    try {
+      const existingLevel = await StockLevel.findOne({
+        productId: id,
+        warehouseId: DEFAULT_WAREHOUSE_ID,
+      });
+      const reservedQty = existingLevel?.reservedQuantity || 0;
+      await StockLevel.findOneAndUpdate(
+        { productId: id, warehouseId: DEFAULT_WAREHOUSE_ID },
+        {
+          $set: {
+            quantity: normalizedStock,
+            availableQuantity: Math.max(0, normalizedStock - reservedQty),
+          },
+        },
+        { upsert: true },
+      );
+    } catch (slErr) {
+      console.warn(
+        "[Product] Could not update StockLevel (non-fatal):",
+        slErr.message,
+      );
+    }
+  }
+
+  await product.populate("categoryIds", "name slug");
+  return enrichProductWithStock(product);
 }
 
 /**
@@ -349,6 +435,9 @@ async function updateProduct(id, data, userRoles) {
  */
 async function deleteProduct(id) {
   const product = await Product.findOne({
+    getProductStock,
+    enrichProductWithStock,
+    enrichProductsWithStock,
     _id: id,
     isDeleted: { $ne: true },
   });

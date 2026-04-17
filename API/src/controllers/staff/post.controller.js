@@ -71,17 +71,15 @@ const uploadImage = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search, status, tagId } = req.query;
+    const { page = 1, limit = 20, search, status } = req.query;
     const query = { authorId: req.user._id };
     if (search) query.$text = { $search: search };
     if (status) query.status = status;
-    if (tagId) query.tagIds = tagId;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate("authorId", "email profile")
-        .populate("tagIds", "name slug")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -104,7 +102,7 @@ const getAll = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
-    const { title, slug, excerpt, content, coverImageUrl, tagIds } = req.body;
+    const { title, slug, excerpt, content, coverImageUrl } = req.body;
     if (!title || !content) {
       return res.status(400).json({ error: "Tiêu đề và nội dung là bắt buộc" });
     }
@@ -127,12 +125,12 @@ const create = async (req, res, next) => {
       coverImageUrl,
       status: "draft",
       authorId: req.user.userId || req.user._id,
-      tagIds: tagIds || [],
     });
 
-    const populatedPost = await Post.findById(post._id)
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const populatedPost = await Post.findById(post._id).populate(
+      "authorId",
+      "email profile",
+    );
 
     await notifyAdminsPendingApproval({
       post: populatedPost,
@@ -148,7 +146,7 @@ const create = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const { title, slug, excerpt, content, coverImageUrl, tagIds } = req.body;
+    const { title, slug, excerpt, content, coverImageUrl } = req.body;
     const requesterId = req.user.userId || req.user._id;
     const post = await Post.findById(req.params.id);
     if (!post) {
@@ -173,15 +171,15 @@ const update = async (req, res, next) => {
     if (excerpt !== undefined) post.excerpt = excerpt;
     if (content !== undefined) post.content = content;
     if (coverImageUrl !== undefined) post.coverImageUrl = coverImageUrl;
-    if (tagIds !== undefined) post.tagIds = tagIds;
 
     post.status = "draft";
     post.publishedAt = null;
 
     await post.save();
-    const updatedPost = await Post.findById(post._id)
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const updatedPost = await Post.findById(post._id).populate(
+      "authorId",
+      "email profile",
+    );
 
     await notifyAdminsPendingApproval({
       post: updatedPost,
@@ -206,7 +204,6 @@ const getMyPosts = async (req, res, next) => {
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate("authorId", "email profile")
-        .populate("tagIds", "name slug")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),

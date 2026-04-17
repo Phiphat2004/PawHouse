@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { CareAppointment, User } = require("../../models");
+const { CareAppointment, Service, User } = require("../../models");
 const emailService = require("../email.service");
 
 const APPOINTMENT_STATUSES = [
@@ -60,10 +60,60 @@ function validateScheduleNotPast(normalizedDate, startMinutes) {
   }
 }
 
+async function resolveService(
+  { serviceId, serviceType },
+  fallbackServiceType = "",
+) {
+  if (
+    serviceId !== undefined &&
+    serviceId !== null &&
+    String(serviceId).trim()
+  ) {
+    if (!mongoose.Types.ObjectId.isValid(String(serviceId).trim())) {
+      const error = new Error("Dịch vụ không hợp lệ");
+      error.status = 400;
+      throw error;
+    }
+
+    const foundService = await Service.findById(String(serviceId).trim());
+    if (!foundService) {
+      const error = new Error("Không tìm thấy dịch vụ");
+      error.status = 404;
+      throw error;
+    }
+
+    return {
+      serviceId: foundService._id,
+      serviceType: foundService.name,
+    };
+  }
+
+  const normalizedServiceType = String(
+    serviceType !== undefined ? serviceType : fallbackServiceType,
+  ).trim();
+
+  if (!normalizedServiceType) {
+    const error = new Error("Thiếu thông tin dịch vụ");
+    error.status = 400;
+    throw error;
+  }
+
+  let foundService = await Service.findOne({ name: normalizedServiceType });
+  if (!foundService) {
+    foundService = await Service.create({ name: normalizedServiceType });
+  }
+
+  return {
+    serviceId: foundService._id,
+    serviceType: foundService.name,
+  };
+}
+
 async function createAppointment(customerId, payload) {
   const {
     petName,
     petType,
+    serviceId,
     serviceType,
     appointmentDate,
     startTime,
@@ -71,11 +121,13 @@ async function createAppointment(customerId, payload) {
     paymentMethod,
   } = payload;
 
-  if (!petName || !petType || !serviceType || !appointmentDate || !startTime) {
+  if (!petName || !petType || !appointmentDate || !startTime) {
     const error = new Error("Thiếu thông tin đặt lịch");
     error.status = 400;
     throw error;
   }
+
+  const resolvedService = await resolveService({ serviceId, serviceType });
 
   const normalizedDate = normalizeDateOnly(appointmentDate);
   if (!normalizedDate) {
@@ -110,7 +162,8 @@ async function createAppointment(customerId, payload) {
     customerId,
     petName: String(petName).trim(),
     petType: String(petType).trim(),
-    serviceType: String(serviceType).trim(),
+    serviceId: resolvedService.serviceId,
+    serviceType: resolvedService.serviceType,
     appointmentDate: normalizedDate,
     startTime,
     note: note ? String(note).trim() : "",
@@ -176,10 +229,22 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
     payload.petType !== undefined
       ? String(payload.petType).trim()
       : appointment.petType;
-  const nextServiceType =
-    payload.serviceType !== undefined
-      ? String(payload.serviceType).trim()
-      : appointment.serviceType;
+
+  const resolvedService = await resolveService(
+    {
+      serviceId:
+        payload.serviceId !== undefined
+          ? payload.serviceId
+          : appointment.serviceId,
+      serviceType:
+        payload.serviceType !== undefined
+          ? payload.serviceType
+          : appointment.serviceType,
+    },
+    appointment.serviceType,
+  );
+
+  const nextServiceType = resolvedService.serviceType;
   const nextDate =
     payload.appointmentDate !== undefined
       ? normalizeDateOnly(payload.appointmentDate)
@@ -229,6 +294,7 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
 
   appointment.petName = nextPetName;
   appointment.petType = nextPetType;
+  appointment.serviceId = resolvedService.serviceId;
   appointment.serviceType = nextServiceType;
   appointment.appointmentDate = nextDate;
   appointment.startTime = nextStartTime;

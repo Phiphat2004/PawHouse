@@ -56,6 +56,7 @@ async function getAppointmentsForStaff({
   const [appointments, total] = await Promise.all([
     CareAppointment.find(query)
       .populate("customerId", "email profile.fullName phone")
+      .populate("serviceId", "name durationMinutes basePrice isActive")
       .populate("reviewedBy", "email profile.fullName")
       .sort({ appointmentDate: 1, startTime: 1, createdAt: -1 })
       .skip(skip)
@@ -81,10 +82,9 @@ async function approveAppointment(appointmentId, reviewerId) {
     throw error;
   }
 
-  const appointment = await CareAppointment.findById(appointmentId).populate(
-    "customerId",
-    "email profile.fullName",
-  );
+  const appointment = await CareAppointment.findById(appointmentId)
+    .populate("customerId", "email profile.fullName")
+    .populate("serviceId", "name durationMinutes basePrice isActive");
   if (!appointment) {
     const error = new Error("Không tìm thấy lịch hẹn");
     error.status = 404;

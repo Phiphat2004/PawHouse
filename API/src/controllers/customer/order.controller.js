@@ -2,11 +2,10 @@ const orderService = require("../../services/customer/order.service");
 
 const createOrder = async (req, res, next) => {
   try {
-    const { addressSnapshot, deliveryZoneId, note } = req.body;
+    const { addressSnapshot, note } = req.body;
 
     const result = await orderService.createOrder(req.user._id, {
       addressSnapshot,
-      deliveryZoneId,
       note,
     });
 

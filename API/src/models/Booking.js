@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const careAppointmentSchema = new mongoose.Schema(
+const bookingSchema = new mongoose.Schema(
   {
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -10,6 +10,11 @@ const careAppointmentSchema = new mongoose.Schema(
     },
     petName: { type: String, required: true, trim: true },
     petType: { type: String, required: true, trim: true },
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
+      index: true,
+    },
     serviceType: { type: String, required: true, trim: true },
     appointmentDate: { type: Date, required: true, index: true },
     startTime: { type: String, required: true },
@@ -47,10 +52,10 @@ const careAppointmentSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-careAppointmentSchema.index({
+bookingSchema.index({
   appointmentDate: 1,
   startTime: 1,
   status: 1,
 });
 
-module.exports = mongoose.model("CareAppointment", careAppointmentSchema);
+module.exports = mongoose.model("Booking", bookingSchema);

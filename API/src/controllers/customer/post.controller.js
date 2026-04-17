@@ -3,26 +3,23 @@ const postService = require("../../services/customer/post.service");
 
 const getPublicPosts = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search, tagId } = req.query;
+    const { page = 1, limit = 20, search } = req.query;
     if (search && String(search).trim()) {
       const result = await postService.searchPosts({
         q: search,
         page,
         limit,
-        tagId,
         status: "published",
       });
       return res.json(result);
     }
 
     const query = { status: "published" };
-    if (tagId) query.tagIds = tagId;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate("authorId", "email profile")
-        .populate("tagIds", "name slug")
         .sort({ publishedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -45,12 +42,11 @@ const getPublicPosts = async (req, res, next) => {
 
 const search = async (req, res, next) => {
   try {
-    const { q, page = 1, limit = 20, tagId } = req.query;
+    const { q, page = 1, limit = 20 } = req.query;
     const result = await postService.searchPosts({
       q,
       page,
       limit,
-      tagId,
       status: "published",
     });
     res.json(result);
@@ -61,9 +57,10 @@ const search = async (req, res, next) => {
 
 const getById = async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.id)
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const post = await Post.findById(req.params.id).populate(
+      "authorId",
+      "email profile",
+    );
     if (!post) {
       return res.status(404).json({ error: "Không tìm thấy bài viết" });
     }
@@ -88,9 +85,10 @@ const getById = async (req, res, next) => {
 
 const getBySlug = async (req, res, next) => {
   try {
-    const post = await Post.findOne({ slug: req.params.slug })
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const post = await Post.findOne({ slug: req.params.slug }).populate(
+      "authorId",
+      "email profile",
+    );
     if (!post) {
       return res.status(404).json({ error: "Không tìm thấy bài viết" });
     }

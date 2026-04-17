@@ -29,8 +29,6 @@ const createPostValidation = [
     .optional()
     .isIn(["draft", "published", "hidden"])
     .withMessage("Trạng thái không hợp lệ"),
-  body("tagIds").optional().isArray().withMessage("tagIds phải là mảng"),
-  body("tagIds.*").optional().isMongoId().withMessage("Tag ID không hợp lệ"),
 ];
 
 const updatePostValidation = [
@@ -55,8 +53,6 @@ const updatePostValidation = [
     .optional()
     .isIn(["draft", "published", "hidden"])
     .withMessage("Trạng thái không hợp lệ"),
-  body("tagIds").optional().isArray().withMessage("tagIds phải là mảng"),
-  body("tagIds.*").optional().isMongoId().withMessage("Tag ID không hợp lệ"),
 ];
 
 const idValidation = [

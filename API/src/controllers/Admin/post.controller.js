@@ -34,19 +34,17 @@ const uploadImage = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search, status, authorId, tagId } = req.query;
+    const { page = 1, limit = 20, search, status, authorId } = req.query;
 
     const query = {};
     if (search) query.$text = { $search: search };
     if (status) query.status = status;
     if (authorId) query.authorId = authorId;
-    if (tagId) query.tagIds = tagId;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [posts, total] = await Promise.all([
       Post.find(query)
         .populate("authorId", "email profile")
-        .populate("tagIds", "name slug")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit)),
@@ -69,8 +67,7 @@ const getAll = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
-    const { title, slug, excerpt, content, coverImageUrl, status, tagIds } =
-      req.body;
+    const { title, slug, excerpt, content, coverImageUrl, status } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ error: "Tiêu đề và nội dung là bắt buộc" });
@@ -94,16 +91,16 @@ const create = async (req, res, next) => {
       coverImageUrl,
       status: status === "published" ? "published" : "draft",
       authorId: req.user.userId || req.user._id,
-      tagIds: tagIds || [],
     };
     if (postData.status === "published") {
       postData.publishedAt = new Date();
     }
 
     const post = await Post.create(postData);
-    const populatedPost = await Post.findById(post._id)
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const populatedPost = await Post.findById(post._id).populate(
+      "authorId",
+      "email profile",
+    );
 
     res.status(201).json({ post: populatedPost });
   } catch (error) {
@@ -113,8 +110,7 @@ const create = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const { title, slug, excerpt, content, coverImageUrl, status, tagIds } =
-      req.body;
+    const { title, slug, excerpt, content, coverImageUrl, status } = req.body;
     const post = await Post.findById(req.params.id);
     if (!post) {
       return res.status(404).json({ error: "Không tìm thấy bài viết" });
@@ -132,7 +128,6 @@ const update = async (req, res, next) => {
     if (excerpt !== undefined) post.excerpt = excerpt;
     if (content !== undefined) post.content = content;
     if (coverImageUrl !== undefined) post.coverImageUrl = coverImageUrl;
-    if (tagIds !== undefined) post.tagIds = tagIds;
     if (status !== undefined) {
       post.status = status;
       if (status === "published" && !post.publishedAt) {
@@ -141,9 +136,10 @@ const update = async (req, res, next) => {
     }
 
     await post.save();
-    const updatedPost = await Post.findById(post._id)
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const updatedPost = await Post.findById(post._id).populate(
+      "authorId",
+      "email profile",
+    );
 
     res.json({ post: updatedPost });
   } catch (error) {
@@ -166,9 +162,10 @@ const toggleStatus = async (req, res, next) => {
     }
 
     await post.save();
-    const updatedPost = await Post.findById(post._id)
-      .populate("authorId", "email profile")
-      .populate("tagIds", "name slug");
+    const updatedPost = await Post.findById(post._id).populate(
+      "authorId",
+      "email profile",
+    );
     res.json({ post: updatedPost });
   } catch (error) {
     next(error);
