@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 const {
   Order,
+  OrderItem,
   Cart,
-  CartItem,
   Product,
   ProductVariation,
-  DeliveryZone,
   User,
+  StockLevel,
 } = require("../../models");
 const emailService = require("../email.service");
 
@@ -20,10 +20,27 @@ function generateOrderCode() {
 }
 
 /**
+ * Get total stock quantity for a product
+ */
+async function getProductStock(productId) {
+  const stockLevels = await StockLevel.find({ productId });
+  return stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+}
+
+/**
+ * Get stock for product variation or product
+ */
+async function getAvailableStock(productId, variationId) {
+  // For variations, we would need to implement variation-level stock tracking
+  // For now, return product stock
+  return getProductStock(productId);
+}
+
+/**
  * Create a new order from cart items
  */
 async function createOrder(userId, orderData) {
-  const { addressSnapshot, deliveryZoneId, note } = orderData;
+  const { addressSnapshot, note } = orderData;
 
   // Validate address
   if (
@@ -38,10 +55,9 @@ async function createOrder(userId, orderData) {
   }
 
   // Get user's cart
-  const cart = await Cart.findOne({ user_id: userId }).populate({
-    path: "items",
-    populate: { path: "product_id" },
-  });
+  const cart = await Cart.findOne({ user_id: userId }).populate(
+    "items.product_id",
+  );
 
   if (!cart || cart.items.length === 0) {
     const error = new Error("Giỏ hàng trống");
@@ -87,9 +103,7 @@ async function createOrder(userId, orderData) {
       variation?.price !== undefined && variation?.price !== null
         ? Number(variation.price)
         : Number(product.price) || 0;
-    const availableStock = variation
-      ? Number(variation.stock) || 0
-      : Number(product.stock) || 0;
+    const availableStock = await getAvailableStock(product._id, variation?._id);
 
     // Check stock availability
     if (availableStock < quantity) {
@@ -119,14 +133,7 @@ async function createOrder(userId, orderData) {
     subtotal += lineTotal;
   }
 
-  // Get delivery zone and calculate shipping fee
-  let shippingFee = 0;
-  if (deliveryZoneId) {
-    const zone = await DeliveryZone.findById(deliveryZoneId);
-    if (zone) {
-      shippingFee = zone.fee || 0;
-    }
-  }
+  const shippingFee = 0;
 
   const total = subtotal + shippingFee;
   const orderCode = generateOrderCode();
@@ -138,12 +145,10 @@ async function createOrder(userId, orderData) {
     orderCode,
     status: "pending",
     addressSnapshot,
-    deliveryZoneId: deliveryZoneId || null,
     shippingFee,
     subtotal,
     total,
     note: note || "",
-    items: orderItems,
     statusHistory: [
       {
         from: null,
@@ -156,6 +161,12 @@ async function createOrder(userId, orderData) {
   });
 
   await order.save();
+
+  if (orderItems.length) {
+    await OrderItem.insertMany(
+      orderItems.map((item) => ({ ...item, orderId: order._id })),
+    );
+  }
 
   // Create payment record
   const Payment =
@@ -185,28 +196,27 @@ async function createOrder(userId, orderData) {
   }
 
   // Clear user's cart
-  for (const cartItem of cart.items) {
-    await CartItem.findByIdAndDelete(cartItem._id);
-  }
   cart.items = [];
   cart.original_price = 0;
   cart.total_price = 0;
   await cart.save();
 
   const populatedOrder = await order.populate("userId", "name email phone");
+  const orderResponse = populatedOrder.toObject();
+  orderResponse.items = orderItems;
 
   // Send order confirmation email
   try {
     const user = await User.findById(userId);
     if (user && user.email) {
-      await emailService.sendOrderConfirmation(order.toObject(), user.email);
+      await emailService.sendOrderConfirmation(orderResponse, user.email);
     }
   } catch (err) {
     console.error("Error sending order confirmation email:", err.message);
     // Don't throw - order was already created successfully
   }
 
-  return populatedOrder;
+  return orderResponse;
 }
 
 /**
@@ -225,11 +235,14 @@ async function searchOrders(userId, filters = {}) {
   }
 
   if (search) {
-    // Search by order code or product name
+    const matchedOrderIds = await OrderItem.distinct("orderId", {
+      productName: { $regex: search, $options: "i" },
+    });
+
     query.$or = [
       { orderCode: { $regex: search, $options: "i" } },
       { orderNumber: { $regex: search, $options: "i" } },
-      { "items.productName": { $regex: search, $options: "i" } },
+      { _id: { $in: matchedOrderIds } },
     ];
   }
 
@@ -238,7 +251,6 @@ async function searchOrders(userId, filters = {}) {
   const [orders, total] = await Promise.all([
     Order.find(query)
       .populate("userId", "name email phone")
-      .populate("deliveryZoneId", "name fee")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit)),
@@ -299,11 +311,10 @@ async function getOrderById(orderId, userId) {
     query.userId = userId;
   }
 
-  const order = await Order.findOne(query)
-    .populate("userId", "name email phone")
-    .populate("deliveryZoneId", "name fee")
-    .populate("items.variationId")
-    .populate("items.productId", "name images");
+  const order = await Order.findOne(query).populate(
+    "userId",
+    "name email phone",
+  );
 
   if (!order) {
     const error = new Error("Không tìm thấy đơn hàng");
@@ -312,6 +323,15 @@ async function getOrderById(orderId, userId) {
   }
 
   const orderObj = order.toObject();
+  const separatedItems = await OrderItem.find({ orderId: order._id })
+    .populate("variationId")
+    .populate("productId", "name images")
+    .lean();
+
+  if (separatedItems.length) {
+    orderObj.items = separatedItems;
+  }
+
   const Payment =
     require("../../models").Payment || require("../../models/Payment");
   let payment = null;
@@ -447,16 +467,24 @@ async function getDashboardStats() {
     ]),
   ]);
 
-  const topProductsAgg = await Order.aggregate([
-    { $match: { status: "completed" } },
-    { $unwind: "$items" },
+  const topProductsAgg = await OrderItem.aggregate([
+    {
+      $lookup: {
+        from: "orders",
+        localField: "orderId",
+        foreignField: "_id",
+        as: "order",
+      },
+    },
+    { $unwind: "$order" },
+    { $match: { "order.status": "completed" } },
     {
       $group: {
-        _id: "$items.productId",
-        name: { $first: "$items.productName" },
-        image: { $first: "$items.image" },
-        soldAmount: { $sum: "$items.quantity" },
-        revenue: { $sum: "$items.lineTotal" },
+        _id: "$productId",
+        name: { $first: "$productName" },
+        image: { $first: "$image" },
+        soldAmount: { $sum: "$quantity" },
+        revenue: { $sum: "$lineTotal" },
       },
     },
     { $sort: { soldAmount: -1 } },
@@ -509,8 +537,10 @@ async function cancelOrder(orderId, userId, reason = "") {
     throw error;
   }
 
+  const orderItems = await OrderItem.find({ orderId: order._id }).lean();
+
   // Restore stock
-  for (const item of order.items) {
+  for (const item of orderItems) {
     if (item.variationId) {
       await ProductVariation.findByIdAndUpdate(item.variationId, {
         $inc: { stock: item.quantity },
@@ -539,7 +569,9 @@ async function cancelOrder(orderId, userId, reason = "") {
   try {
     const user = await User.findById(userId);
     if (user && user.email) {
-      await emailService.sendOrderStatusUpdate(order.toObject(), user.email);
+      const payload = order.toObject();
+      payload.items = orderItems;
+      await emailService.sendOrderStatusUpdate(payload, user.email);
     }
   } catch (err) {
     console.error("Error sending order cancellation email:", err.message);
@@ -642,7 +674,8 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   // Restore stock if the order is cancelled by Admin
   if (newStatus === "cancelled") {
-    for (const item of order.items) {
+    const orderItems = await OrderItem.find({ orderId: order._id }).lean();
+    for (const item of orderItems) {
       if (item.variationId) {
         await ProductVariation.findByIdAndUpdate(item.variationId, {
           $inc: { stock: item.quantity },
@@ -659,7 +692,9 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   try {
     const user = await User.findById(order.userId);
     if (user && user.email) {
-      await emailService.sendOrderStatusUpdate(order.toObject(), user.email);
+      const payload = order.toObject();
+      payload.items = await OrderItem.find({ orderId: order._id }).lean();
+      await emailService.sendOrderStatusUpdate(payload, user.email);
     }
   } catch (err) {
     console.error("Error sending order status update email:", err.message);

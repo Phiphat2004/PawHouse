@@ -1,9 +1,9 @@
-const { Cart, CartItem, Product } = require("../../models");
+const { Cart, Product, StockLevel } = require("../../models");
 
 async function recalculateCart(cart) {
   await cart.populate({
-    path: "items",
-    populate: { path: "product_id", select: "price compareAtPrice" },
+    path: "items.product_id",
+    select: "price compareAtPrice",
   });
 
   let original = 0;
@@ -20,14 +20,19 @@ async function recalculateCart(cart) {
   await cart.save();
 }
 
+/**
+ * Get total stock quantity for a product
+ */
+async function getProductStock(productId) {
+  const stockLevels = await StockLevel.find({ productId });
+  return stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+}
+
 const getCart = async (req, res, next) => {
   try {
     let cart = await Cart.findOne({ user_id: req.user._id }).populate({
-      path: "items",
-      populate: {
-        path: "product_id",
-        select: "name price compareAtPrice images slug stock",
-      },
+      path: "items.product_id",
+      select: "name price compareAtPrice images slug",
     });
 
     if (!cart) {
@@ -60,14 +65,12 @@ const addToCart = async (req, res, next) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    const productStock = Number(product.stock) || 0;
+    const productStock = await getProductStock(product_id);
 
     let cart = await Cart.findOne({ user_id: req.user._id });
     if (!cart) {
       cart = await Cart.create({ user_id: req.user._id, items: [] });
     }
-
-    await cart.populate("items");
 
     const existingItem = cart.items.find(
       (i) => i.product_id.toString() === product_id.toString(),
@@ -94,21 +97,16 @@ const addToCart = async (req, res, next) => {
         });
       }
 
-      const newItem = await CartItem.create({
-        cart_id: cart._id,
+      cart.items.push({
         product_id,
         quantity: qty,
       });
-      cart.items.push(newItem._id);
       await cart.save();
     }
 
     cart = await Cart.findById(cart._id).populate({
-      path: "items",
-      populate: {
-        path: "product_id",
-        select: "name price compareAtPrice images slug stock",
-      },
+      path: "items.product_id",
+      select: "name price compareAtPrice images slug",
     });
 
     await recalculateCart(cart);
@@ -132,19 +130,21 @@ const updateQuantity = async (req, res, next) => {
     const cart = await Cart.findOne({ user_id: req.user._id });
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    if (!cart.items.map(String).includes(itemId)) {
+    if (!cart.items.some((item) => item._id.toString() === itemId.toString())) {
       return res
         .status(403)
         .json({ message: "Item does not belong to your cart" });
     }
 
-    const item = await CartItem.findById(itemId);
+    const item = cart.items.find(
+      (entry) => entry._id.toString() === itemId.toString(),
+    );
     if (!item) return res.status(404).json({ message: "Cart item not found" });
 
-    const product = await Product.findById(item.product_id).select("stock");
+    const product = await Product.findById(item.product_id);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    const productStock = Number(product.stock) || 0;
+    const productStock = await getProductStock(item.product_id);
     if (qty > productStock) {
       return res.status(400).json({
         message: `Chỉ còn ${productStock} sản phẩm trong kho`,
@@ -154,16 +154,13 @@ const updateQuantity = async (req, res, next) => {
     }
 
     item.quantity = qty;
-    await item.save();
+    await cart.save();
 
     await recalculateCart(cart);
 
     const updatedCart = await Cart.findById(cart._id).populate({
-      path: "items",
-      populate: {
-        path: "product_id",
-        select: "name price compareAtPrice images slug stock",
-      },
+      path: "items.product_id",
+      select: "name price compareAtPrice images slug stock",
     });
 
     return res.json({ message: "Quantity updated", cart: updatedCart });
@@ -179,7 +176,7 @@ const removeItem = async (req, res, next) => {
       return res.status(400).json({ message: "product_id is required" });
 
     const cart = await Cart.findOne({ user_id: req.user._id }).populate(
-      "items",
+      "items.product_id",
     );
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
@@ -189,8 +186,6 @@ const removeItem = async (req, res, next) => {
     if (!item)
       return res.status(404).json({ message: "Item not found in cart" });
 
-    await CartItem.findByIdAndDelete(item._id);
-
     cart.items = cart.items.filter(
       (i) => i._id.toString() !== item._id.toString(),
     );
@@ -199,11 +194,8 @@ const removeItem = async (req, res, next) => {
     await recalculateCart(cart);
 
     const updatedCart = await Cart.findById(cart._id).populate({
-      path: "items",
-      populate: {
-        path: "product_id",
-        select: "name price compareAtPrice images slug stock",
-      },
+      path: "items.product_id",
+      select: "name price compareAtPrice images slug stock",
     });
 
     return res.json({ message: "Item removed from cart", cart: updatedCart });
@@ -216,8 +208,6 @@ const clearCart = async (req, res, next) => {
   try {
     const cart = await Cart.findOne({ user_id: req.user._id });
     if (!cart) return res.json({ message: "Cart already empty" });
-
-    await CartItem.deleteMany({ cart_id: cart._id });
 
     cart.items = [];
     cart.original_price = 0;

@@ -1,21 +1,5 @@
 const mongoose = require("mongoose");
 
-const orderItemSchema = new mongoose.Schema({
-  variationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "ProductVariation",
-    required: false,
-  },
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-  sku: { type: String },
-  productName: { type: String, required: true },
-  variationName: { type: String },
-  image: { type: String },
-  unitPrice: { type: Number, required: true, min: 0 },
-  quantity: { type: Number, required: true, min: 1 },
-  lineTotal: { type: Number, required: true, min: 0 },
-});
-
 const statusHistorySchema = new mongoose.Schema(
   {
     from: { type: String },
@@ -65,17 +49,11 @@ const orderSchema = new mongoose.Schema(
       addressLine: { type: String, required: true },
     },
 
-    deliveryZoneId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DeliveryZone",
-    },
     shippingFee: { type: Number, default: 0, min: 0 },
     subtotal: { type: Number, default: 0, min: 0 },
     total: { type: Number, default: 0, min: 0 },
 
     note: { type: String },
-
-    items: [orderItemSchema],
     statusHistory: [statusHistorySchema],
   },
   { timestamps: true },
