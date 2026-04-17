@@ -186,13 +186,13 @@ async function createProduct(data, userRoles, userId) {
     rawCompareAt === 0 ? undefined : rawCompareAt;
 
   if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
-    const error = new Error("Giá sản phẩm không hợp lệ");
+    const error = new Error("Invalid product price");
     error.status = 400;
     throw error;
   }
 
   if (Number.isNaN(normalizedStock) || normalizedStock < 0) {
-    const error = new Error("Số lượng tồn kho không hợp lệ");
+    const error = new Error("Invalid stock quantity");
     error.status = 400;
     throw error;
   }
@@ -202,7 +202,7 @@ async function createProduct(data, userRoles, userId) {
     (Number.isNaN(normalizedCompareAtPrice) ||
       normalizedCompareAtPrice <= normalizedPrice)
   ) {
-    const error = new Error("Giá so sánh phải lớn hơn giá bán");
+    const error = new Error("Compare price must be greater than sale price");
     error.status = 400;
     throw error;
   }
@@ -213,7 +213,7 @@ async function createProduct(data, userRoles, userId) {
     isDeleted: { $ne: true },
   });
   if (existingSKU) {
-    const error = new Error("Mã SKU đã tồn tại");
+    const error = new Error("SKU already exists");
     error.status = 400;
     throw error;
   }
@@ -224,7 +224,7 @@ async function createProduct(data, userRoles, userId) {
     isDeleted: { $ne: true },
   });
   if (existingSlug) {
-    const error = new Error("Slug đã tồn tại");
+    const error = new Error("Slug already exists");
     error.status = 400;
     throw error;
   }
@@ -309,7 +309,7 @@ async function updateProduct(id, data, userRoles) {
     isDeleted: { $ne: true },
   });
   if (!product) {
-    const error = new Error("Không tìm thấy sản phẩm");
+    const error = new Error("Product not found");
     error.status = 404;
     throw error;
   }
@@ -322,7 +322,7 @@ async function updateProduct(id, data, userRoles) {
       _id: { $ne: id },
     });
     if (existingSKU) {
-      const error = new Error("Mã SKU đã tồn tại");
+      const error = new Error("SKU already exists");
       error.status = 400;
       throw error;
     }
@@ -335,7 +335,7 @@ async function updateProduct(id, data, userRoles) {
       _id: { $ne: id },
     });
     if (existingProduct) {
-      const error = new Error("Slug đã tồn tại");
+      const error = new Error("Slug already exists");
       error.status = 400;
       throw error;
     }
@@ -364,7 +364,7 @@ async function updateProduct(id, data, userRoles) {
     normalizedPrice !== undefined &&
     (Number.isNaN(normalizedPrice) || normalizedPrice < 0)
   ) {
-    const error = new Error("Giá sản phẩm không hợp lệ");
+    const error = new Error("Invalid product price");
     error.status = 400;
     throw error;
   }
@@ -373,7 +373,7 @@ async function updateProduct(id, data, userRoles) {
     normalizedStock !== undefined &&
     (Number.isNaN(normalizedStock) || normalizedStock < 0)
   ) {
-    const error = new Error("Số lượng tồn kho không hợp lệ");
+    const error = new Error("Invalid stock quantity");
     error.status = 400;
     throw error;
   }
@@ -386,7 +386,7 @@ async function updateProduct(id, data, userRoles) {
     (Number.isNaN(normalizedCompareAtPrice) ||
       normalizedCompareAtPrice <= finalPrice)
   ) {
-    const error = new Error("Giá so sánh phải lớn hơn giá bán");
+    const error = new Error("Compare price must be greater than sale price");
     error.status = 400;
     throw error;
   }
@@ -442,7 +442,7 @@ async function deleteProduct(id) {
     isDeleted: { $ne: true },
   });
   if (!product) {
-    const error = new Error("Không tìm thấy sản phẩm");
+    const error = new Error("Product not found");
     error.status = 404;
     throw error;
   }
