@@ -314,12 +314,6 @@ export default function AdminLayout({ children }) {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <span className="text-xl">🔔</span>
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-              </div>
 
               <div className="relative">
                 <button
