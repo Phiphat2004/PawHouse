@@ -1,0 +1,79 @@
+const orderService = require("../../services/customer/order.service");
+
+const createOrder = async (req, res, next) => {
+  try {
+    const { addressSnapshot, deliveryZoneId, note } = req.body;
+
+    const result = await orderService.createOrder(req.user._id, {
+      addressSnapshot,
+      deliveryZoneId,
+      note,
+    });
+
+    res.status(201).json({
+      message: "Tạo đơn hàng thành công",
+      order: result.order || result,
+      reservedMovements: result.reservedMovements || [],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const searchOrders = async (req, res, next) => {
+  try {
+    const { status, page = 1, limit = 10, search } = req.query;
+    const result = await orderService.searchOrders(req.user._id, {
+      status,
+      page,
+      limit,
+      search,
+    });
+
+    res.json({
+      message: "Lấy danh sách đơn hàng thành công",
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getOrderById = async (req, res, next) => {
+  try {
+    const order = await orderService.getOrderById(req.params.id, req.user._id);
+
+    res.json({
+      message: "Lấy chi tiết đơn hàng thành công",
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const cancelOrder = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+
+    const order = await orderService.cancelOrder(
+      req.params.id,
+      req.user._id,
+      reason,
+    );
+
+    res.json({
+      message: "Huỷ đơn hàng thành công",
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  createOrder,
+  searchOrders,
+  getOrderById,
+  cancelOrder,
+};
