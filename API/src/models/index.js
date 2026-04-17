@@ -10,8 +10,7 @@ const Service = require("./Service");
 const CareAppointment = Booking;
 
 // Auth models
-const EmailVerificationOtp = require("./EmailVerificationOtp");
-const PasswordResetOtp = require("./PasswordResetOtp");
+const OtpToken = require("./OtpToken");
 const Session = require("./Session");
 
 // Order models
@@ -35,8 +34,7 @@ module.exports = {
   Service,
   CareAppointment,
   // Auth
-  EmailVerificationOtp,
-  PasswordResetOtp,
+  OtpToken,
   Session,
   // Order
   Payment,
