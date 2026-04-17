@@ -175,14 +175,19 @@ const removeItem = async (req, res, next) => {
     if (!product_id)
       return res.status(400).json({ message: "product_id is required" });
 
+    const requestedProductId = product_id.toString();
+
     const cart = await Cart.findOne({ user_id: req.user._id }).populate(
       "items.product_id",
     );
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    const item = cart.items.find(
-      (i) => i.product_id.toString() === product_id.toString(),
-    );
+    const item = cart.items.find((i) => {
+      const currentProductId = i.product_id?._id
+        ? i.product_id._id.toString()
+        : i.product_id.toString();
+      return currentProductId === requestedProductId;
+    });
     if (!item)
       return res.status(404).json({ message: "Item not found in cart" });
 

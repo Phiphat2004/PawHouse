@@ -283,6 +283,7 @@ async function reserveStock(orderId, items = [], createdBy) {
       continue;
     }
 
+    // StockLevel not found with sufficient stock - try fallback to ProductVariation stock or fail
     if (variationId) {
       const pv = await ProductVariation.findById(variationId);
       if (!pv) throw new Error("Product variation not found for reservation");
@@ -291,6 +292,7 @@ async function reserveStock(orderId, items = [], createdBy) {
           `Insufficient variation stock for reservation. Available: ${pv.stock || 0}, Requested: ${qty}`,
         );
       }
+      // Deduct from ProductVariation stock as fallback
       await ProductVariation.findByIdAndUpdate(variationId, {
         $inc: { stock: -qty },
       });
@@ -301,7 +303,7 @@ async function reserveStock(orderId, items = [], createdBy) {
         warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: "RESERVE",
         quantity: qty,
-        reason: "Reserve variation for order",
+        reason: "Reserve variation for order (fallback from ProductVariation)",
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
@@ -315,6 +317,7 @@ async function reserveStock(orderId, items = [], createdBy) {
       continue;
     }
 
+    // No StockLevel and no variationId - cannot reserve
     const existing = await StockLevel.findOne({
       productId,
       warehouseId: warehouse._id,
@@ -323,7 +326,7 @@ async function reserveStock(orderId, items = [], createdBy) {
       ? existing.quantity - existing.reservedQuantity
       : 0;
     throw new Error(
-      `Insufficient stock to reserve. Available: ${available}, Requested: ${qty}`,
+      `Insufficient stock to reserve. Available: ${available}, Requested: ${qty}. Please ensure product stock is properly configured in StockLevel.`,
     );
   }
 

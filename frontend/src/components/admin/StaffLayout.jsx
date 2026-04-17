@@ -107,66 +107,113 @@ export default function StaffLayout({ children }) {
     return location.pathname.startsWith(item.path);
   };
 
+  const stockMenuActive =
+    location.pathname.includes("/ton-kho") ||
+    location.pathname.includes("/nhap-kho");
+
+  const getMenuItemClass = (active) => {
+    return [
+      "flex items-center rounded-lg transition-all duration-200",
+      sidebarOpen
+        ? "w-full gap-3 px-4 py-3 justify-start"
+        : "w-12 h-12 mx-auto justify-center p-0",
+      active
+        ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
+        : "text-gray-700 hover:bg-orange-50",
+    ].join(" ");
+  };
+
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <aside
-        className={`fixed top-0 left-0 h-full bg-white shadow-lg transition-all duration-300 z-40 ${
+        className={`fixed top-0 left-0 h-screen bg-white shadow-lg transition-all duration-300 z-40 border-r ${
           sidebarOpen ? "w-64" : "w-20"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          {sidebarOpen && (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🐾</span>
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-amber-500">
-                PawHouse
-              </span>
+        <div className="flex h-full flex-col">
+          {/* Header */}
+          <div className="shrink-0 border-b p-4">
+            <div
+              className={`flex items-center ${
+                sidebarOpen ? "justify-between" : "justify-center flex-col gap-3"
+              }`}
+            >
+              {sidebarOpen ? (
+                <>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-2xl shrink-0">🐾</span>
+                    <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-amber-500 truncate">
+                      PawHouse
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 shrink-0 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    ◀
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl">🐾</span>
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="p-2 shrink-0 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    ▶
+                  </button>
+                </>
+              )}
             </div>
-          )}
-          {!sidebarOpen && (
-            <div className="flex items-center justify-center w-full">
-              <span className="text-2xl">🐾</span>
-            </div>
-          )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            {sidebarOpen ? "◀" : "▶"}
-          </button>
-        </div>
+          </div>
+
+          {/* Scrollable menu */}
 
         <nav className="p-4 pb-24 space-y-2 h-[calc(100vh-80px)] overflow-y-auto">
           {menuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                isActive(item)
-                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                  : "text-gray-700 hover:bg-orange-50"
-              }`}
+              className={getMenuItemClass(isActive(item))}
+              title={!sidebarOpen ? item.label : ""}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl shrink-0">{item.icon}</span>
               {sidebarOpen && <span className="font-medium">{item.label}</span>}
             </Link>
           ))}
 
           <div className="space-y-1">
             <button
-              onClick={() => setStockMenuOpen(!stockMenuOpen)}
-              className={`flex items-center justify-between w-full gap-3 px-4 py-3 rounded-lg transition-all ${
-                location.pathname.includes('/ton-kho') || location.pathname.includes('/nhap-kho')
+              onClick={() => {
+                if (sidebarOpen) {
+                  setStockMenuOpen(!stockMenuOpen);
+                } else {
+                  navigate("/quan-tri/ton-kho");
+                }
+              }}
+              className={[
+                "flex items-center rounded-lg transition-all duration-200",
+                sidebarOpen
+                  ? "w-full justify-between px-4 py-3"
+                  : "w-12 h-12 mx-auto justify-center p-0",
+                stockMenuActive
                   ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                  : "text-gray-700 hover:bg-orange-50"
-              }`}
+                  : "text-gray-700 hover:bg-orange-50",
+              ].join(" ")}
+              title={!sidebarOpen ? "Tồn kho" : ""}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">📦</span>
+              <div
+                className={`flex items-center ${
+                  sidebarOpen ? "gap-3" : "justify-center"
+                }`}
+              >
+                <span className="text-xl shrink-0">📦</span>
                 {sidebarOpen && <span className="font-medium">Tồn kho</span>}
               </div>
+
               {sidebarOpen && (
                 <svg
                   className={`w-4 h-4 transition-transform ${
@@ -209,26 +256,29 @@ export default function StaffLayout({ children }) {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                isActive(item)
-                  ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
-                  : "text-gray-700 hover:bg-orange-50"
-              }`}
+              className={getMenuItemClass(isActive(item))}
+              title={!sidebarOpen ? item.label : ""}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl shrink-0">{item.icon}</span>
               {sidebarOpen && <span className="font-medium">{item.label}</span>}
             </Link>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        <div className="shrink-0 border-t bg-white p-4">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+            className={`flex items-center rounded-lg text-red-600 hover:bg-red-50 transition-colors ${
+              sidebarOpen
+                ? "w-full gap-3 px-4 py-3 justify-start"
+                : "w-12 h-12 mx-auto justify-center p-0"
+            }`}
+            title={!sidebarOpen ? "Đăng xuất" : ""}
           >
-            <span className="text-xl">🚪</span>
+            <span className="text-xl shrink-0">🚪</span>
             {sidebarOpen && <span className="font-medium">Đăng xuất</span>}
           </button>
+        </div>
         </div>
       </aside>
 

@@ -1,5 +1,5 @@
 // Lê Nhựt Hào
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { orderApi, productApi } from "../services/api";
@@ -17,17 +17,7 @@ export default function OrderDetailPage() {
   const [cancelReasonError, setCancelReasonError] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    if (!token) {
-      alert("Vui lòng đăng nhập để xem chi tiết đơn hàng");
-      navigate("/login");
-      return;
-    }
-    fetchOrderDetail();
-  }, [navigate, id]);
-
-  const fetchOrderDetail = async () => {
+  const fetchOrderDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -68,7 +58,17 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    if (!token) {
+      alert("Vui lòng đăng nhập để xem chi tiết đơn hàng");
+      navigate("/login");
+      return;
+    }
+    fetchOrderDetail();
+  }, [navigate, fetchOrderDetail]);
 
   const handleCancelOrder = async () => {
     setCancelReason("");
@@ -99,15 +99,15 @@ export default function OrderDetailPage() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
-      confirmed: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-      packing: { text: "Đang đóng gói", color: "bg-purple-100 text-purple-800" },
-      shipping: { text: "Đang giao hàng", color: "bg-indigo-100 text-indigo-800" },
-      completed: { text: "Hoàn thành", color: "bg-green-100 text-green-800" },
-      cancelled: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
-      refunded: { text: "Đã hoàn tiền", color: "bg-gray-100 text-gray-800" },
+      pending: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
+      confirmed: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800 border border-blue-200" },
+      packing: { text: "Đang đóng gói", color: "bg-purple-100 text-purple-800 border border-purple-200" },
+      shipping: { text: "Đang giao hàng", color: "bg-indigo-100 text-indigo-800 border border-indigo-200" },
+      completed: { text: "Hoàn thành", color: "bg-green-100 text-green-800 border border-green-200" },
+      cancelled: { text: "Đã hủy", color: "bg-red-100 text-red-800 border border-red-200" },
+      refunded: { text: "Đã hoàn tiền", color: "bg-gray-100 text-gray-800 border border-gray-200" },
     };
-    const statusInfo = statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800" };
+    const statusInfo = statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800 border border-gray-200" };
     return (
       <span className={`px-4 py-2 rounded-full text-sm font-medium ${statusInfo.color}`}>
         {statusInfo.text}
@@ -141,7 +141,7 @@ export default function OrderDetailPage() {
             </h2>
             <Link
               to="/don-hang"
-              className="inline-block mt-4 bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition"
+              className="inline-block mt-4 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
             >
               Quay lại danh sách đơn hàng
             </Link>
@@ -159,7 +159,7 @@ export default function OrderDetailPage() {
         <div className="mb-6">
           <Link
             to="/don-hang"
-            className="text-[#846551] hover:text-[#6d5041] font-medium"
+            className="text-orange-600 hover:text-orange-700 font-medium"
           >
             ← Quay lại danh sách đơn hàng
           </Link>
@@ -203,7 +203,6 @@ export default function OrderDetailPage() {
               {order.items && order.items.length > 0 ? (
                 order.items.map((item, index) => {
                   const variation = item.variationId || item.variation_id;
-                  const product = variation?.product_id;
                   return (
                     <div
                       key={index}
@@ -333,7 +332,7 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
                   <span>Tổng cộng:</span>
-                  <span className="text-[#846551]">
+                  <span className="text-orange-600">
                     {(order.total || order.final_price || 0).toLocaleString(
                       "vi-VN"
                     )}
@@ -375,7 +374,7 @@ export default function OrderDetailPage() {
                   setCancelPopupOpen(false);
                 }}
                 disabled={cancelLoading}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                className="px-4 py-2 rounded-lg border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-60"
               >
                 Đóng
               </button>

@@ -279,7 +279,7 @@ export default function CartPage() {
             </p>
             <button
               onClick={() => navigate("/san-pham")}
-              className="bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition"
+              className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
             >
               Tiếp tục mua sắm
             </button>
@@ -298,7 +298,7 @@ export default function CartPage() {
                       selectedItems.length === cartItems.length
                     }
                     onChange={toggleSelectAll}
-                    className="w-5 h-5 text-[#846551] rounded focus:ring-[#846551]"
+                    className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
                   />
                   <span className="ml-2 text-gray-700 font-medium">
                     Chọn tất cả ({cartItems.length})
@@ -320,7 +320,7 @@ export default function CartPage() {
                       type="checkbox"
                       checked={selectedItems.includes(item._id)}
                       onChange={() => toggleItemSelection(item._id)}
-                      className="mt-2 w-5 h-5 text-[#846551] rounded focus:ring-[#846551]"
+                      className="mt-2 w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
                     />
                     <div className="flex-1">
                       <CartItem
