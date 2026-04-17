@@ -77,7 +77,7 @@ async function getAppointmentsForStaff({
 
 async function approveAppointment(appointmentId, reviewerId) {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-    const error = new Error("Mã lịch hẹn không hợp lệ");
+    const error = new Error("Invalid appointment ID");
     error.status = 400;
     throw error;
   }
@@ -86,13 +86,13 @@ async function approveAppointment(appointmentId, reviewerId) {
     .populate("customerId", "email profile.fullName")
     .populate("serviceId", "name durationMinutes basePrice isActive");
   if (!appointment) {
-    const error = new Error("Không tìm thấy lịch hẹn");
+    const error = new Error("Appointment not found");
     error.status = 404;
     throw error;
   }
 
   if (appointment.status !== "pending") {
-    const error = new Error("Chỉ có thể duyệt lịch đang chờ");
+    const error = new Error("Only pending appointments can be approved");
     error.status = 400;
     throw error;
   }
@@ -123,20 +123,20 @@ async function approveAppointment(appointmentId, reviewerId) {
 
 async function rejectAppointment(appointmentId, reviewerId, payload = {}) {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-    const error = new Error("Mã lịch hẹn không hợp lệ");
+    const error = new Error("Invalid appointment ID");
     error.status = 400;
     throw error;
   }
 
   const appointment = await CareAppointment.findById(appointmentId);
   if (!appointment) {
-    const error = new Error("Không tìm thấy lịch hẹn");
+    const error = new Error("Appointment not found");
     error.status = 404;
     throw error;
   }
 
   if (appointment.status !== "pending") {
-    const error = new Error("Chỉ có thể từ chối lịch đang chờ duyệt");
+    const error = new Error("Only pending appointments can be rejected");
     error.status = 400;
     throw error;
   }
@@ -159,7 +159,7 @@ function validateStatusTransition(currentStatus, nextStatus) {
   if (nextStatus === "checked_in") {
     if (!isConfirmedStatus(currentStatus)) {
       const error = new Error(
-        "Chỉ có thể nhận khách sau khi lịch đã được xác nhận",
+        "Check-in only available after appointment is confirmed",
       );
       error.status = 400;
       throw error;
@@ -169,9 +169,7 @@ function validateStatusTransition(currentStatus, nextStatus) {
 
   if (nextStatus === "in_progress") {
     if (currentStatus !== "checked_in") {
-      const error = new Error(
-        "Cần chuyển sang Đã check-in trước khi bắt đầu dịch vụ",
-      );
+      const error = new Error("Must check-in before starting service");
       error.status = 400;
       throw error;
     }
@@ -181,7 +179,7 @@ function validateStatusTransition(currentStatus, nextStatus) {
   if (nextStatus === "completed") {
     if (currentStatus !== "in_progress") {
       const error = new Error(
-        "Cần chuyển sang Đang chăm sóc trước khi hoàn tất",
+        "Must start service before completing appointment",
       );
       error.status = 400;
       throw error;
@@ -189,7 +187,7 @@ function validateStatusTransition(currentStatus, nextStatus) {
     return;
   }
 
-  const error = new Error("Trạng thái cập nhật không hợp lệ");
+  const error = new Error("Invalid status update");
   error.status = 400;
   throw error;
 }
@@ -200,7 +198,7 @@ async function updateAppointmentStatus(
   payload = {},
 ) {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-    const error = new Error("Mã lịch hẹn không hợp lệ");
+    const error = new Error("Invalid appointment ID");
     error.status = 400;
     throw error;
   }
@@ -215,14 +213,14 @@ async function updateAppointmentStatus(
     "confirmed",
   ];
   if (!allowedNextStatuses.includes(nextStatus)) {
-    const error = new Error("Trạng thái cập nhật không hợp lệ");
+    const error = new Error("Invalid status update");
     error.status = 400;
     throw error;
   }
 
   const appointment = await CareAppointment.findById(appointmentId);
   if (!appointment) {
-    const error = new Error("Không tìm thấy lịch hẹn");
+    const error = new Error("Appointment not found");
     error.status = 404;
     throw error;
   }

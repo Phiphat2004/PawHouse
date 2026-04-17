@@ -45,7 +45,7 @@ function validateScheduleNotPast(normalizedDate, startMinutes) {
   const nowDate = normalizeDateOnly(now);
 
   if (normalizedDate < nowDate) {
-    const error = new Error("Không được đặt lịch trong quá khứ");
+    const error = new Error("Cannot schedule in the past");
     error.status = 400;
     throw error;
   }
@@ -53,7 +53,7 @@ function validateScheduleNotPast(normalizedDate, startMinutes) {
   if (normalizedDate.getTime() === nowDate.getTime()) {
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     if (startMinutes <= nowMinutes) {
-      const error = new Error("Giờ bắt đầu phải lớn hơn thời điểm hiện tại");
+      const error = new Error("Start time must be greater than current time");
       error.status = 400;
       throw error;
     }
@@ -70,14 +70,14 @@ async function resolveService(
     String(serviceId).trim()
   ) {
     if (!mongoose.Types.ObjectId.isValid(String(serviceId).trim())) {
-      const error = new Error("Dịch vụ không hợp lệ");
+      const error = new Error("Invalid service");
       error.status = 400;
       throw error;
     }
 
     const foundService = await Service.findById(String(serviceId).trim());
     if (!foundService) {
-      const error = new Error("Không tìm thấy dịch vụ");
+      const error = new Error("Service not found");
       error.status = 404;
       throw error;
     }
@@ -93,7 +93,7 @@ async function resolveService(
   ).trim();
 
   if (!normalizedServiceType) {
-    const error = new Error("Thiếu thông tin dịch vụ");
+    const error = new Error("Missing service information");
     error.status = 400;
     throw error;
   }
@@ -122,7 +122,7 @@ async function createAppointment(customerId, payload) {
   } = payload;
 
   if (!petName || !petType || !appointmentDate || !startTime) {
-    const error = new Error("Thiếu thông tin đặt lịch");
+    const error = new Error("Missing appointment information");
     error.status = 400;
     throw error;
   }
@@ -131,14 +131,14 @@ async function createAppointment(customerId, payload) {
 
   const normalizedDate = normalizeDateOnly(appointmentDate);
   if (!normalizedDate) {
-    const error = new Error("Ngày hẹn không hợp lệ");
+    const error = new Error("Invalid appointment date");
     error.status = 400;
     throw error;
   }
 
   const startMinutes = parseTimeToMinutes(startTime);
   if (startMinutes === null) {
-    const error = new Error("Khung giờ không hợp lệ");
+    const error = new Error("Invalid time slot");
     error.status = 400;
     throw error;
   }
@@ -153,7 +153,9 @@ async function createAppointment(customerId, payload) {
   });
 
   if (duplicate) {
-    const error = new Error("Bạn đã có lịch hẹn trong khung giờ này");
+    const error = new Error(
+      "You already have an appointment in this time slot",
+    );
     error.status = 409;
     throw error;
   }
@@ -195,7 +197,7 @@ async function createAppointment(customerId, payload) {
 
 async function updateMyAppointment(customerId, appointmentId, payload) {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-    const error = new Error("Mã lịch hẹn không hợp lệ");
+    const error = new Error("Invalid appointment ID");
     error.status = 400;
     throw error;
   }
@@ -205,7 +207,7 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
     customerId,
   });
   if (!appointment) {
-    const error = new Error("Không tìm thấy lịch hẹn");
+    const error = new Error("Appointment not found");
     error.status = 404;
     throw error;
   }
@@ -215,7 +217,7 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
     !isConfirmedStatus(appointment.status)
   ) {
     const error = new Error(
-      "Chỉ có thể đổi lịch đang chờ duyệt hoặc đã xác nhận",
+      "Can only reschedule pending or confirmed appointments",
     );
     error.status = 400;
     throw error;
@@ -265,13 +267,13 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
     !nextDate ||
     !nextStartTime
   ) {
-    const error = new Error("Thiếu thông tin đặt lịch");
+    const error = new Error("Missing appointment information");
     error.status = 400;
     throw error;
   }
 
   if (nextStartMinutes === null) {
-    const error = new Error("Khung giờ không hợp lệ");
+    const error = new Error("Invalid time slot");
     error.status = 400;
     throw error;
   }
@@ -287,7 +289,9 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
   });
 
   if (duplicate) {
-    const error = new Error("Bạn đã có lịch hẹn trong khung giờ này");
+    const error = new Error(
+      "You already have an appointment in this time slot",
+    );
     error.status = 409;
     throw error;
   }
@@ -314,7 +318,7 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
 
 async function getMyAppointmentById(customerId, appointmentId) {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-    const error = new Error("Mã lịch hẹn không hợp lệ");
+    const error = new Error("Invalid appointment ID");
     error.status = 400;
     throw error;
   }
@@ -325,7 +329,7 @@ async function getMyAppointmentById(customerId, appointmentId) {
   }).populate("reviewedBy", "email profile.fullName");
 
   if (!appointment) {
-    const error = new Error("Không tìm thấy lịch hẹn");
+    const error = new Error("Appointment not found");
     error.status = 404;
     throw error;
   }
@@ -335,7 +339,7 @@ async function getMyAppointmentById(customerId, appointmentId) {
 
 async function cancelMyAppointment(customerId, appointmentId, payload = {}) {
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-    const error = new Error("Mã lịch hẹn không hợp lệ");
+    const error = new Error("Invalid appointment ID");
     error.status = 400;
     throw error;
   }
@@ -345,7 +349,7 @@ async function cancelMyAppointment(customerId, appointmentId, payload = {}) {
     customerId,
   });
   if (!appointment) {
-    const error = new Error("Không tìm thấy lịch hẹn");
+    const error = new Error("Appointment not found");
     error.status = 404;
     throw error;
   }
@@ -354,14 +358,16 @@ async function cancelMyAppointment(customerId, appointmentId, payload = {}) {
     appointment.status !== "pending" &&
     !isConfirmedStatus(appointment.status)
   ) {
-    const error = new Error("Lịch hẹn này không thể hủy ở thời điểm hiện tại");
+    const error = new Error(
+      "This appointment cannot be cancelled at this time",
+    );
     error.status = 400;
     throw error;
   }
 
   const cancellationReason = String(payload.reason || "").trim();
   if (!cancellationReason) {
-    const error = new Error("Vui lòng nhập lý do hủy lịch");
+    const error = new Error("Please enter cancellation reason");
     error.status = 400;
     throw error;
   }

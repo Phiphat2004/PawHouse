@@ -42,7 +42,7 @@ async function updateCategory(
   userRoles,
 ) {
   if (!userRoles?.includes("admin")) {
-    const error = new Error("Không có quyền thực hiện");
+    const error = new Error("Permission denied");
     error.status = 403;
     throw error;
   }
@@ -50,14 +50,14 @@ async function updateCategory(
   if (slug) {
     const existingCategory = await Category.findOne({ slug, _id: { $ne: id } });
     if (existingCategory) {
-      const error = new Error("Slug đã tồn tại");
+      const error = new Error("Slug already exists");
       error.status = 400;
       throw error;
     }
   }
 
   if (parentCategory && parentCategory.toString() === id.toString()) {
-    const error = new Error("Danh mục cha không thể tự trỏ vào chính nó");
+    const error = new Error("Parent category cannot reference itself");
     error.status = 400;
     throw error;
   }
@@ -73,7 +73,7 @@ async function updateCategory(
   });
 
   if (!category) {
-    const error = new Error("Không tìm thấy danh mục");
+    const error = new Error("Category not found");
     error.status = 404;
     throw error;
   }
@@ -83,14 +83,14 @@ async function updateCategory(
 
 async function deleteCategory(id, userRoles) {
   if (!userRoles?.includes("admin")) {
-    const error = new Error("Không có quyền thực hiện");
+    const error = new Error("Permission denied");
     error.status = 403;
     throw error;
   }
 
   const category = await Category.findById(id);
   if (!category) {
-    const error = new Error("Không tìm thấy danh mục");
+    const error = new Error("Category not found");
     error.status = 404;
     throw error;
   }
@@ -99,7 +99,7 @@ async function deleteCategory(id, userRoles) {
   const productsCount = await Product.countDocuments({ categoryIds: id });
   if (productsCount > 0) {
     const error = new Error(
-      `Không thể xóa danh mục có ${productsCount} sản phẩm. Vui lòng di chuyển hoặc xóa các sản phẩm trước.`,
+      `Cannot delete category with ${productsCount} products. Please move or delete products first.`,
     );
     error.status = 400;
     throw error;
@@ -116,7 +116,7 @@ async function createCategory(data, userRoles) {
   const { name, slug, description, isActive, parentCategory } = data;
 
   if (!userRoles?.includes("admin")) {
-    const error = new Error("Không có quyền thực hiện");
+    const error = new Error("Permission denied");
     error.status = 403;
     throw error;
   }

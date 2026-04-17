@@ -49,7 +49,7 @@ async function createOrder(userId, orderData) {
     !addressSnapshot.phone ||
     !addressSnapshot.addressLine
   ) {
-    const error = new Error("Địa chỉ giao hàng không đầy đủ");
+    const error = new Error("Incomplete shipping address");
     error.status = 400;
     throw error;
   }
@@ -60,7 +60,7 @@ async function createOrder(userId, orderData) {
   );
 
   if (!cart || cart.items.length === 0) {
-    const error = new Error("Giỏ hàng trống");
+    const error = new Error("Cart is empty");
     error.status = 400;
     throw error;
   }
@@ -93,7 +93,7 @@ async function createOrder(userId, orderData) {
     const product = cartItem.product_id;
 
     if (!product) {
-      const error = new Error("Sản phẩm không tồn tại");
+      const error = new Error("Product not found");
       error.status = 400;
       throw error;
     }
@@ -274,7 +274,7 @@ async function searchOrders(userId, filters = {}) {
 async function getOrderById(orderId, userId) {
   const normalizedOrderId = String(orderId || "").trim();
   if (!normalizedOrderId) {
-    const error = new Error("Mã đơn hàng không hợp lệ");
+    const error = new Error("Invalid order ID");
     error.status = 400;
     throw error;
   }
@@ -317,7 +317,7 @@ async function getOrderById(orderId, userId) {
   );
 
   if (!order) {
-    const error = new Error("Không tìm thấy đơn hàng");
+    const error = new Error("Order not found");
     error.status = 404;
     throw error;
   }
@@ -524,7 +524,7 @@ async function cancelOrder(orderId, userId, reason = "") {
   });
 
   if (!order) {
-    const error = new Error("Không tìm thấy đơn hàng");
+    const error = new Error("Order not found");
     error.status = 404;
     throw error;
   }
@@ -596,7 +596,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   const order = await Order.findById(orderId);
 
   if (!order) {
-    const error = new Error("Không tìm thấy đơn hàng");
+    const error = new Error("Order not found");
     error.status = 404;
     throw error;
   }
@@ -611,14 +611,14 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     "refunded",
   ];
   if (!validStatuses.includes(newStatus)) {
-    const error = new Error("Trạng thái không hợp lệ");
+    const error = new Error("Invalid status");
     error.status = 400;
     throw error;
   }
 
   const normalizedNote = typeof note === "string" ? note.trim() : "";
   if (newStatus === "cancelled" && !normalizedNote) {
-    const error = new Error("Vui lòng nhập lý do hủy đơn");
+    const error = new Error("Please enter cancellation reason");
     error.status = 400;
     throw error;
   }
