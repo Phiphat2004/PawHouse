@@ -123,6 +123,14 @@ export default function Header() {
             >
               Sản phẩm
             </Link>
+            {user && (
+              <Link
+                to="/lich-cham-soc"
+                className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
+              >
+                Lịch chăm sóc
+              </Link>
+            )}
             <Link
               to="/cong-dong"
               className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
@@ -141,14 +149,6 @@ export default function Header() {
             >
               Liên hệ
             </Link>
-            {user && (
-              <Link
-                to="/lich-cham-soc"
-                className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
-              >
-                Lịch chăm sóc
-              </Link>
-            )}
           </nav>
 
           <div className="flex items-center gap-4">

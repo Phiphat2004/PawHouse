@@ -9,6 +9,7 @@ const {
   StockLevel,
 } = require("../../models");
 const emailService = require("../email.service");
+const stockService = require("./stock.service");
 
 /**
  * Generate unique order code
@@ -182,17 +183,17 @@ async function createOrder(userId, orderData) {
     await payment.save();
   }
 
-  // Update product stock
-  for (const item of orderItems) {
-    if (item.variationId) {
-      await ProductVariation.findByIdAndUpdate(item.variationId, {
-        $inc: { stock: -item.quantity },
-      });
-    } else if (item.productId) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: -item.quantity },
-      });
-    }
+  // Reserve stock in StockLevel for the order
+  try {
+    await stockService.reserveStock(order._id, orderItems, userId);
+  } catch (err) {
+    console.error("Error reserving stock:", err.message);
+    // Delete the order if stock reservation fails
+    await Order.deleteOne({ _id: order._id });
+    await OrderItem.deleteMany({ orderId: order._id });
+    const error = new Error(`Stock reservation failed: ${err.message}`);
+    error.status = 500;
+    throw error;
   }
 
   // Clear user's cart
@@ -539,17 +540,12 @@ async function cancelOrder(orderId, userId, reason = "") {
 
   const orderItems = await OrderItem.find({ orderId: order._id }).lean();
 
-  // Restore stock
-  for (const item of orderItems) {
-    if (item.variationId) {
-      await ProductVariation.findByIdAndUpdate(item.variationId, {
-        $inc: { stock: item.quantity },
-      });
-    } else if (item.productId) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: item.quantity },
-      });
-    }
+  // Restore stock by releasing the reservation
+  try {
+    await stockService.releaseStock(order._id, orderItems, userId);
+  } catch (err) {
+    console.error("Error releasing stock:", err.message);
+    // Don't fail the cancellation if stock release fails
   }
 
   // Update order status
@@ -656,8 +652,16 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   await order.save();
 
-  // Update payment status to 'paid' when order is marked as 'completed' (Đã giao hàng)
+  // Fulfill stock when order is marked as completed
   if (newStatus === "completed") {
+    const orderItems = await OrderItem.find({ orderId: order._id }).lean();
+    try {
+      await stockService.fulfillStock(order._id, orderItems, adminId);
+    } catch (err) {
+      console.error("Error fulfilling stock:", err.message);
+      // Don't fail the status update if stock fulfillment fails
+    }
+
     const Payment =
       require("../../models").Payment || require("../../models/Payment");
     if (Payment) {
@@ -672,19 +676,14 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     }
   }
 
-  // Restore stock if the order is cancelled by Admin
+  // Release stock if the order is cancelled
   if (newStatus === "cancelled") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
-    for (const item of orderItems) {
-      if (item.variationId) {
-        await ProductVariation.findByIdAndUpdate(item.variationId, {
-          $inc: { stock: item.quantity },
-        });
-      } else if (item.productId) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity },
-        });
-      }
+    try {
+      await stockService.releaseStock(order._id, orderItems, adminId);
+    } catch (err) {
+      console.error("Error releasing stock:", err.message);
+      // Don't fail the cancellation if stock release fails
     }
   }
 

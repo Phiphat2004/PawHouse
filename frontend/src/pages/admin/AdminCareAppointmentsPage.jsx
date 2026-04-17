@@ -272,40 +272,42 @@ export default function AdminCareAppointmentsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">{renderStatusBadge(item.status)}</td>
                       <td className="px-4 py-3 text-sm text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex flex-col sm:flex-row items-center justify-end gap-1.5">
                           <button
                             onClick={() => setSelectedAppointment(item)}
-                            className="px-3 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200"
+                            className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
                           >
                             Xem chi tiết
                           </button>
-                          {item.status === "pending" ? (
-                            <>
+                          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                            {item.status === "pending" ? (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(item._id)}
+                                  disabled={processingId === item._id}
+                                  className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 text-xs font-medium"
+                                >
+                                  Xác nhận
+                                </button>
+                                <button
+                                  onClick={() => openRejectPopup(item._id)}
+                                  disabled={processingId === item._id}
+                                  className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50 text-xs font-medium"
+                                >
+                                  Từ chối
+                                </button>
+                              </>
+                            ) : null}
+                            {getNextStatus(item.status) && getNextStatus(item.status) !== "confirmed" ? (
                               <button
-                                onClick={() => handleApprove(item._id)}
+                                onClick={() => handleAdvanceStatus(item)}
                                 disabled={processingId === item._id}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50"
+                                className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 text-xs font-medium"
                               >
-                                Xác nhận
+                                {statusActions[getNextStatus(item.status)]?.label || "Cập nhật"}
                               </button>
-                              <button
-                                onClick={() => openRejectPopup(item._id)}
-                                disabled={processingId === item._id}
-                                className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50"
-                              >
-                                Từ chối
-                              </button>
-                            </>
-                          ) : null}
-                          {getNextStatus(item.status) && getNextStatus(item.status) !== "confirmed" ? (
-                            <button
-                              onClick={() => handleAdvanceStatus(item)}
-                              disabled={processingId === item._id}
-                              className="px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
-                            >
-                              {statusActions[getNextStatus(item.status)]?.label || "Cập nhật"}
-                            </button>
-                          ) : null}
+                            ) : null}
+                          </div>
                         </div>
                       </td>
                     </tr>

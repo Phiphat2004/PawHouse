@@ -76,15 +76,15 @@ export default function OrderPage() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
-      confirmed: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800" },
-      packing: { text: "Đang đóng gói", color: "bg-purple-100 text-purple-800" },
-      shipping: { text: "Đang giao hàng", color: "bg-indigo-100 text-indigo-800" },
-      completed: { text: "Hoàn thành", color: "bg-green-100 text-green-800" },
-      cancelled: { text: "Đã hủy", color: "bg-red-100 text-red-800" },
-      refunded: { text: "Đã hoàn tiền", color: "bg-gray-100 text-gray-800" },
+      pending: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
+      confirmed: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800 border border-blue-200" },
+      packing: { text: "Đang đóng gói", color: "bg-purple-100 text-purple-800 border border-purple-200" },
+      shipping: { text: "Đang giao hàng", color: "bg-indigo-100 text-indigo-800 border border-indigo-200" },
+      completed: { text: "Hoàn thành", color: "bg-green-100 text-green-800 border border-green-200" },
+      cancelled: { text: "Đã hủy", color: "bg-red-100 text-red-800 border border-red-200" },
+      refunded: { text: "Đã hoàn tiền", color: "bg-gray-100 text-gray-800 border border-gray-200" },
     };
-    const statusInfo = statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800" };
+    const statusInfo = statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800 border border-gray-200" };
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
         {statusInfo.text}
@@ -170,7 +170,7 @@ export default function OrderPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Tìm theo mã đơn hoặc tên sản phẩm..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#846551] focus:border-transparent bg-white text-sm"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-sm"
             />
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -183,7 +183,7 @@ export default function OrderPage() {
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-[#846551] text-white rounded-lg hover:bg-[#6d5041] transition text-sm font-medium"
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm font-medium"
           >
             Tìm kiếm
           </button>
@@ -201,7 +201,7 @@ export default function OrderPage() {
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   statusFilter === status
-                    ? "bg-[#846551] text-white"
+                    ? "bg-orange-500 text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -238,7 +238,7 @@ export default function OrderPage() {
             </p>
             <Link
               to="/"
-              className="inline-block bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition"
+              className="inline-block bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
             >
               Tiếp tục mua sắm
             </Link>
@@ -276,7 +276,7 @@ export default function OrderPage() {
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
-                    <p className="text-xl font-bold text-[#846551]">
+                    <p className="text-xl font-bold text-orange-600">
                       {(order.total || order.final_price || 0).toLocaleString(
                         "vi-VN"
                       )}
@@ -285,7 +285,7 @@ export default function OrderPage() {
                     <div className="flex gap-2">
                       <Link
                         to={`/don-hang/${order._id}`}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
+                        className="px-4 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition text-sm font-medium"
                       >
                         Xem chi tiết
                       </Link>
@@ -311,7 +311,7 @@ export default function OrderPage() {
                     setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
                   }
                   disabled={pagination.page === 1}
-                  className="px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-orange-200 text-orange-700 rounded-lg bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Trước
                 </button>
@@ -323,7 +323,7 @@ export default function OrderPage() {
                     setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
                   }
                   disabled={pagination.page >= pagination.totalPages}
-                  className="px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-orange-200 text-orange-700 rounded-lg bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Sau
                 </button>
@@ -358,7 +358,7 @@ export default function OrderPage() {
               <button
                 onClick={closeCancelPopup}
                 disabled={!!cancelLoadingId}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                className="px-4 py-2 rounded-lg border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-60"
               >
                 Đóng
               </button>

@@ -366,7 +366,7 @@ export default function AdminOrdersPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/quan-tri/don-hang/${order._id}`)}
-                            className="h-8 rounded-lg text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 font-medium px-3"
+                            className="h-8 rounded-lg text-[#846551] border-[#d8c8bc] bg-[#f6f1ed] hover:bg-[#efe6df] hover:text-[#6d5443] font-medium px-3"
                           >
                             Xem chi tiết
                           </Button>

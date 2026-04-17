@@ -224,7 +224,7 @@ export default function CheckoutPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="Nguyễn Văn A"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -238,7 +238,7 @@ export default function CheckoutPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="0901234567"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -252,7 +252,7 @@ export default function CheckoutPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="example@email.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
 
@@ -266,7 +266,7 @@ export default function CheckoutPage() {
                     value={formData.city}
                     onChange={handleInputChange}
                     placeholder="Hồ Chí Minh"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -277,7 +277,7 @@ export default function CheckoutPage() {
                     value={formData.district}
                     onChange={handleInputChange}
                     placeholder="Quận 1"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
                     value={formData.ward}
                     onChange={handleInputChange}
                     placeholder="Phường Bến Nghé"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -305,15 +305,15 @@ export default function CheckoutPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="Số nhà, tên đường..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
 
               {/* Phương thức thanh toán */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phương thức thanh toán</label>
-                <div className="flex items-center p-3 border border-[#846551] rounded-lg bg-orange-50">
-                  <span className="text-[#846551] font-medium">💵 Thanh toán khi nhận hàng (COD)</span>
+                <div className="flex items-center p-3 border border-orange-500 rounded-lg bg-orange-50">
+                  <span className="text-orange-600 font-medium">💵 Thanh toán khi nhận hàng (COD)</span>
                 </div>
               </div>
 
@@ -326,7 +326,7 @@ export default function CheckoutPage() {
                   onChange={handleInputChange}
                   rows={3}
                   placeholder="Ghi chú cho người giao hàng (tuỳ chọn)..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#846551] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
 
@@ -334,7 +334,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading || cartItems.length === 0}
-                className="w-full bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -395,7 +395,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
                   <span>Tổng cộng:</span>
-                  <span className="text-[#846551]">{finalTotal.toLocaleString("vi-VN")}₫</span>
+                  <span className="text-orange-600">{finalTotal.toLocaleString("vi-VN")}₫</span>
                 </div>
               </div>
             </div>

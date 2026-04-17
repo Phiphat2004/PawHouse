@@ -133,7 +133,7 @@ export default function AdminLayout({ children }) {
         ? "w-full gap-3 px-4 py-3 justify-start"
         : "w-12 h-12 mx-auto justify-center p-0",
       active
-        ? "bg-orange-500 text-white shadow-md"
+        ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
         : "text-gray-700 hover:bg-orange-50",
     ].join(" ");
   };
@@ -218,7 +218,7 @@ export default function AdminLayout({ children }) {
                     ? "w-full justify-between px-4 py-3"
                     : "w-12 h-12 mx-auto justify-center p-0",
                   stockMenuActive
-                    ? "bg-orange-500 text-white shadow-md"
+                    ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                     : "text-gray-700 hover:bg-orange-50",
                 ].join(" ")}
                 title={!sidebarOpen ? "Tồn kho" : ""}
