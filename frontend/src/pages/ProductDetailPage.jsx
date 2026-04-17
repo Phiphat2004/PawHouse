@@ -1,4 +1,4 @@
-// Lê Nhựt Hào
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
@@ -17,6 +17,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -51,6 +52,7 @@ export default function ProductDetailPage() {
 
       if (response.product) {
         setProduct(response.product);
+        setSelectedImageIdx(0);
       } else {
         setError("Không tìm thấy sản phẩm");
       }
@@ -125,7 +127,10 @@ export default function ProductDetailPage() {
     );
   }
 
-  const productImage = product.images?.[0]?.url || product.image || "/placeholder.png";
+  const allImages = product.images?.length > 0 ? product.images : (product.image ? [product.image] : ["/placeholder.png"]);
+  const currentImageObj = allImages[selectedImageIdx] || allImages[0];
+  const mainImageUrl = typeof currentImageObj === 'string' ? currentImageObj : (currentImageObj?.url || "/placeholder.png");
+
   const price = product.price || 0;
   const comparePrice = product.compareAtPrice;
 
@@ -160,17 +165,44 @@ export default function ProductDetailPage() {
         <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Product Image Section */}
-            <div className="p-8 lg:p-12 bg-gray-50/50">
-              <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl bg-white group">
-                <img
-                  src={productImage}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                
-                {product.compareAtPrice > product.price && (
-                  <div className="absolute top-6 right-6 bg-[#ff4d2e] text-white font-bold px-4 py-1.5 rounded-full shadow-lg text-sm">
-                    Tiết kiệm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+            <div className="p-6 lg:p-8 bg-gray-50/50 flex flex-col items-center justify-center">
+              <div className="w-full max-w-[400px]">
+                <div className="relative aspect-square rounded-3xl overflow-hidden shadow-xl bg-white group mb-4">
+                  <img
+                    src={mainImageUrl}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+
+                  {product.compareAtPrice > product.price && (
+                    <div className="absolute top-4 right-4 bg-[#ff4d2e] text-white font-bold px-3 py-1 rounded-full shadow-lg text-xs">
+                      Tiết kiệm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumbnails */}
+                {allImages.length > 1 && (
+                  <div className="grid grid-cols-5 gap-2">
+                    {allImages.map((img, idx) => {
+                      const imgUrl = typeof img === 'string' ? img : img.url;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedImageIdx(idx)}
+                          className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${selectedImageIdx === idx
+                              ? "border-[#ff4d2e] shadow-md scale-105"
+                              : "border-transparent opacity-70 hover:opacity-100 bg-white shadow-sm"
+                            }`}
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={`${product.name} thumbnail ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -219,12 +251,10 @@ export default function ProductDetailPage() {
                     </div>
                   )}
 
-                  <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${
-                    product.stock > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full ${
-                      product.stock > 0 ? "bg-green-600" : "bg-red-600"
-                    }`}></span>
+                  <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${product.stock > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                    }`}>
+                    <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? "bg-green-600" : "bg-red-600"
+                      }`}></span>
                     {product.stock > 0 ? `Còn lại: ${product.stock} sản phẩm` : "Hết hàng"}
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AdminLayout } from "../../components/admin";
 import ProductTable from "../../components/admin/ProductTable";
 import ProductForm from "../../components/admin/ProductForm";
@@ -22,6 +22,30 @@ export default function AdminProductsPage() {
   const [toasts, setToasts] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState({});
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleNode = (id, e) => {
+    e.stopPropagation();
+    setExpandedNodes(prev => ({...prev, [id]: !prev[id]}));
+  };
+
+  const handleSelectCategory = (id) => {
+    setFilterCategory(id);
+    setIsCategoryOpen(false);
+  };
 
   useEffect(() => {
     loadData();
@@ -173,13 +197,17 @@ export default function AdminProductsPage() {
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchCategory =
-      !filterCategory ||
-      product.categoryIds?.some((id) =>
-        typeof id === "string"
-          ? id === filterCategory
-          : id._id === filterCategory,
-      );
+    const matchCategory = !filterCategory || (() => {
+      const childCatIds = categories
+        .filter(c => c.parentCategory === filterCategory || c.parentCategory?._id === filterCategory)
+        .map(c => c._id);
+      const validIds = [filterCategory, ...childCatIds];
+      
+      return product.categoryIds?.some((id) => {
+        const pid = typeof id === "string" ? id : id._id;
+        return validIds.includes(pid);
+      });
+    })();
 
     const matchStatus =
       filterStatus === "" ||
@@ -266,18 +294,72 @@ export default function AdminProductsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Danh mục
               </label>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="">Tất cả danh mục</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-left flex justify-between items-center transition-all shadow-sm hover:border-orange-300"
+                >
+                  <span className="truncate text-gray-700">
+                    {filterCategory 
+                      ? categories.find(c => c._id === filterCategory)?.name || "Đã chọn"
+                      : "Tất cả danh mục"}
+                  </span>
+                  <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                {isCategoryOpen && (
+                  <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto animate-fade-in-down">
+                    <div 
+                      onClick={() => handleSelectCategory("")}
+                      className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 ${!filterCategory ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
+                    >
+                      Tất cả danh mục
+                    </div>
+                    
+                    {categories.filter(c => !c.parentCategory && c.isActive !== false).map(root => {
+                      const children = categories.filter(c => c.parentCategory === root._id || c.parentCategory?._id === root._id);
+                      const isExpanded = expandedNodes[root._id];
+                      
+                      return (
+                        <div key={root._id} className="border-b border-gray-50 last:border-0">
+                          <div className={`flex items-center justify-between px-2 hover:bg-gray-50 transition-colors ${filterCategory === root._id ? "bg-orange-50" : ""}`}>
+                            <div 
+                              onClick={() => handleSelectCategory(root._id)}
+                              className={`flex-grow cursor-pointer px-2 py-2 text-sm ${filterCategory === root._id ? "font-bold text-orange-600" : "font-medium text-gray-800"}`}
+                            >
+                              {root.name}
+                            </div>
+                            
+                            {children.length > 0 && (
+                              <button 
+                                onClick={(e) => toggleNode(root._id, e)}
+                                className={`p-1 mr-1 rounded bg-transparent transition-colors ${isExpanded ? "text-orange-500 bg-orange-100/50" : "text-gray-400 hover:text-orange-500 hover:bg-orange-50"}`}
+                              >
+                                <svg className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                              </button>
+                            )}
+                          </div>
+                          
+                          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
+                            <div className="bg-gray-50 py-1 border-l-2 border-orange-200 ml-3 mb-1 mr-1 rounded-r">
+                              {children.map(child => (
+                                <div
+                                  key={child._id}
+                                  onClick={() => handleSelectCategory(child._id)}
+                                  className={`px-3 py-1.5 text-sm cursor-pointer hover:bg-orange-100 hover:text-orange-700 transition-colors ${filterCategory === child._id ? "font-bold text-orange-600 bg-orange-100/50" : "text-gray-600"}`}
+                                >
+                                  {child.name}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

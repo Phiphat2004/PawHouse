@@ -14,7 +14,7 @@ async function getAllCategories({ isActive, search }) {
     ];
   }
 
-  const categories = await Category.find(query).lean().sort({ name: 1 });
+  const categories = await Category.find(query).populate("parentCategory", "name slug").lean().sort({ name: 1 });
 
   const { Product } = require("../models");
   await Promise.all(
@@ -33,7 +33,7 @@ async function getCategoryById(id) {
   return Category.findById(id);
 }
 
-async function updateCategory(id, { name, slug, description, isActive }, userRoles) {
+async function updateCategory(id, { name, slug, description, isActive, parentCategory }, userRoles) {
   // Check if user is admin
   if (!userRoles?.includes("admin")) {
     const error = new Error("Không có quyền thực hiện");
@@ -51,9 +51,20 @@ async function updateCategory(id, { name, slug, description, isActive }, userRol
     }
   }
 
+  if (parentCategory && parentCategory.toString() === id.toString()) {
+    const error = new Error("Danh mục cha không thể tự trỏ vào chính nó");
+    error.status = 400;
+    throw error;
+  }
+
+  const payload = { name, slug, description, isActive };
+  if (parentCategory !== undefined) {
+    payload.parentCategory = parentCategory || null;
+  }
+
   const category = await Category.findByIdAndUpdate(
     id,
-    { name, slug, description, isActive },
+    payload,
     { new: true, runValidators: true },
   );
 
@@ -100,7 +111,7 @@ async function deleteCategory(id, userRoles) {
 }
 
 async function createCategory(data, userRoles) {
-  const { name, slug, description, isActive } = data;
+  const { name, slug, description, isActive, parentCategory } = data;
 
   // Check if user is admin
   if (!userRoles?.includes("admin")) {
@@ -126,6 +137,7 @@ async function createCategory(data, userRoles) {
     slug: finalSlug,
     description,
     isActive,
+    parentCategory: parentCategory || null,
   });
 
   await category.save();

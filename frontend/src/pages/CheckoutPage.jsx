@@ -166,7 +166,7 @@ export default function CheckoutPage() {
           // include reserved movements from API response if provided
           if (response.reservedMovements) payload.movements = response.reservedMovements;
           localStorage.setItem('stockMovementUpdated', JSON.stringify(payload));
-        } catch {}
+        } catch { }
       }
     } catch (err) {
       console.error("Failed to create order:", err);

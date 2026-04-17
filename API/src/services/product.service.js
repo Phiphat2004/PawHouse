@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { Product, StockLevel } = require("../models");
+const { Product, StockLevel, Category } = require("../models");
 
 const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId("000000000000000000000001");
 const DEFAULT_WAREHOUSE = {
@@ -33,7 +33,9 @@ async function getAllProducts({
   }
 
   if (categoryId) {
-    query.categoryIds = categoryId;
+    const childCategories = await Category.find({ parentCategory: categoryId }).select("_id").lean();
+    const allIds = [categoryId, ...childCategories.map(c => c._id)];
+    query.categoryIds = { $in: allIds };
   }
 
   if (isActive !== undefined) {
