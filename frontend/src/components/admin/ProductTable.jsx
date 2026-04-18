@@ -191,29 +191,29 @@ export default function ProductTable({
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
                       <Link
                         to={`/quan-tri/san-pham/${product._id}`}
-                        className="text-blue-600 hover:text-blue-900 transition-colors"
+                        className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-full transition-all"
                         title="Xem chi tiết"
                       >
-                        <EyeOutlined />
+                        <EyeOutlined className="text-lg" />
                       </Link>
                       {canManage && (
                         <>
                           <button
                             onClick={() => onEdit(product)}
-                            className="text-orange-600 hover:text-orange-900 transition-colors"
+                            className="p-2 text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full transition-all"
                             title="Chỉnh sửa"
                           >
-                            <EditOutlined />
+                            <EditOutlined className="text-lg" />
                           </button>
                           <button
                             onClick={() => onDelete(product)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
+                            className="p-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-full transition-all"
                             title="Xóa"
                           >
-                            <DeleteOutlined />
+                            <DeleteOutlined className="text-lg" />
                           </button>
                         </>
                       )}

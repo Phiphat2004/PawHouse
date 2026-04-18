@@ -21,8 +21,12 @@ export default function FeaturedProducts() {
       setLoading(true);
       const response = await productApi.getAll();
       const productsList = response.products || response || [];
-      // Get first 6 active products
-      const featuredProducts = productsList
+      // Sắp xếp theo ngày tạo mới nhất (createdAt)
+      const sortedProducts = [...productsList].sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      // Lấy 6 sản phẩm mới nhất đang kích hoạt
+      const featuredProducts = sortedProducts
         .filter((p) => p.isActive !== false)
         .slice(0, 6);
       setProducts(featuredProducts);
@@ -36,71 +40,18 @@ export default function FeaturedProducts() {
   };
 
   const handleAddToCart = async (product) => {
-    // Get first active variation from current product data
-    let variation = null;
-
-    if (product.variations && product.variations.length > 0) {
-      variation =
-        product.variations.find((v) => v.status === "active" && !v.isDeleted) ||
-        product.variations[0];
-    }
-
-    // If no variation found, reload from API (backend will auto-create default variation if needed)
-    if (!variation) {
-      try {
-        const productDetail = await productApi.getById(product._id);
-        if (
-          productDetail.product?.variations &&
-          productDetail.product.variations.length > 0
-        ) {
-          variation =
-            productDetail.product.variations.find(
-              (v) => v.status === "active" && !v.isDeleted,
-            ) || productDetail.product.variations[0];
-          // Update product in state with new variations
-          setProducts((prev) =>
-            prev.map((p) =>
-              p._id === product._id
-                ? { ...p, variations: productDetail.product.variations }
-                : p,
-            ),
-          );
-        }
-      } catch (error) {
-        console.error("Failed to load product details:", error);
-        setToast({
-          type: "error",
-          title: "Lỗi",
-          message: "Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.",
-        });
-        return;
-      }
-    }
-
-    if (!variation) {
-      setToast({
-        type: "error",
-        title: "Lỗi",
-        message: "Sản phẩm này chưa có biến thể. Vui lòng liên hệ admin.",
-      });
-      return;
-    }
-
-    // Add to cart
-    const result = await addToCart(variation._id, 1);
+    const result = await addToCart(product._id, 1);
     if (result.success) {
       setToast({
         type: "success",
         title: "Thành công!",
-        message: result.message,
+        message: result.message || "Đã thêm vào giỏ hàng!",
       });
-      // Reload products to update variations
-      loadProducts();
-    } else {
+    } else if (result.message !== "Cần đăng nhập") {
       setToast({
         type: "error",
         title: "Lỗi",
-        message: result.message,
+        message: result.message || "Có lỗi xảy ra",
       });
     }
   };
@@ -111,9 +62,9 @@ export default function FeaturedProducts() {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
           <div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-              Sản Phẩm Nổi Bật
+              Sản Phẩm Mới Nhất
             </h2>
-            <p className="text-gray-600">Được khách hàng yêu thích nhất</p>
+            <p className="text-gray-600">Khám phá những sản phẩm vừa mới cập nhật tại PawHouse</p>
           </div>
           <Link
             to="/san-pham"
@@ -142,10 +93,6 @@ export default function FeaturedProducts() {
                 product.variations?.[0]?.compareAtPrice ||
                 product.compareAtPrice ||
                 product.originalPrice;
-              const categoryName =
-                product.categoryIds?.[0]?.name ||
-                product.category ||
-                "Sản phẩm";
               const hasDiscount = comparePrice && comparePrice > productPrice;
 
               return (
@@ -162,35 +109,42 @@ export default function FeaturedProducts() {
                         className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer"
                       />
                     </Link>
-                    {hasDiscount && (
-                      <span className="absolute top-3 left-3 px-3 py-1 bg-linear-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded-full">
-                        Giảm{" "}
-                        {Math.round(
-                          ((comparePrice - productPrice) / comparePrice) * 100,
-                        )}
-                        %
+                    {product.stock <= 0 ? (
+                      <span className="absolute top-3 left-3 px-3 py-1 bg-[#ff4d2e] text-white text-[10px] font-bold rounded-full uppercase tracking-widest z-20 backdrop-blur-md shadow-sm">
+                        Hết hàng
                       </span>
+                    ) : (
+                      hasDiscount && (
+                        <span className="absolute top-3 left-3 px-3 py-1 bg-linear-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded-full z-10">
+                          Giảm{" "}
+                          {Math.round(
+                            ((comparePrice - productPrice) / comparePrice) * 100,
+                          )}
+                          %
+                        </span>
+                      )
                     )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 pointer-events-none">
+                    
+                    {product.stock > 0 && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           handleAddToCart(product);
                         }}
                         disabled={cartLoading}
-                        className="p-3 bg-white rounded-full hover:bg-orange-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed pointer-events-auto"
+                        className="absolute bottom-3 right-3 w-10 h-10 bg-[#ff4d2e] text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#e64529] z-20"
                         title="Thêm vào giỏ hàng"
                       >
-                        <ShoppingCartOutlined />
+                        <ShoppingCartOutlined className="text-lg" />
                       </button>
-                    </div>
+                    )}
                   </div>
                   <div className="p-4">
-                    <span className="text-xs text-orange-500 font-medium">
-                      {categoryName}
+                    <span className="text-[12px] text-orange-500 font-bold uppercase tracking-wider">
+                      {product.brand || "PawHouse"}
                     </span>
                     <Link to={`/san-pham/${product.slug || product._id}`}>
-                      <h3 className="font-semibold text-gray-900 mt-1 mb-2 line-clamp-2 hover:text-[#846551] transition cursor-pointer">
+                      <h3 className="font-semibold text-gray-900 mt-1 mb-2 line-clamp-2 hover:text-[#ff4d2e] transition cursor-pointer text-base">
                         {product.name}
                       </h3>
                     </Link>
@@ -201,8 +155,8 @@ export default function FeaturedProducts() {
                           : productPrice}
                         đ
                       </span>
-                      {comparePrice && comparePrice > productPrice && (
-                        <span className="text-sm text-gray-400 line-through">
+                      {hasDiscount && (
+                        <span className="text-xs text-gray-400 line-through">
                           {typeof comparePrice === "number"
                             ? comparePrice.toLocaleString("vi-VN")
                             : comparePrice}

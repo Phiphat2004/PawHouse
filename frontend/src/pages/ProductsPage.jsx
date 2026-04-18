@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { productApi, categoryApi } from "../services/api";
 import { useAddToCart } from "../hooks/useAddToCart";
@@ -16,6 +16,20 @@ export default function ProductsPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState({});
   const dropdownRef = React.useRef(null);
+
+  const [searchParams] = useSearchParams();
+  const initialCategory = searchParams.get("category");
+
+  useEffect(() => {
+    if (initialCategory && categories.length > 0) {
+      const found = categories.find(
+        (c) => c.slug === initialCategory || c._id === initialCategory
+      );
+      if (found) {
+        setFilterCategory(found._id);
+      }
+    }
+  }, [initialCategory, categories]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -388,59 +402,50 @@ function ProductCard({ product }) {
           <span className="text-6xl">📦</span>
         </div>
 
-        {/* Discount Badge */}
-        {hasDiscount && (
-          <div className="absolute top-3 right-3 bg-[#ff4d2e] text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-10">
-            -{discountPercent}%
-          </div>
+        {/* Badge Section */}
+        {product.stock <= 0 ? (
+          <span className="absolute top-3 left-3 px-3 py-1 bg-[#ff4d2e] text-white text-[10px] font-bold rounded-full uppercase tracking-widest z-20 backdrop-blur-md shadow-sm">
+            Hết hàng
+          </span>
+        ) : (
+          hasDiscount && (
+            <div className="absolute top-3 left-3 bg-[#ff4d2e] text-white text-[10px] font-bold px-2 py-0.5 rounded-md z-10">
+              -{discountPercent}%
+            </div>
+          )
         )}
 
-        {/* Floating Add to Cart Button (Bottom Right of Image) */}
-        <button
-          onClick={handleAddToCart}
-          disabled={cartLoading}
-          className="absolute bottom-3 right-3 w-10 h-10 bg-[#ff4d2e] text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#e64529] z-10"
-          title="Thêm vào giỏ hàng"
-        >
-          <ShoppingCartOutlined className="text-lg" />
-        </button>
+        {/* Floating Add to Cart Button (Only show if in stock) */}
+        {product.stock > 0 && (
+          <button
+            onClick={handleAddToCart}
+            disabled={cartLoading}
+            className="absolute bottom-3 right-3 w-10 h-10 bg-[#ff4d2e] text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#e64529] z-10"
+            title="Thêm vào giỏ hàng"
+          >
+            <ShoppingCartOutlined className="text-lg" />
+          </button>
+        )}
       </div>
 
-      {/* Product Info */}
       <div className="p-4 flex flex-col flex-grow">
-        {/* Brand */}
         {product.brand && (
-          <p className="text-[10px] text-[#ff4d2e] font-bold uppercase tracking-widest mb-1.5">
+          <span className="text-[12px] text-orange-500 font-bold uppercase tracking-wider mb-1.5">
             {product.brand}
-          </p>
+          </span>
         )}
-
-        {/* Product Name */}
-        <h3 className="text-lg font-semibold text-gray-800 mb-1 line-clamp-2 leading-snug group-hover:text-[#ff4d2e] transition-colors">
+        <h3 className="font-semibold text-gray-900 group-hover:text-[#ff4d2e] transition line-clamp-2 text-base leading-tight">
           {product.name}
         </h3>
 
-        {/* Description */}
-        <p className="text-[13px] text-gray-500 line-clamp-2 mb-3 leading-tight h-8">
-          {product.description || "Khám phá các sản phẩm chất lượng từ PawHouse."}
-        </p>
-
-        {/* Price & Category Section */}
-        <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-xl font-bold text-[#ff4d2e]">
-              {productPrice.toLocaleString("vi-VN")}₫
-            </span>
-            {hasDiscount && (
-              <span className="text-[12px] text-gray-400 line-through">
-                {comparePrice.toLocaleString("vi-VN")}₫
-              </span>
-            )}
-          </div>
-
-          {product.categoryIds && product.categoryIds.length > 0 && (
-            <span className="px-2.5 py-0.5 bg-[#fff5f2] text-[#ff4d2e] text-[10px] font-medium rounded-full">
-              {product.categoryIds[0].name || product.categoryIds[0]}
+        {/* Price Section */}
+        <div className="mt-auto pt-3 border-t border-gray-50 flex items-center gap-3">
+          <span className="text-xl font-bold text-[#ff4d2e]">
+            {productPrice.toLocaleString("vi-VN")}₫
+          </span>
+          {hasDiscount && (
+            <span className="text-sm text-gray-400 line-through">
+              {comparePrice.toLocaleString("vi-VN")}₫
             </span>
           )}
         </div>

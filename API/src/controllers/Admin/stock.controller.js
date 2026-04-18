@@ -1,4 +1,5 @@
 const stockService = require("../../services/admin/stock.service");
+const adminProductService = require("../../services/admin/product.service");
 
 const createEntry = async (req, res, next) => {
   try {
@@ -131,12 +132,22 @@ const deleteWarehouse = async (req, res, next) => {
   }
 };
 
+const getProductDetailsForAdmin = async (req, res, next) => {
+  try {
+    const product = await adminProductService.getProductById(req.params.productId);
+    res.json({ product });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createEntry,
   getStockLevels,
   getMovements,
   deleteMovement,
   getProductStock,
+  getProductDetailsForAdmin,
   getWarehouses,
   createWarehouse,
   deleteWarehouse,

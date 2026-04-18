@@ -70,13 +70,59 @@ export default function ProductForm({
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  const handleFocus = (e) => {
+    const { name, value } = e.target;
+    if (Number(value) === 0) {
+      setFormData((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    if (value === "") {
+      setFormData((prev) => ({ ...prev, [name]: 0 }));
+    }
+  };
+
   const handleCategoryChange = (categoryId) => {
-    setFormData((prev) => ({
-      ...prev,
-      categoryIds: prev.categoryIds.includes(categoryId)
-        ? prev.categoryIds.filter((id) => id !== categoryId)
-        : [...prev.categoryIds, categoryId],
-    }));
+    const category = categories.find((c) => c._id === categoryId);
+    if (!category) return;
+
+    setFormData((prev) => {
+      let newIds = [...prev.categoryIds];
+      const isSelected = newIds.includes(categoryId);
+
+      if (isSelected) {
+        // Unselecting - just remove the ID
+        newIds = newIds.filter((id) => id !== categoryId);
+      } else {
+        // Selecting - add current ID
+        newIds.push(categoryId);
+
+        if (!category.parentCategory) {
+          // It's a PARENT - Deselect all its children to keep it "Broad"
+          const childIds = categories
+            .filter(
+              (c) =>
+                c.parentCategory === categoryId ||
+                c.parentCategory?._id === categoryId
+            )
+            .map((c) => c._id);
+          newIds = newIds.filter((id) => !childIds.includes(id));
+        } else {
+          // It's a CHILD - Deselect its parent to keep it "Specific"
+          const parentId =
+            typeof category.parentCategory === "string"
+              ? category.parentCategory
+              : category.parentCategory?._id;
+          if (parentId) {
+            newIds = newIds.filter((id) => id !== parentId);
+          }
+        }
+      }
+
+      return { ...prev, categoryIds: newIds };
+    });
   };
 
   const handleFileChange = (e) => {
@@ -337,6 +383,8 @@ export default function ProductForm({
                     name="originalPrice"
                     value={formData.originalPrice}
                     onChange={handleChange}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     min="0"
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.originalPrice ? "border-red-500" : "border-gray-300"
                       }`}
@@ -357,6 +405,8 @@ export default function ProductForm({
                     name="discountPercentage"
                     value={formData.discountPercentage}
                     onChange={handleChange}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     min="0"
                     max="100"
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.discountPercentage ? "border-red-500" : "border-gray-300"
@@ -366,11 +416,19 @@ export default function ProductForm({
                   {errors.discountPercentage && (
                     <p className="mt-1 text-sm text-red-500">{errors.discountPercentage}</p>
                   )}
-                  {formData.originalPrice > 0 && formData.discountPercentage > 0 && (
-                    <p className="mt-1 text-xs text-green-600 font-medium">
-                      Giá bán thực tế: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Math.round(formData.originalPrice * (1 - formData.discountPercentage / 100)))}
-                    </p>
-                  )}
+                </div>
+
+                {/* Final Price (Readonly) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Giá bán thực tế (VNĐ)
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Math.round(formData.originalPrice * (1 - formData.discountPercentage / 100)))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-green-700 font-bold cursor-not-allowed"
+                  />
                 </div>
               </div>
             </div>
@@ -416,21 +474,32 @@ export default function ProductForm({
 
                         return (
                           <div key={rootCat._id} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <div className="font-semibold text-gray-800 mb-2 px-1 text-sm uppercase tracking-wider">
-                              {rootCat.name}
-                            </div>
+                            <label className={`flex items-center gap-2 cursor-pointer p-2 mb-2 rounded-lg transition-all ${formData.categoryIds.includes(rootCat._id)
+                                ? "bg-orange-100 text-orange-800"
+                                : "hover:bg-gray-100"
+                              }`}>
+                              <input
+                                type="checkbox"
+                                checked={formData.categoryIds.includes(rootCat._id)}
+                                onChange={() => handleCategoryChange(rootCat._id)}
+                                className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 shrink-0"
+                              />
+                              <span className="font-bold text-sm uppercase tracking-wider">
+                                {rootCat.name} (Danh mục chính)
+                              </span>
+                            </label>
+
                             {childCats.length === 0 ? (
                               <p className="text-xs text-gray-500 px-1 italic">Chưa có danh mục con</p>
                             ) : (
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-2 gap-2 pl-4">
                                 {childCats.map((child) => (
                                   <label
                                     key={child._id}
-                                    className={`flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border-2 transition-all bg-white ${
-                                      formData.categoryIds.includes(child._id)
+                                    className={`flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border-2 transition-all bg-white ${formData.categoryIds.includes(child._id)
                                         ? "border-orange-500 bg-orange-50"
                                         : "border-gray-200 hover:border-orange-200"
-                                    }`}
+                                      }`}
                                   >
                                     <input
                                       type="checkbox"
@@ -439,11 +508,10 @@ export default function ProductForm({
                                       className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 shrink-0"
                                     />
                                     <span
-                                      className={`text-sm font-medium ${
-                                        formData.categoryIds.includes(child._id)
+                                      className={`text-sm font-medium ${formData.categoryIds.includes(child._id)
                                           ? "text-orange-700"
                                           : "text-gray-700"
-                                      }`}
+                                        }`}
                                     >
                                       {child.name}
                                     </span>
@@ -505,9 +573,10 @@ export default function ProductForm({
                             <button
                               type="button"
                               onClick={() => handleRemoveFile(idx)}
-                              className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                              className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 font-bold text-lg"
                               title="Gỡ ảnh này"
                             >
+                              &times;
                             </button>
                           </div>
                         ))}
@@ -545,9 +614,10 @@ export default function ProductForm({
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(index)}
-                            className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                            className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 font-bold text-lg"
                             title="Xóa ảnh này"
                           >
+                            &times;
                           </button>
 
                           {/* Sorting controls */}

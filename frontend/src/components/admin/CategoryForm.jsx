@@ -104,11 +104,6 @@ export default function CategoryForm({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {errors.submit && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {errors.submit}
-            </div>
-          )}
 
           {/* Tên danh mục */}
           <div>
@@ -120,13 +115,10 @@ export default function CategoryForm({
               name="name"
               value={formData.name}
               onChange={handleNameChange}
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${errors.name ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${errors.name ? "border-red-500 bg-red-50" : "border-gray-300"
                 }`}
               placeholder="Ví dụ: Thức ăn cho chó"
             />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-500">{errors.name}</p>
-            )}
           </div>
 
           {/* Slug */}
@@ -139,13 +131,10 @@ export default function CategoryForm({
               name="slug"
               value={formData.slug}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-xl font-mono text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${errors.slug ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-3 border rounded-xl font-mono text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent transition ${errors.slug ? "border-red-500 bg-red-50" : "border-gray-300"
                 }`}
               placeholder="thuc-an-cho-cho"
             />
-            {errors.slug && (
-              <p className="mt-1 text-sm text-red-500">{errors.slug}</p>
-            )}
           </div>
 
           {/* Mô tả */}

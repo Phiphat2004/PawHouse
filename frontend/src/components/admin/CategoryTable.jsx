@@ -12,7 +12,6 @@ export default function CategoryTable({
   canManage = false,
   onEdit,
   onDelete,
-  onToggleStatus,
 }) {
   const formatDate = (date) => {
     if (!date) return "-";
@@ -47,9 +46,6 @@ export default function CategoryTable({
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Số lượng sản phẩm
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trạng thái
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ngày tạo
@@ -87,61 +83,37 @@ export default function CategoryTable({
                     {category.productCount || 0} sản phẩm
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {canManage ? (
-                    <button
-                      onClick={() =>
-                        onToggleStatus(category._id, category.isActive)
-                      }
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full transition-colors ${category.isActive
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                        }`}
-                    >
-                      {category.isActive ? "Hoạt động" : "Tạm ngưng"}
-                    </button>
-                  ) : (
-                    <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${category.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                        }`}
-                    >
-                      {category.isActive ? "Hoạt động" : "Tạm ngưng"}
-                    </span>
-                  )}
-                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(category.createdAt)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      to={`/quan-tri/danh-muc/${category._id}`}
-                      className="text-blue-600 hover:text-blue-900 transition-colors"
-                      title="Xem chi tiết"
-                    >
-                      <EyeOutlined />
-                    </Link>
-                    {canManage && (
-                      <>
-                        <button
-                          onClick={() => onEdit(category)}
-                          className="text-orange-600 hover:text-orange-900 transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <EditOutlined />
-                        </button>
-                        <button
-                          onClick={() => onDelete(category)}
-                          className="text-red-600 hover:text-red-900 transition-colors"
-                          title="Xóa"
-                        >
-                          <DeleteOutlined />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        to={`/quan-tri/danh-muc/${category._id}`}
+                        className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-full transition-all"
+                        title="Xem chi tiết"
+                      >
+                        <EyeOutlined className="text-lg" />
+                      </Link>
+                      {canManage && (
+                        <>
+                          <button
+                            onClick={() => onEdit(category)}
+                            className="p-2 text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full transition-all"
+                            title="Chỉnh sửa"
+                          >
+                            <EditOutlined className="text-lg" />
+                          </button>
+                          <button
+                            onClick={() => onDelete(category)}
+                            className="p-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-full transition-all"
+                            title="Xóa"
+                          >
+                            <DeleteOutlined className="text-lg" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                 </td>
               </tr>
             ))}

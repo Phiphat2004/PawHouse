@@ -17,14 +17,35 @@ async function getAllCategories({ isActive, search }) {
   const categories = await Category.find(query)
     .populate("parentCategory", "name slug")
     .lean()
-    .sort({ name: 1 });
+    .sort({ createdAt: -1 });
 
   const { Product } = require("../../models");
+  
+  // Build a tree of category relations
+  const categoryTree = {};
+  categories.forEach(c => {
+    const parentId = c.parentCategory?._id ? c.parentCategory._id.toString() : null;
+    if (parentId) {
+      if (!categoryTree[parentId]) categoryTree[parentId] = [];
+      categoryTree[parentId].push(c._id.toString());
+    }
+  });
+
+  const getDescendantIds = (idStr) => {
+    let ids = [idStr];
+    const children = categoryTree[idStr] || [];
+    for (const childId of children) {
+      ids = ids.concat(getDescendantIds(childId));
+    }
+    return ids;
+  };
+
   await Promise.all(
     categories.map(async (category) => {
+      const allIds = getDescendantIds(category._id.toString());
       category.productCount = await Product.countDocuments({
-        categoryIds: category._id,
-        isDeleted: false,
+        categoryIds: { $in: allIds },
+        isDeleted: { $ne: true },
       });
     }),
   );
@@ -95,8 +116,21 @@ async function deleteCategory(id, userRoles) {
     throw error;
   }
 
+  // Check if category has sub-categories
+  const childCount = await Category.countDocuments({ parentCategory: id });
+  if (childCount > 0) {
+    const error = new Error(
+      `Cannot delete this category because it has ${childCount} sub-categories. Please delete or move them first.`,
+    );
+    error.status = 400;
+    throw error;
+  }
+
   const { Product } = require("../../models");
-  const productsCount = await Product.countDocuments({ categoryIds: id });
+  const productsCount = await Product.countDocuments({ 
+    categoryIds: id,
+    isDeleted: { $ne: true }
+  });
   if (productsCount > 0) {
     const error = new Error(
       `Cannot delete category with ${productsCount} products. Please move or delete products first.`,
@@ -121,19 +155,16 @@ async function createCategory(data, userRoles) {
     throw error;
   }
 
-  let finalSlug = slug;
-  const existingCategory = await Category.findOne({ slug: finalSlug });
+  const existingCategory = await Category.findOne({ slug });
   if (existingCategory) {
-    let counter = 1;
-    while (await Category.findOne({ slug: `${slug}-${counter}` })) {
-      counter++;
-    }
-    finalSlug = `${slug}-${counter}`;
+    const error = new Error("Slug already exists");
+    error.status = 400;
+    throw error;
   }
 
   const category = new Category({
     name,
-    slug: finalSlug,
+    slug,
     description,
     isActive,
     parentCategory: parentCategory || null,

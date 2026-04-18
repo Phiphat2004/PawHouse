@@ -195,6 +195,7 @@ export const stockApi = {
 
   // Product stock
   getProductStock: (productId) => api.get(`/stock/product/${productId}`),
+  getProductDetails: (productId) => api.get(`/stock/product-details/${productId}`),
 
   // Warehouses
   getWarehouses: () => api.get("/stock/warehouses"),

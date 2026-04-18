@@ -15,7 +15,9 @@ export default function Categories() {
     categoryApi.getAll()
       .then((res) => {
         const list = res.categories || res || []
-        setCategories(list.slice(0, 6))
+        // Chỉ lấy các danh mục gốc (không có parentCategory)
+        const rootCategories = list.filter(c => !c.parentCategory)
+        setCategories(rootCategories.slice(0, 6))
       })
       .catch(() => setCategories([]))
       .finally(() => setLoading(false))
@@ -47,7 +49,7 @@ export default function Categories() {
           {categories.map((category, index) => (
             <button
               key={category._id || category.id}
-              onClick={() => navigate(`/san-pham?category=${category._id || category.id}`)}
+              onClick={() => navigate(`/san-pham?category=${category.slug || category._id || category.id}`)}
               className="group p-6 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
             >
               <span className="text-4xl block mb-3 group-hover:scale-125 transition-transform duration-300">
