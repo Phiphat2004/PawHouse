@@ -22,7 +22,7 @@ const DEFAULT_WAREHOUSE = {
  */
 async function getProductStock(productId) {
   const stockLevels = await StockLevel.find({ productId });
-  return stockLevels.reduce((sum, sl) => sum + sl.quantity, 0);
+  return stockLevels.reduce((sum, sl) => sum + (Number(sl.availableQuantity) || 0), 0);
 }
 
 /**

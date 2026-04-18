@@ -426,7 +426,6 @@ async function fulfillStock(orderId, items = [], createdBy) {
         $inc: {
           reservedQuantity: -qty,
           quantity: -qty,
-          availableQuantity: -qty,
         },
       },
       { new: true },

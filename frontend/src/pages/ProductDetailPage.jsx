@@ -191,8 +191,8 @@ export default function ProductDetailPage() {
                           key={idx}
                           onClick={() => setSelectedImageIdx(idx)}
                           className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${selectedImageIdx === idx
-                              ? "border-[#ff4d2e] shadow-md scale-105"
-                              : "border-transparent opacity-70 hover:opacity-100 bg-white shadow-sm"
+                            ? "border-[#ff4d2e] shadow-md scale-105"
+                            : "border-transparent opacity-70 hover:opacity-100 bg-white shadow-sm"
                             }`}
                         >
                           <img
@@ -244,12 +244,6 @@ export default function ProductDetailPage() {
               {/* Metadata */}
               <div className="mt-auto space-y-6">
                 <div className="flex items-center gap-4 text-sm">
-                  {product.categoryIds && product.categoryIds.length > 0 && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-[#ff4d2e] rounded-full font-bold">
-                      <span className="w-2 h-2 rounded-full bg-[#ff4d2e] animate-pulse"></span>
-                      {product.categoryIds[0].name || product.categoryIds[0]}
-                    </div>
-                  )}
 
                   <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${product.stock > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
                     }`}>

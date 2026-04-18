@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AdminLayout } from "../../components/admin";
-import { productApi } from "../../utils/services/api";
+import { productApi, stockApi } from "../../services/api";
 import Toast from "../../components/layout/Toast";
 import ProductForm from "../../components/admin/ProductForm";
 import { hasWriteAccessForCatalog } from "../../utils/role";
@@ -23,7 +23,7 @@ export default function AdminProductDetailPage() {
     try {
       setLoading(true);
       const [productData, categoriesData] = await Promise.all([
-        productApi.getById(id),
+        stockApi.getProductDetails(id),
         productApi.getCategories(),
       ]);
       setProduct(productData.product);
@@ -291,13 +291,13 @@ export default function AdminProductDetailPage() {
                   {product.compareAtPrice &&
                     product.compareAtPrice > product.price && (
                       <div className="mt-1 flex items-center gap-2">
-                        <p className="text-sm text-gray-500 line-through">
+                        <span className="text-sm text-gray-500 line-through">
                           Giá gốc: {new Intl.NumberFormat("vi-VN", {
                             style: "currency",
                             currency: "VND",
                           }).format(product.compareAtPrice)}
-                        </p>
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600">
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 leading-none">
                           -Giảm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
                         </span>
                       </div>

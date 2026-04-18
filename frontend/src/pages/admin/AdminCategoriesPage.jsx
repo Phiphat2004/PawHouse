@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
 import { AdminLayout } from "../../components/admin";
 import CategoryTable from "../../components/admin/CategoryTable";
 import CategoryForm from "../../components/admin/CategoryForm";
@@ -15,7 +16,20 @@ export default function AdminCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterParent, setFilterParent] = useState("");
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [toasts, setToasts] = useState([]);
@@ -24,24 +38,24 @@ export default function AdminCategoriesPage() {
     loadCategories();
   }, []);
 
-  const addToast = (message, type = "success") => {
+  const addToast = (type, title, message) => {
     const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, type, title, message }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 3000);
+    }, 4000);
   };
 
-  const loadCategories = async () => {
+  const loadCategories = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await categoryApi.getAll();
       setCategories(data.categories || data || []);
     } catch (err) {
       setError(err.message);
       console.error("Error loading categories:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -69,12 +83,13 @@ export default function AdminCategoriesPage() {
       setCategories(categories.filter((c) => c._id !== categoryId));
       setShowDeleteModal(false);
       setCategoryToDelete(null);
-      addToast("Xóa danh mục thành công!", "success");
+      addToast("success", "Thành công!", "Xóa danh mục thành công!");
     } catch (err) {
       const errorMessage =
         err.response?.data?.error || err.message || "Lỗi khi xóa danh mục";
-      addToast(errorMessage, "error");
-      throw err; // Re-throw to let modal handle the error
+      addToast("error", "Lỗi!", errorMessage);
+      setShowDeleteModal(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -86,22 +101,18 @@ export default function AdminCategoriesPage() {
   const handleFormSubmit = async (formData) => {
     try {
       if (editingCategory) {
-        const updated = await categoryApi.update(editingCategory._id, formData);
-        setCategories(
-          categories.map((c) =>
-            c._id === editingCategory._id ? updated.category || updated : c,
-          ),
-        );
-        addToast("Cập nhật danh mục thành công!", "success");
+        await categoryApi.update(editingCategory._id, formData);
+        addToast("success", "Thành công!", "Cập nhật danh mục thành công!");
       } else {
-        const created = await categoryApi.create(formData);
-        setCategories([created.category || created, ...categories]);
-        addToast("Thêm danh mục thành công!", "success");
+        await categoryApi.create(formData);
+        addToast("success", "Thành công!", "Thêm danh mục thành công!");
       }
       setShowForm(false);
       setEditingCategory(null);
+      await loadCategories(true); // Silent reload to keep scroll position & filters
     } catch (err) {
       console.error("Form submit error:", err);
+      addToast("error", "Lỗi!", err.message || "Lỗi khi lưu danh mục");
       throw err;
     }
   };
@@ -111,31 +122,11 @@ export default function AdminCategoriesPage() {
     setEditingCategory(null);
   };
 
-  const handleToggleStatus = async (categoryId, currentStatus) => {
-    if (!canManage) return;
-    try {
-      const category = categories.find((c) => c._id === categoryId);
-      if (!category) return;
 
-      const updateData = {
-        name: category.name,
-        slug: category.slug,
-        description: category.description,
-        isActive: !currentStatus,
-      };
 
-      const updated = await categoryApi.update(categoryId, updateData);
 
-      setCategories(
-        categories.map((c) =>
-          c._id === categoryId ? updated.category || updated : c,
-        ),
-      );
-      addToast("Cập nhật trạng thái thành công!", "success");
-    } catch (err) {
-      addToast(`Lỗi khi cập nhật trạng thái: ${err.message}`, "error");
-    }
-  };
+
+  const parentCategories = categories.filter((c) => !c.parentCategory);
 
   const filteredCategories = categories.filter((category) => {
     const matchesSearch =
@@ -144,12 +135,14 @@ export default function AdminCategoriesPage() {
       (category.description &&
         category.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesStatus =
-      filterStatus === "" ||
-      (filterStatus === "active" && category.isActive) ||
-      (filterStatus === "inactive" && !category.isActive);
+    const matchesParent =
+      filterParent === "" ||
+      (filterParent === "root" && !category.parentCategory) ||
+      (filterParent !== "root" &&
+        category.parentCategory &&
+        (category.parentCategory._id || category.parentCategory).toString() === filterParent);
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesParent;
   });
 
   if (loading) {
@@ -189,9 +182,10 @@ export default function AdminCategoriesPage() {
           {canManage ? (
             <button
               onClick={handleCreate}
-              className="px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-amber-600 transition shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
             >
-              Thêm danh mục
+              <span className="text-xl">+</span>
+              <span className="font-medium">Thêm danh mục</span>
             </button>
           ) : (
             <span className="rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-500">
@@ -200,96 +194,84 @@ export default function AdminCategoriesPage() {
           )}
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Tìm kiếm theo tên, slug hoặc mô tả..."
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                    title="Xóa tìm kiếm"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-            <div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Tạm ngưng</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Search Results Info */}
-          {(searchTerm || filterStatus) && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Tìm thấy{" "}
-                <span className="font-semibold text-orange-600">
-                  {filteredCategories.length}
-                </span>{" "}
-                kết quả
-                {searchTerm && (
-                  <span>
-                    {" "}
-                    cho từ khóa{" "}
-                    <span className="font-semibold">"{searchTerm}"</span>
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
-        </div>
-
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Tổng danh mục</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {categories.length}
-                </p>
-              </div>
-            </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Tổng cộng</p>
+            <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Đang hoạt động</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {categories.filter((c) => c.isActive).length}
-                </p>
-              </div>
-            </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Danh mục cha</p>
+            <p className="text-2xl font-bold text-orange-600">
+              {categories.filter((c) => !c.parentCategory).length}
+            </p>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Tạm ngưng</p>
-                <p className="text-2xl font-bold text-gray-600">
-                  {categories.filter((c) => !c.isActive).length}
-                </p>
-              </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Danh mục con</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {categories.filter((c) => !!c.parentCategory).length}
+            </p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Tìm kiếm theo tên, slug hoặc mô tả..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="relative" ref={categoryDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-left flex justify-between items-center transition-all shadow-sm hover:border-orange-300"
+              >
+                <span className="truncate text-gray-700">
+                  {filterParent
+                    ? parentCategories.find(c => c._id === filterParent)?.name || "Danh mục đã chọn"
+                    : "Tất cả danh mục cha"}
+                </span>
+                <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isCategoryOpen && (
+                <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                  <div
+                    onClick={() => { setFilterParent(""); setIsCategoryOpen(false); }}
+                    className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 text-sm ${!filterParent ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
+                  >
+                    Tất cả danh mục cha
+                  </div>
+                  {parentCategories.map(p => (
+                    <div
+                      key={p._id}
+                      onClick={() => { setFilterParent(p._id); setIsCategoryOpen(false); }}
+                      className={`px-4 py-2.5 cursor-pointer hover:bg-orange-50 transition-colors text-sm border-b border-gray-50 last:border-0 ${filterParent === p._id ? "font-bold text-orange-600 bg-orange-50" : "text-gray-800"}`}
+                    >
+                      {p.name}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
+
 
         {/* Table */}
         {filteredCategories.length === 0 ? (
@@ -299,16 +281,13 @@ export default function AdminCategoriesPage() {
                 Không tìm thấy kết quả
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || filterStatus
+                {searchTerm
                   ? "Không có danh mục nào phù hợp với điều kiện tìm kiếm"
                   : "Chưa có danh mục nào"}
               </p>
-              {(searchTerm || filterStatus) && (
+              {searchTerm && (
                 <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setFilterStatus("");
-                  }}
+                  onClick={() => setSearchTerm("")}
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
                 >
                   Xóa bộ lọc
@@ -322,7 +301,6 @@ export default function AdminCategoriesPage() {
             canManage={canManage}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
-            onToggleStatus={handleToggleStatus}
           />
         )}
 
@@ -346,11 +324,13 @@ export default function AdminCategoriesPage() {
         )}
 
         {/* Toast Notifications */}
-        {toasts.map((toast) => (
+        {toasts.map((toast, index) => (
           <Toast
             key={toast.id}
-            message={toast.message}
+            index={index}
             type={toast.type}
+            title={toast.title}
+            message={toast.message}
             onClose={() =>
               setToasts((prev) => prev.filter((t) => t.id !== toast.id))
             }

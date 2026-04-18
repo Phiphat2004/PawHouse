@@ -5,7 +5,7 @@ import { categoryApi, productApi } from "../../services/api";
 import Toast from "../../components/layout/Toast";
 import CategoryForm from "../../components/admin/CategoryForm";
 import { hasWriteAccessForCatalog } from "../../utils/role";
-import { EditOutlined, DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 export default function AdminCategoryDetailPage() {
   const canManage = hasWriteAccessForCatalog();
@@ -32,12 +32,35 @@ export default function AdminCategoryDetailPage() {
       setCategory(categoryData.category || categoryData);
       setCategories(categoriesData.categories || categoriesData || []);
 
-      // Lọc sản phẩm thuộc danh mục này
+      // Tìm tất cả các danh mục con (đệ quy)
+      const catsList = categoriesData.categories || categoriesData || [];
+      const categoryTree = {};
+      catsList.forEach(c => {
+        const pId = c.parentCategory?._id || c.parentCategory;
+        if (pId) {
+          if (!categoryTree[pId]) categoryTree[pId] = [];
+          categoryTree[pId].push(c._id);
+        }
+      });
+
+      const getDescendants = (catId) => {
+        let ids = [catId];
+        const children = categoryTree[catId] || [];
+        for (const child of children) {
+          ids = ids.concat(getDescendants(child));
+        }
+        return ids;
+      };
+
+      const validIds = getDescendants(id);
+
+      // Lọc sản phẩm thuộc danh mục này (bao gồm danh mục con)
       const allProducts = productsData.products || productsData || [];
       const categoryProducts = allProducts.filter((product) =>
-        product.categoryIds?.some((catId) =>
-          typeof catId === "string" ? catId === id : catId._id === id,
-        ),
+        product.categoryIds?.some((catId) => {
+          const pid = typeof catId === "string" ? catId : catId._id;
+          return validIds.includes(pid);
+        })
       );
       setProducts(categoryProducts);
     } catch (err) {
@@ -75,7 +98,8 @@ export default function AdminCategoryDetailPage() {
         navigate("/quan-tri/danh-muc");
       }, 1500);
     } catch (err) {
-      addToast("error", "Lỗi!", "Không thể xóa danh mục: " + err.message);
+      const errorMessage = err.response?.data?.error || err.message || "Không thể xóa danh mục";
+      addToast("error", "", errorMessage);
     } finally {
       setShowDeleteModal(false);
     }
@@ -107,31 +131,9 @@ export default function AdminCategoryDetailPage() {
     setShowEditForm(false);
   };
 
-  const handleToggleStatus = async () => {
-    if (!canManage) return;
-    try {
-      const updateData = {
-        name: category.name,
-        slug: category.slug,
-        description: category.description,
-        isActive: !category.isActive,
-      };
 
-      await categoryApi.update(id, updateData);
-      setCategory({ ...category, isActive: !category.isActive });
-      addToast(
-        "success",
-        "Thành công!",
-        `Đã ${category.isActive ? "tạm ngưng" : "kích hoạt"} danh mục`,
-      );
-    } catch (err) {
-      addToast(
-        "error",
-        "Lỗi!",
-        "Không thể cập nhật trạng thái: " + err.message,
-      );
-    }
-  };
+
+
 
   const formatPrice = (price) => {
     if (!price) return "0đ";
@@ -186,27 +188,18 @@ export default function AdminCategoryDetailPage() {
           {canManage ? (
             <div className="flex gap-2">
               <button
-                onClick={handleToggleStatus}
-                className={`px-4 py-2 flex items-center justify-center gap-2 rounded-lg font-medium border transition-all ${category.isActive
-                    ? "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
-                    : "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                  }`}
-              >
-                {category.isActive ? <><PauseCircleOutlined /> Tạm ngưng</> : <><PlayCircleOutlined /> Kích hoạt</>}
-              </button>
-              <button
                 onClick={handleEditClick}
                 className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center gap-2 transition-colors"
               >
                 <EditOutlined /> Chỉnh sửa
               </button>
-              <button
-                onClick={handleDeleteClick}
-                className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium flex items-center justify-center gap-2 transition-colors"
-              >
-                <DeleteOutlined /> Xóa
-              </button>
-            </div>
+                  <button
+                    onClick={handleDeleteClick}
+                    className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <DeleteOutlined /> Xóa
+                  </button>
+                </div>
           ) : (
             <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
               Chế độ chỉ xem
@@ -232,13 +225,63 @@ export default function AdminCategoryDetailPage() {
               </div>
             </div>
 
+            {/* Hiện danh mục cha hoặc danh mục con tùy theo vị trí */}
+            {category.parentCategory && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Danh mục cha</h2>
+                {(() => {
+                  const parentId = category.parentCategory._id || category.parentCategory;
+                  const parentName =
+                    category.parentCategory.name ||
+                    categories.find((c) => c._id === parentId || c._id?.toString() === parentId?.toString())?.name ||
+                    "Danh mục cha";
+                  return (
+                    <Link
+                      to={`/quan-tri/danh-muc/${parentId}`}
+                      className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all text-sm font-medium text-gray-900 inline-flex w-fit"
+                    >
+                      <span className="text-orange-400">📂</span>
+                      {parentName}
+                    </Link>
+                  );
+                })()}
+              </div>
+            )}
 
 
-            {/* Products in Category */}
+            {/* Subcategories - chỉ hiện khi là danh mục cha có con */}
+            {(() => {
+              const subs = categories.filter(
+                (c) =>
+                  c.parentCategory &&
+                  (c.parentCategory._id || c.parentCategory).toString() === id
+              );
+              return subs.length > 0 ? (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    Danh mục con ({subs.length})
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {subs.map((sub) => (
+                      <Link
+                        key={sub._id}
+                        to={`/quan-tri/danh-muc/${sub._id}`}
+                        className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all text-sm font-medium text-gray-900"
+                      >
+                        <span className="text-orange-400">📁</span>
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
+
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                   Sản phẩm ({products.length})
+                  Sản phẩm ({products.length})
                 </h2>
               </div>
               {products.length > 0 ? (
@@ -262,7 +305,7 @@ export default function AdminCategoryDetailPage() {
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-gray-400">
-                            
+
                           </div>
                         )}
                       </div>
@@ -293,28 +336,17 @@ export default function AdminCategoryDetailPage() {
 
           {/* Right Column - Details */}
           <div className="space-y-6">
+
+
+
+
             {/* Status Card */}
+
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Trạng thái
               </h2>
               <div className="space-y-4">
-                <div>
-                  <span className="text-sm text-gray-600">
-                    Trạng thái hiện tại
-                  </span>
-                  <div className="mt-1">
-                    {category.isActive ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      Đang hoạt động
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                        Tạm ngưng
-                      </span>
-                    )}
-                  </div>
-                </div>
                 <div>
                   <span className="text-sm text-gray-600">Slug</span>
                   <p className="mt-1 font-mono text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded border">

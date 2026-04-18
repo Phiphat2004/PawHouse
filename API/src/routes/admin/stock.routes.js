@@ -15,6 +15,10 @@ router.get("/levels", adminStockController.getStockLevels);
 router.get("/movements", adminStockController.getMovements);
 router.delete("/movements/:id", adminStockController.deleteMovement);
 router.get("/product/:productId", adminStockController.getProductStock);
+router.get(
+  "/product-details/:productId",
+  adminStockController.getProductDetailsForAdmin,
+);
 router.get("/warehouses", adminStockController.getWarehouses);
 router.post("/warehouses", adminStockController.createWarehouse);
 router.delete("/warehouses/:id", adminStockController.deleteWarehouse);
