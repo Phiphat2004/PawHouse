@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { DatePicker } from "antd";
 import { AdminLayout } from "../../components/admin";
@@ -26,13 +26,16 @@ const statusClassName = {
   checked_in: "bg-indigo-100 text-indigo-700 border border-indigo-200",
   in_progress: "bg-violet-100 text-violet-700 border border-violet-200",
   completed: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+  mixed: "bg-gray-100 text-gray-700 border border-gray-200",
 };
+
+const BATCH_NOTE_REGEX = /\[BATCH:([A-Za-z0-9_-]+):(\d+)\/(\d+)\]\s*$/;
 
 function renderStatusBadge(status) {
   const label = statusLabel[status] || status;
   const cls = statusClassName[status] || "bg-gray-100 text-gray-700 border border-gray-200";
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${cls}`}>
       {label}
     </span>
   );
@@ -53,6 +56,43 @@ function getNextStatus(currentStatus) {
   return "";
 }
 
+function parseBatchNote(note = "") {
+  const rawNote = String(note || "");
+  const matched = rawNote.match(BATCH_NOTE_REGEX);
+
+  if (!matched) {
+    return {
+      batchId: "",
+      sequence: 0,
+      total: 0,
+      cleanNote: rawNote,
+    };
+  }
+
+  return {
+    batchId: matched[1],
+    sequence: Number(matched[2]) || 0,
+    total: Number(matched[3]) || 0,
+    cleanNote: rawNote.replace(BATCH_NOTE_REGEX, "").trim(),
+  };
+}
+
+function getGroupStatus(items = []) {
+  const uniqueStatuses = Array.from(
+    new Set(items.map((item) => String(item.status || "").toLowerCase()).filter(Boolean)),
+  );
+
+  if (uniqueStatuses.length === 1) {
+    return uniqueStatuses[0];
+  }
+
+  if (uniqueStatuses.length > 1) {
+    return "mixed";
+  }
+
+  return "";
+}
+
 export default function AdminCareAppointmentsPage() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,9 +100,10 @@ export default function AdminCareAppointmentsPage() {
   const [dateRange, setDateRange] = useState(["", ""]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [processingId, setProcessingId] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [rejectPopup, setRejectPopup] = useState({
     open: false,
-    appointmentId: "",
+    appointmentIds: [],
     reason: "",
   });
   const [errorPopup, setErrorPopup] = useState("");
@@ -118,26 +159,15 @@ export default function AdminCareAppointmentsPage() {
     }
   }
 
-  async function handleReject(id, reason) {
-    try {
-      setProcessingId(id);
-      await careAppointmentApi.rejectAppointment(id, reason);
-      toast.success("Đã từ chối lịch hẹn");
-      await fetchAppointments();
-      return true;
-    } catch (err) {
-      showErrorPopup(err.message || "Không thể từ chối lịch");
-      return false;
-    } finally {
-      setProcessingId("");
-    }
-  }
+  function openRejectPopup(appointmentIdOrIds) {
+    const appointmentIds = Array.isArray(appointmentIdOrIds)
+      ? appointmentIdOrIds.filter(Boolean)
+      : [appointmentIdOrIds].filter(Boolean);
 
-  function openRejectPopup(appointmentId) {
     setSelectedAppointment(null);
     setRejectPopup({
       open: true,
-      appointmentId,
+      appointmentIds,
       reason: "",
     });
   }
@@ -145,7 +175,7 @@ export default function AdminCareAppointmentsPage() {
   function closeRejectPopup() {
     setRejectPopup({
       open: false,
-      appointmentId: "",
+      appointmentIds: [],
       reason: "",
     });
   }
@@ -157,12 +187,28 @@ export default function AdminCareAppointmentsPage() {
       return;
     }
 
-    const ok = await handleReject(rejectPopup.appointmentId, reason);
-    if (ok) {
-      if (selectedAppointment?._id === rejectPopup.appointmentId) {
+    const ids = Array.isArray(rejectPopup.appointmentIds)
+      ? rejectPopup.appointmentIds.filter(Boolean)
+      : [];
+
+    if (!ids.length) {
+      showErrorPopup("Không tìm thấy lịch hẹn để từ chối");
+      return;
+    }
+
+    try {
+      setProcessingId(`reject-${ids.join("-")}`);
+      await Promise.all(ids.map((id) => careAppointmentApi.rejectAppointment(id, reason)));
+      toast.success(ids.length > 1 ? `Đã từ chối ${ids.length} lịch hẹn` : "Đã từ chối lịch hẹn");
+      await fetchAppointments();
+      if (selectedAppointment && ids.includes(selectedAppointment._id)) {
         setSelectedAppointment(null);
       }
       closeRejectPopup();
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể từ chối lịch");
+    } finally {
+      setProcessingId("");
     }
   }
 
@@ -184,6 +230,115 @@ export default function AdminCareAppointmentsPage() {
     } finally {
       setProcessingId("");
     }
+  }
+
+  const groupedAppointments = useMemo(() => {
+    const grouped = [];
+    const groupIndexByBatchId = new Map();
+
+    filteredAppointments.forEach((item) => {
+      const parsed = parseBatchNote(item.note);
+      const enrichedItem = {
+        ...item,
+        _batchId: parsed.batchId,
+        _batchSequence: parsed.sequence,
+        _batchTotal: parsed.total,
+        _displayNote: parsed.cleanNote,
+      };
+
+      if (!parsed.batchId) {
+        grouped.push({
+          key: `single-${item._id}`,
+          isBatch: false,
+          items: [enrichedItem],
+          total: 1,
+        });
+        return;
+      }
+
+      if (groupIndexByBatchId.has(parsed.batchId)) {
+        const index = groupIndexByBatchId.get(parsed.batchId);
+        grouped[index].items.push(enrichedItem);
+        grouped[index].total = Math.max(grouped[index].total, parsed.total || 0);
+        return;
+      }
+
+      groupIndexByBatchId.set(parsed.batchId, grouped.length);
+      grouped.push({
+        key: `batch-${parsed.batchId}`,
+        isBatch: true,
+        batchId: parsed.batchId,
+        total: parsed.total || 0,
+        items: [enrichedItem],
+      });
+    });
+
+    grouped.forEach((group) => {
+      if (group.isBatch) {
+        group.items.sort((a, b) => a._batchSequence - b._batchSequence);
+      }
+    });
+
+    return grouped.map((group) => {
+      const pendingItems = group.items.filter(
+        (item) => String(item.status || "").toLowerCase() === "pending",
+      );
+      const groupStatus = getGroupStatus(group.items);
+      const nextStatus = groupStatus && groupStatus !== "mixed" ? getNextStatus(groupStatus) : "";
+
+      return {
+        ...group,
+        pendingItems,
+        groupStatus,
+        nextStatus,
+      };
+    });
+  }, [filteredAppointments]);
+
+  async function handleApproveGroup(group) {
+    const ids = (group?.pendingItems || []).map((item) => item._id).filter(Boolean);
+    if (!ids.length) return;
+
+    try {
+      setProcessingId(group.key);
+      await Promise.all(ids.map((id) => careAppointmentApi.approveAppointment(id)));
+      toast.success(`Đã xác nhận ${ids.length} lịch và đã gửi email cho khách`);
+      await fetchAppointments();
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể duyệt lịch nhóm");
+    } finally {
+      setProcessingId("");
+    }
+  }
+
+  async function handleAdvanceGroup(group) {
+    const nextStatus = group?.nextStatus;
+    if (!nextStatus || nextStatus === "confirmed") return;
+
+    const ids = (group?.items || [])
+      .filter((item) => String(item.status || "").toLowerCase() === String(group.groupStatus || "").toLowerCase())
+      .map((item) => item._id)
+      .filter(Boolean);
+
+    if (!ids.length) return;
+
+    try {
+      setProcessingId(group.key);
+      await Promise.all(ids.map((id) => careAppointmentApi.updateAppointmentStatus(id, nextStatus)));
+      toast.success(`Đã cập nhật ${ids.length} lịch sang trạng thái: ${statusLabel[nextStatus] || nextStatus}`);
+      await fetchAppointments();
+    } catch (err) {
+      showErrorPopup(err.message || "Không thể cập nhật trạng thái lịch nhóm");
+    } finally {
+      setProcessingId("");
+    }
+  }
+
+  function toggleGroupDetails(groupKey) {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
   }
 
   return (
@@ -239,7 +394,7 @@ export default function AdminCareAppointmentsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Đang tải...</div>
-          ) : filteredAppointments.length === 0 ? (
+          ) : groupedAppointments.length === 0 ? (
             <div className="p-8 text-center text-gray-500">Không có lịch hẹn nào</div>
           ) : (
             <div className="overflow-x-auto">
@@ -250,68 +405,180 @@ export default function AdminCareAppointmentsPage() {
                     <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Thú cưng</th>
                     <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Dịch vụ</th>
                     <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Lịch hẹn</th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Trạng thái</th>
                     <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">Thao tác</th>
+                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAppointments.map((item) => (
-                    <tr key={item._id} className="border-b border-gray-100">
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <p className="font-medium text-gray-900">{item.customerId?.profile?.fullName || item.customerId?.email || "Khách hàng"}</p>
-                        <p className="text-gray-500">{item.customerId?.email || ""}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <p className="font-medium text-gray-900">{item.petName}</p>
-                        <p className="text-gray-500">{item.petType}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{item.serviceType}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <p>{new Date(item.appointmentDate).toLocaleDateString("vi-VN")}</p>
-                        <p className="text-gray-500">{item.startTime}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{renderStatusBadge(item.status)}</td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        <div className="flex flex-col sm:flex-row items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setSelectedAppointment(item)}
-                            className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
-                          >
-                            Xem chi tiết
-                          </button>
-                          <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                            {item.status === "pending" ? (
-                              <>
+                  {groupedAppointments.map((group) => {
+                    if (!group.isBatch) {
+                      const item = group.items[0];
+                      return (
+                        <tr key={item._id} className="border-b border-gray-100">
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p className="font-medium text-gray-900">{item.customerId?.profile?.fullName || item.customerId?.email || "Khách hàng"}</p>
+                            <p className="text-gray-500">{item.customerId?.email || ""}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p className="font-medium text-gray-900">{item.petName}</p>
+                            <p className="text-gray-500">{item.petType}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{item.serviceType}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p>{new Date(item.appointmentDate).toLocaleDateString("vi-VN")}</p>
+                            <p className="text-gray-500">{item.startTime}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <div className="flex flex-col sm:flex-row items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => setSelectedAppointment(item)}
+                                className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
+                              >
+                                Xem chi tiết
+                              </button>
+                              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                                {item.status === "pending" ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleApprove(item._id)}
+                                      disabled={processingId === item._id}
+                                      className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 text-xs font-medium"
+                                    >
+                                      Xác nhận
+                                    </button>
+                                    <button
+                                      onClick={() => openRejectPopup(item._id)}
+                                      disabled={processingId === item._id}
+                                      className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50 text-xs font-medium"
+                                    >
+                                      Từ chối
+                                    </button>
+                                  </>
+                                ) : null}
+                                {getNextStatus(item.status) && getNextStatus(item.status) !== "confirmed" ? (
+                                  <button
+                                    onClick={() => handleAdvanceStatus(item)}
+                                    disabled={processingId === item._id}
+                                    className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 text-xs font-medium"
+                                  >
+                                    {statusActions[getNextStatus(item.status)]?.label || "Cập nhật"}
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{renderStatusBadge(item.status)}</td>
+                        </tr>
+                      );
+                    }
+
+                    const firstItem = group.items[0];
+                    const groupSize = group.total || group.items.length;
+                    const isExpanded = Boolean(expandedGroups[group.key]);
+                    const serviceSummary = Array.from(
+                      new Set(group.items.map((item) => item.serviceType).filter(Boolean)),
+                    ).join(", ");
+
+                    return (
+                      <Fragment key={group.key}>
+                        <tr className="border-b border-amber-100 bg-amber-50/70">
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p className="font-medium text-gray-900">
+                              {firstItem?.customerId?.profile?.fullName || firstItem?.customerId?.email || "Khách hàng"}
+                            </p>
+                            <p className="text-gray-500">{firstItem?.customerId?.email || ""}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p className="font-medium text-amber-800">Nhóm {groupSize} thú cưng</p>
+                            <p className="text-gray-500 truncate max-w-56">
+                              {group.items.map((item) => item.petName).filter(Boolean).join(", ")}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p className="truncate max-w-56">{serviceSummary || "-"}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <p>{new Date(firstItem?.appointmentDate).toLocaleDateString("vi-VN")}</p>
+                            <p className="text-gray-500">
+                              {firstItem?.startTime}
+                              {group.items.length > 1
+                                ? ` (${group.items.length} khung giờ liên tiếp)`
+                                : ""}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <div className="flex flex-wrap items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => toggleGroupDetails(group.key)}
+                                className="px-2.5 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
+                              >
+                                {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
+                              </button>
+                              {group.pendingItems.length > 0 ? (
                                 <button
-                                  onClick={() => handleApprove(item._id)}
-                                  disabled={processingId === item._id}
-                                  className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 text-xs font-medium"
+                                  onClick={() => handleApproveGroup(group)}
+                                  disabled={processingId === group.key}
+                                  className="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 text-xs font-medium"
                                 >
                                   Xác nhận
                                 </button>
+                              ) : null}
+                              {group.pendingItems.length > 0 ? (
                                 <button
-                                  onClick={() => openRejectPopup(item._id)}
-                                  disabled={processingId === item._id}
-                                  className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50 text-xs font-medium"
+                                  onClick={() => openRejectPopup(group.pendingItems.map((item) => item._id))}
+                                  disabled={processingId === group.key}
+                                  className="px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50 text-xs font-medium"
                                 >
                                   Từ chối
                                 </button>
-                              </>
-                            ) : null}
-                            {getNextStatus(item.status) && getNextStatus(item.status) !== "confirmed" ? (
-                              <button
-                                onClick={() => handleAdvanceStatus(item)}
-                                disabled={processingId === item._id}
-                                className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 text-xs font-medium"
-                              >
-                                {statusActions[getNextStatus(item.status)]?.label || "Cập nhật"}
-                              </button>
-                            ) : null}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                              ) : null}
+                              {group.nextStatus && group.nextStatus !== "confirmed" ? (
+                                <button
+                                  onClick={() => handleAdvanceGroup(group)}
+                                  disabled={processingId === group.key}
+                                  className="px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 text-xs font-medium"
+                                >
+                                  {statusActions[group.nextStatus]?.label || "Cập nhật nhóm"}
+                                </button>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{renderStatusBadge(group.groupStatus)}</td>
+                        </tr>
+
+                        {isExpanded ? (
+                          <tr className="border-b border-amber-100 bg-amber-50/20">
+                            <td colSpan={6} className="px-4 py-3">
+                              <div className="space-y-2">
+                                {group.items.map((item) => (
+                                  <div
+                                    key={item._id}
+                                    className="rounded-lg border border-amber-100 bg-white px-3 py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+                                  >
+                                    <div className="text-sm text-gray-700">
+                                      <p className="font-medium text-gray-900">{item.petName} - {item.petType}</p>
+                                      <p>
+                                        {item.serviceType} | {new Date(item.appointmentDate).toLocaleDateString("vi-VN")} | {item.startTime}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      {renderStatusBadge(item.status)}
+                                      <button
+                                        onClick={() => setSelectedAppointment(item)}
+                                        className="px-2.5 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
+                                      >
+                                        Xem
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -469,10 +736,10 @@ export default function AdminCareAppointmentsPage() {
                 </button>
                 <button
                   onClick={submitReject}
-                  disabled={processingId === rejectPopup.appointmentId}
+                  disabled={processingId.startsWith("reject-")}
                   className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
                 >
-                  {processingId === rejectPopup.appointmentId ? "Đang gửi..." : "Xác nhận từ chối"}
+                  {processingId.startsWith("reject-") ? "Đang gửi..." : "Xác nhận từ chối"}
                 </button>
               </div>
             </div>

@@ -61,7 +61,7 @@ const serviceTypeOptions = [
 const BUSINESS_START_HOUR = 8;
 const BUSINESS_END_HOUR = 20;
 const APPOINTMENT_PAGE_SIZE = 6;
-const MAX_PETS_PER_BOOKING = 3;
+const APPOINTMENT_FETCH_LIMIT = 50;
 const BATCH_NOTE_REGEX = /\[BATCH:([A-Za-z0-9_-]+):(\d+)\/(\d+)\]\s*$/;
 
 const statusLabel = {
@@ -154,6 +154,7 @@ export default function CareAppointmentsPage() {
   const [petEntries, setPetEntries] = useState([{ ...initialPetEntry }]);
   const [editForm, setEditForm] = useState(initialEditForm);
   const [editingId, setEditingId] = useState("");
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -171,42 +172,38 @@ export default function CareAppointmentsPage() {
     appointmentIds: [],
     reason: "",
   });
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
     setErrorPopup(message || "Đã xảy ra lỗi, vui lòng thử lại");
   };
 
-  const fetchMyAppointments = useCallback(async (page = currentPage) => {
+  const fetchMyAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await careAppointmentApi.getMyAppointments({
-        page,
-        limit: APPOINTMENT_PAGE_SIZE,
-      });
+      const allAppointments = [];
+      let page = 1;
+      let totalPages = 1;
 
-      const nextPagination =
-        res.pagination ||
-        {
+      do {
+        const res = await careAppointmentApi.getMyAppointments({
           page,
-          limit: APPOINTMENT_PAGE_SIZE,
-          total: (res.appointments || []).length,
-          pages: 1,
-        };
+          limit: APPOINTMENT_FETCH_LIMIT,
+        });
 
-      if (nextPagination.pages > 0 && page > nextPagination.pages) {
-        setCurrentPage(nextPagination.pages);
-        return;
-      }
+        allAppointments.push(...(res.appointments || []));
+        totalPages = Math.max(Number(res.pagination?.pages || 1), 1);
+        page += 1;
+      } while (page <= totalPages);
 
-      setAppointments(res.appointments || []);
-      setPagination(nextPagination);
+      setAppointments(allAppointments);
     } catch (err) {
       showErrorPopup(err.message || "Không thể tải lịch chăm sóc");
     } finally {
       setLoading(false);
     }
-  }, [currentPage]);
+  }, []);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -345,8 +342,8 @@ export default function CareAppointmentsPage() {
       return;
     }
 
-    if (petEntries.length < 1 || petEntries.length > MAX_PETS_PER_BOOKING) {
-      showErrorPopup("Số lượng thú cưng phải từ 1 đến 3");
+    if (petEntries.length < 1) {
+      showErrorPopup("Vui lòng thêm ít nhất 1 thú cưng");
       return;
     }
 
@@ -363,7 +360,7 @@ export default function CareAppointmentsPage() {
 
     const slotTimes = buildSequentialTimes(form.startTime, petEntries.length);
     if (slotTimes.length !== petEntries.length) {
-      showErrorPopup("Khung giờ không đủ cho 2-3 thú cưng liên tiếp trong ngày");
+      showErrorPopup("Khung giờ không đủ để xếp lịch liên tiếp cho tất cả thú cưng trong ngày");
       return;
     }
 
@@ -403,7 +400,7 @@ export default function CareAppointmentsPage() {
       }
 
       setCurrentPage(1);
-      await fetchMyAppointments(1);
+      await fetchMyAppointments();
       setForm(initialForm);
       setPetEntries([{ ...initialPetEntry }]);
     } catch (err) {
@@ -589,6 +586,34 @@ export default function CareAppointmentsPage() {
     });
   }, [appointments]);
 
+  const paginatedGroupedAppointments = useMemo(() => {
+    const startIndex = (currentPage - 1) * APPOINTMENT_PAGE_SIZE;
+    return groupedAppointments.slice(startIndex, startIndex + APPOINTMENT_PAGE_SIZE);
+  }, [groupedAppointments, currentPage]);
+
+  useEffect(() => {
+    const totalGroups = groupedAppointments.length;
+    const totalPages = Math.max(Math.ceil(totalGroups / APPOINTMENT_PAGE_SIZE), 1);
+
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+
+    setPagination({
+      page: Math.min(currentPage, totalPages),
+      limit: APPOINTMENT_PAGE_SIZE,
+      total: totalGroups,
+      pages: totalPages,
+    });
+  }, [groupedAppointments, currentPage]);
+
+  const toggleGroupDetails = (groupKey) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  };
+
   return (
     <div className="font-['Inter',sans-serif] min-h-screen bg-gray-50">
       <Header />
@@ -599,7 +624,7 @@ export default function CareAppointmentsPage() {
             ✂️ Đặt lịch chăm sóc PawHouse
           </h1>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            Đặt lịch nhanh cho 1 đến 3 thú cưng với dịch vụ phù hợp cho từng bé
+            Đặt lịch nhanh cho nhiều thú cưng với dịch vụ phù hợp cho từng bé
           </p>
         </div>
       </section>
@@ -627,7 +652,6 @@ export default function CareAppointmentsPage() {
                       size="small"
                       icon={<PlusOutlined />}
                       onClick={addPetEntry}
-                      disabled={petEntries.length >= MAX_PETS_PER_BOOKING}
                     >
                       Thêm thú cưng
                     </Button>
@@ -777,7 +801,7 @@ export default function CareAppointmentsPage() {
                 />
               ) : (
                 <div className="space-y-3">
-                  {groupedAppointments.map((group) => {
+                  {paginatedGroupedAppointments.map((group) => {
                     return (
                       <div key={group.key}>
                         <Card
@@ -786,13 +810,32 @@ export default function CareAppointmentsPage() {
                           styles={{ body: { padding: 16 } }}
                         >
                           {group.isBatch ? (
-                            <div className="mb-3 rounded-xl bg-orange-50 border border-orange-100 px-3 py-2">
+                            <div className="mb-3 px-1 py-1">
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-sm text-orange-700 font-medium">
-                                  Lịch nhóm {group.total || group.items.length} thú cưng
-                                </span>
+                                <div>
+                                  <span className="text-sm text-orange-700 font-medium">
+                                    Lịch nhóm {group.total || group.items.length} thú cưng
+                                  </span>
+                                  {group.items.length > 0 ? (
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                                      <span>
+                                        <CalendarOutlined /> {new Date(group.items[0].appointmentDate).toLocaleDateString("vi-VN")}
+                                      </span>
+                                      <span>
+                                        <ClockCircleOutlined /> {group.items[0].startTime}
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </div>
                                 <div className="flex items-center gap-2">
                                   {renderStatusBadge(group.groupStatus)}
+                                  <Button
+                                    type="default"
+                                    size="small"
+                                    onClick={() => toggleGroupDetails(group.key)}
+                                  >
+                                    {expandedGroups[group.key] ? "Ẩn chi tiết" : "Xem chi tiết nhóm"}
+                                  </Button>
                                   {group.canGroupEdit && group.editTargetItem ? (
                                     <Button
                                       type="default"
@@ -822,146 +865,154 @@ export default function CareAppointmentsPage() {
                           ) : null}
 
                           <div className="space-y-4">
-                            {group.items.map((item, idx) => (
-                              <div
-                                key={item._id}
-                                className={idx > 0 ? "pt-4 border-t border-slate-200" : ""}
-                              >
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                  <div>
-                                    <p className="text-slate-900 font-semibold text-base">
-                                      {item.petName} - {item.serviceType}
-                                    </p>
-                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                                      <span className="inline-flex items-center gap-1">
-                                        <CalendarOutlined />
-                                        {new Date(item.appointmentDate).toLocaleDateString("vi-VN")}
-                                      </span>
-                                      <span className="inline-flex items-center gap-1">
-                                        <ClockCircleOutlined />
-                                        {item.startTime}
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-slate-500 mt-1">
-                                      Loại thú cưng: {item.petType}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {!group.isBatch ? renderStatusBadge(item.status) : null}
-                                    {!group.isBatch && item.status === "pending" && editingId !== item._id ? (
-                                      <Button
-                                        type="default"
-                                        size="small"
-                                        icon={<EditOutlined />}
-                                        onClick={() => startEdit(item)}
-                                      >
-                                        Chỉnh sửa
-                                      </Button>
-                                    ) : null}
-                                    {!group.isBatch && canCancelAppointment(item.status) ? (
-                                      <Button
-                                        danger
-                                        size="small"
-                                        onClick={() => openCancelPopup(item._id)}
-                                      >
-                                        Hủy lịch
-                                      </Button>
-                                    ) : null}
-                                  </div>
-                                </div>
-
-                                {item._displayNote && (
-                                  <p className="mt-2 text-sm text-slate-600">
-                                    Ghi chú: {item._displayNote}
-                                  </p>
-                                )}
-
-                                {editingId === item._id ? (
-                                  <div className="mt-4 p-4 rounded-xl border border-blue-200 bg-white space-y-3">
-                                    <h3 className="font-semibold text-slate-800">Chỉnh sửa lịch hẹn</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      <Input
-                                        size="large"
-                                        value={editForm.petName}
-                                        onChange={handleEditChange("petName")}
-                                        placeholder="Tên thú cưng"
-                                      />
-                                      <Select
-                                        size="large"
-                                        value={editForm.petType || undefined}
-                                        onChange={(value) => setEditForm((prev) => ({ ...prev, petType: value || "" }))}
-                                        options={selectPetOptions}
-                                        placeholder="Chọn loại thú cưng"
-                                      />
-                                      <Select
-                                        size="large"
-                                        value={editForm.serviceType || undefined}
-                                        onChange={(value) =>
-                                          setEditForm((prev) => ({ ...prev, serviceType: value || "" }))
-                                        }
-                                        options={selectServiceOptions}
-                                        placeholder="Chọn dịch vụ"
-                                        className="md:col-span-2"
-                                      />
-                                      <DatePicker
-                                        size="large"
-                                        className="w-full"
-                                        format="DD/MM/YYYY"
-                                        value={editForm.appointmentDate ? dayjs(editForm.appointmentDate) : null}
-                                        onChange={(value) =>
-                                          setEditForm((prev) => ({
-                                            ...prev,
-                                            appointmentDate: value ? value.format("YYYY-MM-DD") : "",
-                                          }))
-                                        }
-                                        disabledDate={disabledDate}
-                                        placeholder="Chọn ngày"
-                                      />
+                            {!group.isBatch || expandedGroups[group.key]
+                              ? group.items.map((item, idx) => (
+                                  <div
+                                    key={item._id}
+                                    className={idx > 0 ? "pt-4 border-t border-slate-200" : ""}
+                                  >
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                       <div>
-                                        <TimePicker
-                                          size="large"
-                                          className="w-full"
-                                          format="HH:mm"
-                                          minuteStep={30}
-                                          value={toTimeValue(editForm.startTime)}
-                                          onChange={(value) =>
-                                            setEditForm((prev) => ({
-                                              ...prev,
-                                              startTime: value ? value.format("HH:mm") : "",
-                                            }))
-                                          }
-                                          disabledTime={() => getDisabledTime(editForm.appointmentDate)}
-                                          placeholder="Chọn giờ"
-                                        />
+                                        <p className="text-slate-900 font-semibold text-base">
+                                          {item.petName} - {item.serviceType}
+                                        </p>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                                          <span className="inline-flex items-center gap-1">
+                                            <CalendarOutlined />
+                                            {new Date(item.appointmentDate).toLocaleDateString("vi-VN")}
+                                          </span>
+                                          <span className="inline-flex items-center gap-1">
+                                            <ClockCircleOutlined />
+                                            {item.startTime}
+                                          </span>
+                                        </div>
+                                        <p className="text-sm text-slate-500 mt-1">
+                                          Loại thú cưng: {item.petType}
+                                        </p>
                                       </div>
-                                      <TextArea
-                                        rows={3}
-                                        value={editForm.note}
-                                        onChange={handleEditChange("note")}
-                                        placeholder="Ghi chú"
-                                        className="md:col-span-2"
-                                      />
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          type="default"
+                                          size="small"
+                                          onClick={() => setSelectedAppointment(item)}
+                                        >
+                                          Xem chi tiết
+                                        </Button>
+                                        {!group.isBatch ? renderStatusBadge(item.status) : null}
+                                        {!group.isBatch && item.status === "pending" && editingId !== item._id ? (
+                                          <Button
+                                            type="default"
+                                            size="small"
+                                            icon={<EditOutlined />}
+                                            onClick={() => startEdit(item)}
+                                          >
+                                            Chỉnh sửa
+                                          </Button>
+                                        ) : null}
+                                        {!group.isBatch && canCancelAppointment(item.status) ? (
+                                          <Button
+                                            danger
+                                            size="small"
+                                            onClick={() => openCancelPopup(item._id)}
+                                          >
+                                            Hủy lịch
+                                          </Button>
+                                        ) : null}
+                                      </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        onClick={saveEdit}
-                                        disabled={savingEdit}
-                                        type="primary"
-                                        loading={savingEdit}
-                                      >
-                                        Lưu thay đổi
-                                      </Button>
-                                      <Button
-                                        onClick={cancelEdit}
-                                        disabled={savingEdit}
-                                      >
-                                        Hủy
-                                      </Button>
-                                    </div>
+
+                                    {item._displayNote && (
+                                      <p className="mt-2 text-sm text-slate-600">
+                                        Ghi chú: {item._displayNote}
+                                      </p>
+                                    )}
+
+                                    {editingId === item._id ? (
+                                      <div className="mt-4 p-4 rounded-xl border border-blue-200 bg-white space-y-3">
+                                        <h3 className="font-semibold text-slate-800">Chỉnh sửa lịch hẹn</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          <Input
+                                            size="large"
+                                            value={editForm.petName}
+                                            onChange={handleEditChange("petName")}
+                                            placeholder="Tên thú cưng"
+                                          />
+                                          <Select
+                                            size="large"
+                                            value={editForm.petType || undefined}
+                                            onChange={(value) =>
+                                              setEditForm((prev) => ({ ...prev, petType: value || "" }))
+                                            }
+                                            options={selectPetOptions}
+                                            placeholder="Chọn loại thú cưng"
+                                          />
+                                          <Select
+                                            size="large"
+                                            value={editForm.serviceType || undefined}
+                                            onChange={(value) =>
+                                              setEditForm((prev) => ({ ...prev, serviceType: value || "" }))
+                                            }
+                                            options={selectServiceOptions}
+                                            placeholder="Chọn dịch vụ"
+                                            className="md:col-span-2"
+                                          />
+                                          <DatePicker
+                                            size="large"
+                                            className="w-full"
+                                            format="DD/MM/YYYY"
+                                            value={editForm.appointmentDate ? dayjs(editForm.appointmentDate) : null}
+                                            onChange={(value) =>
+                                              setEditForm((prev) => ({
+                                                ...prev,
+                                                appointmentDate: value ? value.format("YYYY-MM-DD") : "",
+                                              }))
+                                            }
+                                            disabledDate={disabledDate}
+                                            placeholder="Chọn ngày"
+                                          />
+                                          <div>
+                                            <TimePicker
+                                              size="large"
+                                              className="w-full"
+                                              format="HH:mm"
+                                              minuteStep={30}
+                                              value={toTimeValue(editForm.startTime)}
+                                              onChange={(value) =>
+                                                setEditForm((prev) => ({
+                                                  ...prev,
+                                                  startTime: value ? value.format("HH:mm") : "",
+                                                }))
+                                              }
+                                              disabledTime={() => getDisabledTime(editForm.appointmentDate)}
+                                              placeholder="Chọn giờ"
+                                            />
+                                          </div>
+                                          <TextArea
+                                            rows={3}
+                                            value={editForm.note}
+                                            onChange={handleEditChange("note")}
+                                            placeholder="Ghi chú"
+                                            className="md:col-span-2"
+                                          />
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <Button
+                                            onClick={saveEdit}
+                                            disabled={savingEdit}
+                                            type="primary"
+                                            loading={savingEdit}
+                                          >
+                                            Lưu thay đổi
+                                          </Button>
+                                          <Button onClick={cancelEdit} disabled={savingEdit}>
+                                            Hủy
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : null}
                                   </div>
-                                ) : null}
-                              </div>
-                            ))}
+                                ))
+                              : null}
                           </div>
                         </Card>
                       </div>
@@ -985,6 +1036,35 @@ export default function CareAppointmentsPage() {
           </section>
         </div>
       </main>
+
+      <Modal
+        title="Chi tiết lịch hẹn"
+        open={Boolean(selectedAppointment)}
+        onCancel={() => setSelectedAppointment(null)}
+        footer={[
+          <Button key="close-detail" type="primary" onClick={() => setSelectedAppointment(null)}>
+            Đóng
+          </Button>,
+        ]}
+      >
+        {selectedAppointment ? (
+          <div className="space-y-2 text-sm text-slate-700">
+            <p><strong>Thú cưng:</strong> {selectedAppointment.petName}</p>
+            <p><strong>Loại:</strong> {selectedAppointment.petType}</p>
+            <p><strong>Dịch vụ:</strong> {selectedAppointment.serviceType}</p>
+            <p><strong>Ngày hẹn:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString("vi-VN")}</p>
+            <p><strong>Giờ:</strong> {selectedAppointment.startTime}</p>
+            <p><strong>Trạng thái:</strong> {statusLabel[String(selectedAppointment.status || "").toLowerCase()] || selectedAppointment.status}</p>
+            <p><strong>Ghi chú:</strong> {selectedAppointment._displayNote || "Không có ghi chú"}</p>
+            {selectedAppointment.rejectionReason ? (
+              <p className="text-rose-600"><strong>Lý do từ chối:</strong> {selectedAppointment.rejectionReason}</p>
+            ) : null}
+            {selectedAppointment.cancellationReason ? (
+              <p className="text-amber-700"><strong>Lý do hủy:</strong> {selectedAppointment.cancellationReason}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         title="Hủy lịch hẹn"
