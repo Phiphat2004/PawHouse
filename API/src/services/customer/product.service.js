@@ -20,17 +20,27 @@ const DEFAULT_WAREHOUSE = {
 /**
  * Get total stock quantity for a product from all warehouses
  */
-async function getProductStock(productId) {
+async function getProductStock(productId, user = null) {
   const stockLevels = await StockLevel.find({ productId });
-  return stockLevels.reduce((sum, sl) => sum + (Number(sl.availableQuantity) || 0), 0);
+  const isAdminOrStaff =
+    user?.roles?.includes("admin") || user?.roles?.includes("staff");
+
+  return stockLevels.reduce(
+    (sum, sl) =>
+      sum +
+      (isAdminOrStaff
+        ? Number(sl.quantity) || 0
+        : Number(sl.availableQuantity) || 0),
+    0,
+  );
 }
 
 /**
  * Enrich product with stock data from StockLevel
  */
-async function enrichProductWithStock(product) {
+async function enrichProductWithStock(product, user = null) {
   if (!product) return product;
-  const stock = await getProductStock(product._id);
+  const stock = await getProductStock(product._id, user);
   const productObj = product.toObject ? product.toObject() : product;
   return { ...productObj, stock };
 }
@@ -105,12 +115,12 @@ async function getAllProducts({
 /**
  * Get product by ID
  */
-async function getProductById(id) {
+async function getProductById(id, user = null) {
   const product = await Product.findOne({
     _id: id,
     isDeleted: { $ne: true },
   }).populate("categoryIds", "name slug");
-  return enrichProductWithStock(product);
+  return enrichProductWithStock(product, user);
 }
 
 /**

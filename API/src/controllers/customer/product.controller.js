@@ -12,7 +12,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const product = await productService.getProductById(req.params.id);
+    const product = await productService.getProductById(req.params.id, req.user);
     if (!product) {
       return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
     }

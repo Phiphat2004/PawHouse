@@ -23,7 +23,7 @@ export default function AdminProductDetailPage() {
     try {
       setLoading(true);
       const [productData, categoriesData] = await Promise.all([
-        stockApi.getProductDetails(id),
+        productApi.getById(id),
         productApi.getCategories(),
       ]);
       setProduct(productData.product);

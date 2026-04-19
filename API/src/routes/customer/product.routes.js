@@ -1,6 +1,7 @@
 const express = require("express");
 const { param, query, validationResult } = require("express-validator");
 const customerProductController = require("../../controllers/customer/product.controller");
+const { optionalAuth } = require("../../middlewares/auth.middleware");
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ router.get(
 router.get("/", customerProductController.getAll);
 router.get(
   "/:id",
+  optionalAuth,
   getProductByIdValidation,
   handleValidationErrors,
   customerProductController.getById,
