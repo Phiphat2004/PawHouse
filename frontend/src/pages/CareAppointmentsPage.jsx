@@ -60,6 +60,7 @@ const serviceTypeOptions = [
 
 const BUSINESS_START_HOUR = 8;
 const BUSINESS_END_HOUR = 20;
+const MAX_PETS_PER_BOOKING = 6;
 const APPOINTMENT_PAGE_SIZE = 6;
 const APPOINTMENT_FETCH_LIMIT = 50;
 const BATCH_NOTE_REGEX = /\[BATCH:([A-Za-z0-9_-]+):(\d+)\/(\d+)\]\s*$/;

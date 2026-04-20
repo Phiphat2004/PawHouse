@@ -13,9 +13,6 @@ const CareAppointment = Booking;
 const OtpToken = require("./OtpToken");
 const Session = require("./Session");
 
-// Order models
-const Payment = require("./Payment");
-
 // Product models
 const Cart = require("./Cart");
 const ProductVariation = require("./ProductVariation");
@@ -36,8 +33,6 @@ module.exports = {
   // Auth
   OtpToken,
   Session,
-  // Order
-  Payment,
   // Product
   Cart,
   ProductVariation,

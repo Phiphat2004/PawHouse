@@ -11,6 +11,21 @@ const statusHistorySchema = new mongoose.Schema(
   { _id: false },
 );
 
+const paymentSchema = new mongoose.Schema(
+  {
+    method: { type: String, enum: ["cash"], default: "cash" },
+    status: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    amount: { type: Number, default: 0, min: 0 },
+    providerTxnId: { type: String, default: "" },
+    paidAt: { type: Date, default: null },
+  },
+  { _id: false },
+);
+
 const orderSchema = new mongoose.Schema(
   {
     userId: {
@@ -52,6 +67,8 @@ const orderSchema = new mongoose.Schema(
     shippingFee: { type: Number, default: 0, min: 0 },
     subtotal: { type: Number, default: 0, min: 0 },
     total: { type: Number, default: 0, min: 0 },
+
+    payment: { type: paymentSchema, default: () => ({}) },
 
     note: { type: String },
     statusHistory: [statusHistorySchema],
