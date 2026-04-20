@@ -22,7 +22,7 @@ export default function FeaturedProducts() {
       const response = await productApi.getAll();
       const productsList = response.products || response || [];
       // Sắp xếp theo ngày tạo mới nhất (createdAt)
-      const sortedProducts = [...productsList].sort((a, b) => 
+      const sortedProducts = [...productsList].sort((a, b) =>
         new Date(b.createdAt) - new Date(a.createdAt)
       );
       // Lấy 4 sản phẩm mới nhất đang kích hoạt
@@ -124,7 +124,7 @@ export default function FeaturedProducts() {
                         </span>
                       )
                     )}
-                    
+
                     {product.stock > 0 && (
                       <button
                         onClick={(e) => {
