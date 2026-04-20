@@ -9,6 +9,10 @@ function formatDate(dateString) {
   })
 }
 
+function getAuthorLabel(post) {
+  return post.authorId?.profile?.fullName || post.author?.name || post.authorName || 'Admin PawHouse'
+}
+
 export default function Testimonials() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -41,24 +45,44 @@ export default function Testimonials() {
               <Link
                 key={post._id}
                 to={`/cong-dong/${post.slug || post._id}`}
-                className="group block p-6 bg-linear-to-br from-orange-50 to-amber-50 rounded-2xl hover:shadow-xl transition-all duration-300"
+                className="group block overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
-                {post.coverImage && (
-                  <img
-                    src={post.coverImage}
-                    alt={post.title}
-                    className="w-full h-40 object-cover rounded-xl mb-4"
-                  />
+                {post.coverImageUrl || post.coverImage ? (
+                  <div className="overflow-hidden">
+                    <img
+                      src={post.coverImageUrl || post.coverImage?.url || post.coverImage}
+                      alt={post.title}
+                      className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        const fallback = e.currentTarget.parentElement
+                        if (fallback) {
+                          fallback.innerHTML = '<div class="h-44 bg-linear-to-br from-orange-50 to-amber-100 border-b border-orange-100"></div>'
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-44 bg-linear-to-br from-orange-50 to-amber-100 border-b border-orange-100" />
                 )}
-                <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-orange-500 transition-colors">
-                  {post.title}
-                </h3>
-                {post.excerpt && (
-                  <p className="text-gray-600 text-sm line-clamp-2 mb-3">{post.excerpt}</p>
-                )}
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span className="inline-flex items-center gap-1"><EditOutlined /> {post.author?.name || post.authorName || 'Ẩn danh'}</span>
-                  {post.createdAt && <span>{formatDate(post.createdAt)}</span>}
+
+                <div className="p-6">
+                  <h3 className="font-bold text-2xl leading-8 text-gray-900 mb-3 line-clamp-2 group-hover:text-orange-500 transition-colors">
+                    {post.title}
+                  </h3>
+
+                  <p className="text-gray-600 text-base line-clamp-2 min-h-[3.25rem] mb-5">
+                    {post.excerpt || 'Bài viết chia sẻ kinh nghiệm chăm sóc thú cưng từ cộng đồng PawHouse.'}
+                  </p>
+
+                  <div className="flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-4">
+                    <span className="inline-flex items-center gap-2 font-medium text-gray-700">
+                      <EditOutlined /> {getAuthorLabel(post)}
+                    </span>
+                    {(post.publishedAt || post.createdAt) && (
+                      <span className="text-gray-400">{formatDate(post.publishedAt || post.createdAt)}</span>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
