@@ -1,6 +1,12 @@
 const authService = require("../services/auth.service");
-const fs = require("fs");
-const path = require("path");
+const cloudinary = require("cloudinary").v2;
+const config = require("../config");
+
+cloudinary.config({
+  cloud_name: config.cloudinary.cloudName,
+  api_key: config.cloudinary.apiKey,
+  api_secret: config.cloudinary.apiSecret,
+});
 
 const register = async (req, res, next) => {
   try {
@@ -53,17 +59,22 @@ const getMe = async (req, res, next) => {
 
 const updateProfile = async (req, res, next) => {
   try {
-    if (req.file) {
-      const uploadDir = path.join(__dirname, "..", "..", "uploads", "avatars");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
+    if (req.file && req.file.buffer) {
+      // Upload buffer to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { resource_type: "image", folder: "pawhouse/avatars" },
+          (error, data) => {
+            if (error) return reject(error);
+            resolve(data);
+          },
+        );
+        stream.end(req.file.buffer);
+      });
 
-      const ext = path.extname(req.file.originalname);
-      const filename = `user_${req.user._id}_${Date.now()}${ext}`;
-      const filepath = path.join(uploadDir, filename);
-      fs.writeFileSync(filepath, req.file.buffer);
-      req.body.avatarUrl = `/uploads/avatars/${filename}`;
+      if (result && result.secure_url) {
+        req.body.avatarUrl = result.secure_url;
+      }
     }
 
     const result = await authService.updateProfile(req.user, req.body);
