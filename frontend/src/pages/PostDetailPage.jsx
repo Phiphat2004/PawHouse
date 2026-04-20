@@ -14,6 +14,7 @@ export default function PostDetailPage() {
   const [readingProgress, setReadingProgress] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [canViewUnpublished, setCanViewUnpublished] = useState(false);
+  const [authorPostCount, setAuthorPostCount] = useState(0);
   const contentRef = useRef(null);
 
   useEffect(() => {
@@ -99,13 +100,31 @@ export default function PostDetailPage() {
     try {
       setLoading(true);
       const data = await postApi.getBySlug(slug);
-
       setPost(data.post);
+      
+      // Load author's post count
+      if (data.post?.authorId) {
+        loadAuthorPostCount(data.post.authorId._id);
+      }
     } catch (err) {
       setError(err.message || "Không thể tải bài viết");
       console.error("Error loading post:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAuthorPostCount = async (authorId) => {
+    try {
+      const data = await postApi.getPublic();
+      const posts = data.posts || data || [];
+      const count = posts.filter(
+        (p) => p.status === "published" && p.authorId?._id === authorId
+      ).length;
+      setAuthorPostCount(count);
+    } catch (err) {
+      console.error("Error loading author post count:", err);
+      setAuthorPostCount(0);
     }
   };
 
@@ -374,22 +393,6 @@ export default function PostDetailPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap items-center justify-center gap-3 py-8 bg-gradient-to-r from-gray-50 to-white rounded-2xl">
-                  <button className="group flex items-center gap-2 px-6 py-3 bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-400 text-gray-700 hover:text-blue-600 rounded-full font-semibold transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-                    <span className="group-hover:scale-125 transition-transform text-xl">👍</span>
-                    <span>Thích bài viết</span>
-                  </button>
-                  <button className="group flex items-center gap-2 px-6 py-3 bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-400 text-gray-700 hover:text-green-600 rounded-full font-semibold transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-                    <span className="group-hover:scale-125 transition-transform text-xl">💬</span>
-                    <span>Bình luận</span>
-                  </button>
-                  <button className="group flex items-center gap-2 px-6 py-3 bg-white hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-400 text-gray-700 hover:text-purple-600 rounded-full font-semibold transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-                    <span className="group-hover:scale-125 transition-transform text-xl">🔖</span>
-                    <span>Lưu bài</span>
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -463,23 +466,24 @@ export default function PostDetailPage() {
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
                   {post.authorId?.profile?.fullName || "Admin"}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 mb-6">
                   {post.authorId?.email || "admin@pawhouse.vn"}
                 </p>
-                <div className="flex items-center justify-center gap-4 text-sm text-gray-600 mb-6">
+                
+                {/* Author Stats - Professional Clean Design */}
+                <div className="flex items-center justify-center gap-4 text-sm text-gray-600 pb-6 border-b border-gray-100">
                   <div className="text-center">
-                    <div className="font-bold text-gray-900 text-lg">24</div>
-                    <div className="text-xs">Bài viết</div>
-                  </div>
-                  <div className="w-px h-10 bg-gray-200"></div>
-                  <div className="text-center">
-                    <div className="font-bold text-gray-900 text-lg">1.2K</div>
-                    <div className="text-xs">Người theo dõi</div>
+                    <div className="font-bold text-gray-900 text-lg">{authorPostCount}</div>
+                    <div className="text-xs text-gray-600">Bài viết</div>
                   </div>
                 </div>
-                <button className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full font-bold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                  + Theo dõi
-                </button>
+
+                {/* Professional Description */}
+                {post.authorId?.profile?.bio && (
+                  <p className="text-sm text-gray-700 mt-4 leading-relaxed italic">
+                    "{post.authorId.profile.bio}"
+                  </p>
+                )}
               </div>
             </div>
 
