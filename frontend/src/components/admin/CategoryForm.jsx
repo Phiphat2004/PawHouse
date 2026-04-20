@@ -150,26 +150,28 @@ export default function CategoryForm({
           </div>
 
           {/* Danh mục cha */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Danh mục cha (Tùy chọn)
-            </label>
-            <select
-              name="parentCategory"
-              value={formData.parentCategory}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            >
-              <option value="">Không có (Danh mục gốc)</option>
-              {categories
-                ?.filter((c) => !c.parentCategory && c._id !== category?._id)
-                .map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-            </select>
-          </div>
+          {(!category || !categories?.some(c => (c.parentCategory?._id || c.parentCategory) === category._id)) && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Danh mục cha (Tùy chọn)
+              </label>
+              <select
+                name="parentCategory"
+                value={formData.parentCategory}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+              >
+                <option value="">Không có (Danh mục gốc)</option>
+                {categories
+                  ?.filter((c) => !c.parentCategory && c._id !== category?._id)
+                  .map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
 
 
 
