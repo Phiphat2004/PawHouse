@@ -6,7 +6,6 @@ import { AdminLayout, UpdateStockModal } from '../../components/admin';
 
 export default function StockListPage() {
   const [stockLevels, setStockLevels] = useState([]);
-  const [reservedByProduct, setReservedByProduct] = useState({});
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,20 +52,7 @@ export default function StockListPage() {
         params.warehouseId = filters.warehouseId;
       }
 
-      const [response, reserveResponse] = await Promise.all([
-        stockApi.getStockLevels(params),
-        // Use same authoritative source as stock history mapping
-        stockApi.getMovements({ type: 'RESERVE', page: 1, limit: 2000 })
-      ]);
-
-      const reserveMap = {};
-      for (const movement of reserveResponse?.movements || []) {
-        const productId = movement.productId?._id || movement.productId;
-        if (!productId) continue;
-        reserveMap[String(productId)] = (reserveMap[String(productId)] || 0) + (Number(movement.quantity) || 0);
-      }
-
-      setReservedByProduct(reserveMap);
+      const response = await stockApi.getStockLevels(params);
       setStockLevels(response?.stockLevels || []);
       setError('');
     } catch (error) {
@@ -170,19 +156,8 @@ export default function StockListPage() {
     return acc;
   }, {});
 
-  // Convert grouped object to array
-  const aggregatedStockLevels = Object.values(groupedStockLevels).map((item) => {
-    // With all warehouses view, sync reserved/available by order-driven reserve movements
-    if (!filters.warehouseId) {
-      const syncedReserved = reservedByProduct[String(item.productId?._id)] || 0;
-      return {
-        ...item,
-        reservedQuantity: syncedReserved,
-        availableQuantity: Math.max((item.quantity || 0) - syncedReserved, 0),
-      };
-    }
-    return item;
-  });
+  // Convert grouped object to array using backend stock fields as source of truth.
+  const aggregatedStockLevels = Object.values(groupedStockLevels);
 
   // Calculate total stock
   const totalStock = aggregatedStockLevels.reduce((sum, item) => sum + (item.quantity || 0), 0);

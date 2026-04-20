@@ -25,10 +25,10 @@ export default function FeaturedProducts() {
       const sortedProducts = [...productsList].sort((a, b) => 
         new Date(b.createdAt) - new Date(a.createdAt)
       );
-      // Lấy 6 sản phẩm mới nhất đang kích hoạt
+      // Lấy 4 sản phẩm mới nhất đang kích hoạt
       const featuredProducts = sortedProducts
         .filter((p) => p.isActive !== false)
-        .slice(0, 6);
+        .slice(0, 4);
       setProducts(featuredProducts);
     } catch (error) {
       console.error("Failed to load products:", error);
@@ -83,7 +83,7 @@ export default function FeaturedProducts() {
             <p className="text-gray-600">Chưa có sản phẩm nào</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2">
             {products.map((product, index) => {
               const productImage =
                 product.images?.[0]?.url || product.image || "/placeholder.png";
@@ -98,7 +98,7 @@ export default function FeaturedProducts() {
               return (
                 <div
                   key={product._id || product.id || index}
-                  className="group bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
+                  className="group w-[260px] sm:w-[300px] lg:w-[calc((100%-3*1.5rem)/4)] flex-shrink-0 bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="relative overflow-hidden">
