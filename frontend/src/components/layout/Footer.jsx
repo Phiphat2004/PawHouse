@@ -59,10 +59,10 @@ export default function Footer() {
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-start gap-2">
                 <EnvironmentOutlined className="mt-0.5" />
-                <span>Khu Công nghệ cao Hòa Lạc, Thạch Thất, Hà Nội</span>
+                <span>FPT University Can Tho Campus </span>
               </li>
               <li className="flex items-center gap-2">
-                <PhoneOutlined /> 0909 123 456
+                <PhoneOutlined /> 039 2020136
               </li>
               <li className="flex items-center gap-2">
                 <MailOutlined /> support@pawhouse.vn
