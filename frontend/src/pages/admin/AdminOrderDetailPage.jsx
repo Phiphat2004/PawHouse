@@ -5,13 +5,6 @@ import { AdminLayout } from "../../components/admin";
 import { orderApi } from "../../services/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "react-toastify";
 
 export default function AdminOrderDetailPage() {
@@ -55,7 +48,9 @@ export default function AdminOrderDetailPage() {
       // Notify stock history pages (other tabs/routes) to refetch immediately
       try {
         localStorage.setItem('stockMovementUpdated', JSON.stringify({ t: Date.now(), orderId: id, status: newStatus }));
-      } catch {}
+      } catch (err) {
+        console.warn("Failed to notify other tabs (localStorage):", err);
+      }
       toast.success("Cập nhật trạng thái đơn hàng thành công");
       // Refresh toàn bộ order để statusHistory được cập nhật
       await fetchOrderDetail();
@@ -212,7 +207,7 @@ export default function AdminOrderDetailPage() {
                   <Button
                     onClick={() => handleStatusChange('confirmed')}
                     disabled={updatingStatus}
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                    className="bg-blue-300 hover:bg-blue-500 text-white shadow-sm"
                   >
                     Xác nhận đơn
                   </Button>
@@ -231,7 +226,7 @@ export default function AdminOrderDetailPage() {
                   <Button
                     onClick={() => handleStatusChange('packing')}
                     disabled={updatingStatus}
-                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+                    className="bg-purple-200 hover:bg-purple-400 text-white shadow-sm"
                   >
                     Chuẩn bị hàng
                   </Button>
@@ -250,7 +245,7 @@ export default function AdminOrderDetailPage() {
                   <Button
                     onClick={() => handleStatusChange('shipping')}
                     disabled={updatingStatus}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                    className="bg-indigo-300 hover:bg-indigo-500 text-white shadow-sm"
                   >
                     Giao hàng
                   </Button>
@@ -268,7 +263,7 @@ export default function AdminOrderDetailPage() {
                 <Button
                   onClick={() => handleStatusChange('completed')}
                   disabled={updatingStatus}
-                  className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                  className="bg-green-300 hover:bg-green-500 text-white shadow-sm"
                 >
                   Đã giao hàng
                 </Button>
