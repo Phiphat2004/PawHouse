@@ -39,8 +39,9 @@ const stockMovementSchema = new mongoose.Schema(
     type: {
       type: String,
       // RESERVE   : giữ hàng khi tạo đơn (pending)
-      // RELEASE   : trả hàng khi huỷ đơn
-      // FULFILL   : trừ hẳn khi đơn hoàn thành
+      // FULFILL   : trừ hẳn khi đơn xác nhận (confirmed)
+      // RELEASE   : trả hàng khi huỷ đơn (pending status)
+      // RESTORE   : hoàn lại hàng khi huỷ đơn đã confirm (confirmed+ status)
       enum: [
         "IN",
         "OUT",
@@ -50,6 +51,7 @@ const stockMovementSchema = new mongoose.Schema(
         "RESERVE",
         "RELEASE",
         "FULFILL",
+        "RESTORE",
       ],
       required: true,
     },

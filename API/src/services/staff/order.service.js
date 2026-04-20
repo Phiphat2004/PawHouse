@@ -652,8 +652,8 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   await order.save();
 
-  // Fulfill stock when order is marked as completed
-  if (newStatus === "completed") {
+  // Fulfill stock when order is confirmed or marked as completed
+  if (newStatus === "confirmed" || newStatus === "completed") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
       await stockService.fulfillStock(order._id, orderItems, adminId);
@@ -662,17 +662,20 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
       // Don't fail the status update if stock fulfillment fails
     }
 
-    const Payment =
-      require("../../models").Payment || require("../../models/Payment");
-    if (Payment) {
-      await Payment.findOneAndUpdate(
-        { orderId: order._id },
-        {
-          $set: { status: "paid", paidAt: new Date(), amount: order.total },
-          $setOnInsert: { method: "cash" },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      );
+    // Update payment status when order is completed
+    if (newStatus === "completed") {
+      const Payment =
+        require("../../models").Payment || require("../../models/Payment");
+      if (Payment) {
+        await Payment.findOneAndUpdate(
+          { orderId: order._id },
+          {
+            $set: { status: "paid", paidAt: new Date(), amount: order.total },
+            $setOnInsert: { method: "cash" },
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+      }
     }
   }
 
@@ -680,10 +683,16 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   if (newStatus === "cancelled") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
-      await stockService.releaseStock(order._id, orderItems, adminId);
+      // If cancelling from confirmed/packing/shipping, restore quantity first (reverse fulfill)
+      if (["confirmed", "packing", "shipping"].includes(previousStatus)) {
+        await stockService.restoreStock(order._id, orderItems, adminId);
+      } else if (previousStatus === "pending") {
+        // If cancelling from pending, just release the reserved stock
+        await stockService.releaseStock(order._id, orderItems, adminId);
+      }
     } catch (err) {
-      console.error("Error releasing stock:", err.message);
-      // Don't fail the cancellation if stock release fails
+      console.error("Error restoring/releasing stock:", err.message);
+      // Don't fail the cancellation if stock restore/release fails
     }
   }
 
