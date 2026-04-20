@@ -39,9 +39,9 @@ const stockMovementSchema = new mongoose.Schema(
     type: {
       type: String,
       // RESERVE   : giữ hàng khi tạo đơn (pending)
-      // FULFILL   : trừ hẳn khi đơn xác nhận (confirmed)
-      // RELEASE   : trả hàng khi huỷ đơn (pending status)
-      // RESTORE   : hoàn lại hàng khi huỷ đơn đã confirm (confirmed+ status)
+      // FULFILL   : trừ hẳn khi đơn chuyển sang đang giao (shipping)
+      // RELEASE   : trả lại phần đã giữ khi huỷ trước shipping
+      // RESTORE   : hoàn lại hàng nếu đơn đã bị trừ trước đó rồi mới huỷ
       enum: [
         "IN",
         "OUT",

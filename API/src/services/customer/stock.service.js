@@ -538,7 +538,7 @@ async function getStockMovements(filters = {}) {
 
   const statusToType = {
     pending: "RESERVE",
-    shipping: "OUT",
+    shipping: "FULFILL",
     completed: "FULFILL",
   };
 
