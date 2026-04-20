@@ -37,6 +37,19 @@ async function getAvailableStock(productId, variationId) {
   return getProductStock(productId);
 }
 
+function buildPaymentSnapshot(order, payment = null) {
+  const paymentData = payment?.toObject?.() || payment || {};
+
+  return {
+    method: paymentData.method || "cash",
+    status:
+      paymentData.status || (order.status === "completed" ? "paid" : "pending"),
+    amount: paymentData.amount ?? order.total ?? 0,
+    providerTxnId: paymentData.providerTxnId || "",
+    paidAt: paymentData.paidAt || null,
+  };
+}
+
 /**
  * Create a new order from cart items
  */
@@ -149,6 +162,13 @@ async function createOrder(userId, orderData) {
     shippingFee,
     subtotal,
     total,
+    payment: {
+      method: orderData.paymentMethod || "cash",
+      status: "pending",
+      amount: total,
+      providerTxnId: "",
+      paidAt: null,
+    },
     note: note || "",
     statusHistory: [
       {
@@ -167,20 +187,6 @@ async function createOrder(userId, orderData) {
     await OrderItem.insertMany(
       orderItems.map((item) => ({ ...item, orderId: order._id })),
     );
-  }
-
-  // Create payment record
-  const Payment =
-    require("../../models").Payment || require("../../models/Payment");
-  if (Payment) {
-    const paymentMethod = orderData.paymentMethod || "cash";
-    const payment = new Payment({
-      orderId: order._id,
-      method: paymentMethod,
-      status: "pending",
-      amount: total,
-    });
-    await payment.save();
   }
 
   // Reserve stock in StockLevel for the order
@@ -333,21 +339,11 @@ async function getOrderById(orderId, userId) {
     orderObj.items = separatedItems;
   }
 
-  const Payment =
-    require("../../models").Payment || require("../../models/Payment");
-  let payment = null;
-  if (Payment) {
-    payment = await Payment.findOne({ orderId: order._id }).lean();
-  }
-
-  if (!payment) {
-    payment = {
-      method: "cash",
-      status: orderObj.status === "completed" ? "paid" : "pending",
-      amount: orderObj.total || 0,
-    };
-  } else if (orderObj.status === "completed" && payment.status !== "paid") {
+  const payment = buildPaymentSnapshot(orderObj, orderObj.payment);
+  if (orderObj.status === "completed" && payment.status !== "paid") {
     payment.status = "paid";
+    payment.paidAt =
+      payment.paidAt || new Date(orderObj.updatedAt || Date.now());
   }
 
   orderObj.payment = payment;
@@ -650,6 +646,16 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     at: new Date(),
   });
 
+  if (newStatus === "completed") {
+    order.payment = buildPaymentSnapshot(order, {
+      ...(order.payment?.toObject?.() || order.payment || {}),
+      method: order.payment?.method || "cash",
+      status: "paid",
+      amount: order.total,
+      paidAt: new Date(),
+    });
+  }
+
   await order.save();
 
   // Fulfill stock when order is confirmed or marked as completed
@@ -660,22 +666,6 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     } catch (err) {
       console.error("Error fulfilling stock:", err.message);
       // Don't fail the status update if stock fulfillment fails
-    }
-
-    // Update payment status when order is completed
-    if (newStatus === "completed") {
-      const Payment =
-        require("../../models").Payment || require("../../models/Payment");
-      if (Payment) {
-        await Payment.findOneAndUpdate(
-          { orderId: order._id },
-          {
-            $set: { status: "paid", paidAt: new Date(), amount: order.total },
-            $setOnInsert: { method: "cash" },
-          },
-          { upsert: true, new: true, setDefaultsOnInsert: true },
-        );
-      }
     }
   }
 

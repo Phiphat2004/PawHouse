@@ -236,7 +236,7 @@ export default function StockMovementHistoryPage() {
         <div className="mb-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-lg p-8 border border-gray-200">
           <div className="flex items-center gap-4 mb-6">
             <Link
-              to="/quan-tri"
+              to="/quan-tri/ton-kho"
               className="flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium transition-colors group"
             >
               <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
