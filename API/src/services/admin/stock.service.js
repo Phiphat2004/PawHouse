@@ -721,6 +721,75 @@ async function deleteWarehouse() {
   throw new Error("Single warehouse mode does not allow deleting warehouse");
 }
 
+async function restoreStock(orderId, items = [], createdBy) {
+  // Restore quantity when cancelling from confirmed/packing/shipping (after fulfill)
+  const warehouse = await resolveSingleWarehouse();
+  const movements = [];
+
+  for (const item of items) {
+    const productId = item.productId;
+    const variationId = item.variationId;
+    const qty = Math.abs(Number(item.quantity) || 0);
+    if (!productId || qty <= 0) continue;
+
+    const stockLevel = await StockLevel.findOneAndUpdate(
+      { productId, warehouseId: warehouse._id },
+      {
+        $inc: { quantity: qty, availableQuantity: qty },
+      },
+      { new: true },
+    );
+
+    if (!stockLevel && variationId) {
+      await ProductVariation.findByIdAndUpdate(variationId, {
+        $inc: { stock: qty },
+      });
+      const movement = await StockMovement.create({
+        productId,
+        warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+        type: "RESTORE",
+        quantity: qty,
+        reason: "Restore stock from cancelled order",
+        referenceType: "ORDER",
+        referenceId: String(orderId),
+        createdBy,
+        notes: `Restored variation ${variationId} ${qty} units due to order cancellation`,
+      });
+
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate("productId", "name sku")
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
+      continue;
+    }
+
+    if (stockLevel) {
+      await recalculateAndSyncProductStock(productId);
+
+      const movement = await StockMovement.create({
+        productId,
+        warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+        type: "RESTORE",
+        quantity: qty,
+        reason: "Restore stock from cancelled order",
+        referenceType: "ORDER",
+        referenceId: String(orderId),
+        createdBy,
+        notes: `Restored ${qty} units due to order cancellation`,
+      });
+
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate("productId", "name sku")
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
+    }
+  }
+
+  return { message: "Restored stock for cancelled order", movements };
+}
+
 async function deleteStockMovement(movementId) {
   const movement = await StockMovement.findById(movementId);
   if (!movement) throw new Error("Stock movement not found");
@@ -736,6 +805,7 @@ module.exports = {
   reserveStock,
   releaseStock,
   fulfillStock,
+  restoreStock,
   getStockLevels,
   getStockMovements,
   getProductTotalStock,
