@@ -10,7 +10,6 @@ export default function CategoryForm({
     name: "",
     slug: "",
     description: "",
-    isActive: true,
     parentCategory: "",
   });
   const [errors, setErrors] = useState({});
@@ -22,7 +21,6 @@ export default function CategoryForm({
         name: category.name || "",
         slug: category.slug || "",
         description: category.description || "",
-        isActive: category.isActive !== undefined ? category.isActive : true,
         parentCategory: category.parentCategory?._id || category.parentCategory || "",
       });
     }
@@ -79,7 +77,6 @@ export default function CategoryForm({
         name: formData.name,
         slug: formData.slug,
         description: formData.description,
-        isActive: formData.isActive,
         parentCategory: formData.parentCategory || null,
       };
 
@@ -176,21 +173,7 @@ export default function CategoryForm({
 
 
 
-          {/* Trạng thái */}
-          <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                className="w-5 h-5 text-orange-500 rounded focus:ring-2 focus:ring-orange-500"
-              />
-              <span className="text-sm font-semibold text-gray-700">
-                Kích hoạt danh mục
-              </span>
-            </label>
-          </div>
+
 
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
