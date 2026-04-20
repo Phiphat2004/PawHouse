@@ -1,7 +1,7 @@
 const express = require("express");
 const { body, param, validationResult } = require("express-validator");
 const staffPostController = require("../../controllers/staff/post.controller");
-const { protectRoute } = require("../../middlewares/auth.middleware");
+const { authenticate, protectRoute } = require("../../middlewares/auth.middleware");
 const multer = require("multer");
 
 const router = express.Router();
@@ -59,37 +59,60 @@ const idValidation = [
   param("id").isMongoId().withMessage("Post ID không hợp lệ"),
 ];
 
-router.use(...protectRoute(["staff", "admin"]));
+function allowStaffOrPassAdmin(req, res, next) {
+  const roles = Array.isArray(req.user?.roles) ? req.user.roles : [];
+  if (roles.includes("admin")) {
+    return next("route");
+  }
+  if (roles.includes("staff")) {
+    return next();
+  }
+  return res.status(403).json({ error: "Không có quyền thực hiện" });
+}
 
-router.get("/", staffPostController.getAll);
+router.get("/", authenticate, allowStaffOrPassAdmin, staffPostController.getAll);
 router.post(
   "/",
+  authenticate,
+  allowStaffOrPassAdmin,
   createPostValidation,
   handleValidationErrors,
   staffPostController.create,
 );
-router.post("/upload", upload.single("file"), staffPostController.uploadImage);
-router.get("/my-posts", staffPostController.getMyPosts);
+router.post(
+  "/upload",
+  authenticate,
+  allowStaffOrPassAdmin,
+  upload.single("file"),
+  staffPostController.uploadImage,
+);
+router.get("/my-posts", ...protectRoute(["staff"]), staffPostController.getMyPosts);
 router.put(
   "/my-posts/:id",
+  ...protectRoute(["staff"]),
   updatePostValidation,
   handleValidationErrors,
   staffPostController.updateMyPost,
 );
 router.delete(
   "/my-posts/:id",
+  ...protectRoute(["staff"]),
   idValidation,
   handleValidationErrors,
   staffPostController.deleteMyPost,
 );
 router.put(
   "/:id",
+  authenticate,
+  allowStaffOrPassAdmin,
   updatePostValidation,
   handleValidationErrors,
   staffPostController.update,
 );
 router.delete(
   "/:id",
+  authenticate,
+  allowStaffOrPassAdmin,
   idValidation,
   handleValidationErrors,
   staffPostController.delete,
