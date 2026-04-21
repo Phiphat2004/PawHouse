@@ -242,6 +242,10 @@ async function reserveStock(orderId, items = [], createdBy) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
+  // ✅ Get order to capture status at this point
+  const order = await Order.findById(orderId).lean();
+  const targetStatus = order?.status || "pending";
+
   for (const item of items) {
     const productId = item.productId;
     const variationId = item.variationId;
@@ -273,6 +277,9 @@ async function reserveStock(orderId, items = [], createdBy) {
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
+        // ✅ ADD: Lưu target status (lúc RESERVE được tạo)
+        targetStatus,
+        sourceStatus: "manual",
         notes: `Reserved ${qty} units for order ${orderId}`,
       });
 
@@ -410,6 +417,54 @@ async function fulfillStock(orderId, items = [], createdBy) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
+  // ✅ Get order to capture status at this point
+  const order = await Order.findById(orderId).lean();
+  const targetStatus = order?.status || "shipping";
+
+  async function upsertFulfillMovement(productId, qty, reason, notes) {
+    const referenceId = String(orderId);
+    const baseSet = {
+      warehouseId: warehouse._id,
+      warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+      quantity: qty,
+      reason,
+      referenceType: "SALE",
+      createdBy,
+      targetStatus,
+      sourceStatus: "pending",
+      notes,
+    };
+
+    const existingReserve = await StockMovement.findOneAndUpdate(
+      {
+        referenceId,
+        productId,
+        type: { $in: ["RESERVE", "FULFILL"] },
+      },
+      {
+        $set: {
+          ...baseSet,
+          type: "FULFILL",
+        },
+      },
+      {
+        new: true,
+        sort: { createdAt: -1 },
+      },
+    );
+
+    if (existingReserve) {
+      return existingReserve;
+    }
+
+    return StockMovement.create({
+      productId,
+      type: "FULFILL",
+      referenceId,
+      ...baseSet,
+    });
+  }
+
   for (const item of items) {
     const productId = item.productId;
     const variationId = item.variationId;
@@ -433,18 +488,12 @@ async function fulfillStock(orderId, items = [], createdBy) {
 
     if (!stockLevel) {
       if (variationId) {
-        const movement = await StockMovement.create({
+        const movement = await upsertFulfillMovement(
           productId,
-          warehouseId: warehouse._id,
-          warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
-          type: "FULFILL",
-          quantity: qty,
-          reason: "Fulfill variation order",
-          referenceType: "SALE",
-          referenceId: String(orderId),
-          createdBy,
-          notes: `Fulfilled variation ${variationId} ${qty} units for order ${orderId}`,
-        });
+          qty,
+          "Fulfill variation order",
+          `Fulfilled variation ${variationId} ${qty} units for order ${orderId}`,
+        );
 
         const movementDoc = await StockMovement.findById(movement._id)
           .populate("productId", "name sku")
@@ -465,18 +514,12 @@ async function fulfillStock(orderId, items = [], createdBy) {
 
     await recalculateAndSyncProductStock(productId);
 
-    const movement = await StockMovement.create({
+    const movement = await upsertFulfillMovement(
       productId,
-      warehouseId: warehouse._id,
-      warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
-      type: "FULFILL",
-      quantity: qty,
-      reason: "Fulfill order",
-      referenceType: "SALE",
-      referenceId: String(orderId),
-      createdBy,
-      notes: `Fulfilled ${qty} units for order ${orderId}`,
-    });
+      qty,
+      "Fulfill order",
+      `Fulfilled ${qty} units for order ${orderId}`,
+    );
 
     const movementDoc = await StockMovement.findById(movement._id)
       .populate("productId", "name sku")
@@ -509,132 +552,34 @@ async function getStockMovements(filters = {}) {
   const numericPage = Number(page) || 1;
   const numericLimit = Number(limit) || 20;
 
-  const manualQuery = {
-    $or: [
-      { referenceId: { $exists: false } },
-      { referenceId: null },
-      { referenceId: "" },
-    ],
-  };
-  if (productId) manualQuery.productId = productId;
+  const query = {};
+  if (productId) query.productId = productId;
   if (warehouseId && mongoose.Types.ObjectId.isValid(warehouseId)) {
-    manualQuery.warehouseId = new mongoose.Types.ObjectId(warehouseId);
+    query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
   }
-  if (type) manualQuery.type = type;
+  if (type) query.type = type;
 
   const fallbackWarehouse = await (warehouseId
     ? getWarehouseObjectById(warehouseId)
     : resolveSingleWarehouse());
 
-  const manualMovements = await StockMovement.find(manualQuery)
+  // **100% DB ONLY** - No synthetic logic
+  const movements = await StockMovement.find(query)
     .populate("productId", "name sku")
     .populate("createdBy", "name email")
     .sort({ createdAt: -1 })
     .lean();
 
-  const normalizedManual = manualMovements.map((movement) =>
-    attachWarehouseToMovement(movement, fallbackWarehouse),
+  const normalizedMovements = movements.map((movement) =>
+    attachWarehouseToMovement(movement, fallbackWarehouse)
   );
 
-  const statusToType = {
-    pending: "RESERVE",
-    shipping: "FULFILL",
-    completed: "FULFILL",
-  };
-
-  const orderStatusQuery = { $in: Object.keys(statusToType) };
-  const orderQuery = { status: orderStatusQuery };
-
-  const orders = await Order.find(orderQuery)
-    .populate("userId", "name email")
-    .sort({ updatedAt: -1 })
-    .lean();
-
-  const orderIds = orders.map((order) => order._id);
-  const orderItems = orderIds.length
-    ? await OrderItem.find({
-        orderId: { $in: orderIds },
-        ...(productId ? { productId } : {}),
-      }).lean()
-    : [];
-
-  const itemsByOrderId = new Map();
-  for (const item of orderItems) {
-    const key = String(item.orderId);
-    if (!itemsByOrderId.has(key)) itemsByOrderId.set(key, []);
-    itemsByOrderId.get(key).push(item);
-  }
-
-  const orderMovements = [];
-  for (const order of orders) {
-    const movementType = statusToType[order.status];
-    if (!movementType) continue;
-
-    const visibleStatus =
-      order.status === "pending"
-        ? "Chờ xác nhận"
-        : order.status === "shipping"
-          ? "Đang giao hàng"
-          : "Đã giao hàng";
-
-    if (type && type !== movementType) continue;
-
-    const statusHistory = Array.isArray(order.statusHistory)
-      ? order.statusHistory
-      : [];
-    const statusAt = statusHistory.find((h) => h?.to === order.status)?.at;
-    const createdAt = statusAt || order.updatedAt || order.createdAt;
-    const orderUserName =
-      order.userId?.name ||
-      order.addressSnapshot?.fullName ||
-      order.userId?.email ||
-      "Khach hang";
-
-    const itemsForOrder = itemsByOrderId.get(String(order._id)) || [];
-    for (const item of itemsForOrder) {
-      const itemProductId = item.productId?._id || item.productId;
-      if (productId && String(itemProductId) !== String(productId)) continue;
-
-      if (
-        warehouseId &&
-        String(fallbackWarehouse._id) !== String(warehouseId)
-      ) {
-        continue;
-      }
-
-      orderMovements.push({
-        _id: `order-${order._id}-${itemProductId}-${movementType}`,
-        productId: {
-          _id: itemProductId,
-          name: item.productName || "San pham",
-          sku: item.sku || "",
-        },
-        warehouseId: fallbackWarehouse,
-        type: movementType,
-        quantity: Number(item.quantity) || 0,
-        reason: visibleStatus,
-        referenceType: "ORDER",
-        referenceId: String(order._id),
-        createdBy: {
-          email: orderUserName,
-        },
-        orderStatus: order.status,
-        statusLabel: visibleStatus,
-        createdAt,
-      });
-    }
-  }
-
-  const combined = [...orderMovements, ...normalizedManual].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-
-  const total = combined.length;
+  const total = normalizedMovements.length;
   const skip = (numericPage - 1) * numericLimit;
-  const movements = combined.slice(skip, skip + numericLimit);
+  const paginatedMovements = normalizedMovements.slice(skip, skip + numericLimit);
 
   return {
-    movements,
+    movements: paginatedMovements,
     pagination: {
       page: numericPage,
       limit: numericLimit,
@@ -642,6 +587,36 @@ async function getStockMovements(filters = {}) {
       pages: Math.max(1, Math.ceil(total / numericLimit)),
     },
   };
+}
+
+// ✅ Helper function to get status label
+function getStatusLabel(status) {
+  const labels = {
+    pending: "Chờ xác nhận",
+    confirmed: "Xác nhận",
+    packing: "Đang chuẩn bị",
+    shipping: "Đang giao hàng",
+    completed: "Đã giao hàng",
+    cancelled: "Đã hủy",
+    refunded: "Hoàn trả"
+  };
+  return labels[status] || status;
+}
+
+// ✅ Helper function to get label from movement type (fallback)
+function getMovementTypeLabel(type) {
+  const labels = {
+    RESERVE: "Chờ xác nhận",
+    FULFILL: "Đang giao hàng",
+    RELEASE: "Hủy trước giao",
+    RESTORE: "Hủy sau giao",
+    RETURN: "Khách trả hàng",
+    IN: "Nhập kho",
+    OUT: "Xuất kho",
+    ADJUSTMENT: "Điều chỉnh",
+    TRANSFER: "Chuyển kho"
+  };
+  return labels[type] || type;
 }
 
 async function getProductTotalStock(productId) {
@@ -800,6 +775,119 @@ async function deleteStockMovement(movementId) {
   };
 }
 
+// ✅ THÊM: Hàm xử lý hủy order (tự động chọn RELEASE vs RESTORE)
+async function handleOrderCancellation(orderId, items = [], createdBy, orderStatus = "pending") {
+  /**
+   * Xử lý huỷ order:
+   * - Nếu order chưa shipped (pending/confirmed/packing) → RELEASE
+   * - Nếu order đã shipped (shipping/completed) → RESTORE
+   */
+  const warehouse = await resolveSingleWarehouse();
+  const movements = [];
+
+  // Kiểm tra xem có FULFILL movement cho order này không
+  const hasFulfill = await StockMovement.findOne({
+    referenceId: String(orderId),
+    type: "FULFILL",
+  });
+
+  // Chọn loại movement dựa vào việc đã ship hay chưa
+  const movementType = hasFulfill ? "RESTORE" : "RELEASE";
+  const reason = hasFulfill
+    ? "Order cancelled (after shipping)"
+    : "Order cancelled (before shipping)";
+
+  for (const item of items) {
+    const productId = item.productId;
+    const variationId = item.variationId;
+    const qty = Math.abs(Number(item.quantity) || 0);
+    if (!productId || qty <= 0) continue;
+
+    if (movementType === "RELEASE") {
+      // ✅ Trả lại hàng đã giữ (chưa bị trừ)
+      const stockLevel = await StockLevel.findOneAndUpdate(
+        { productId, warehouseId: warehouse._id },
+        { $inc: { reservedQuantity: -qty, availableQuantity: qty } },
+        { new: true },
+      );
+
+      if (!stockLevel && variationId) {
+        await ProductVariation.findByIdAndUpdate(variationId, {
+          $inc: { stock: qty },
+        });
+      }
+
+      if (stockLevel) {
+        await recalculateAndSyncProductStock(productId);
+      }
+
+      const movement = await StockMovement.create({
+        productId,
+        warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+        type: "RELEASE",
+        quantity: qty,
+        reason,
+        referenceType: "ORDER",
+        referenceId: String(orderId),
+        createdBy,
+        targetStatus: "cancelled",
+        sourceStatus: orderStatus,
+        notes: `Released ${qty} units - order ${orderId} cancelled before shipping`,
+      });
+
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate("productId", "name sku")
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
+
+    } else {
+      // ✅ Hoàn lại hàng đã bán (đã bị trừ)
+      const stockLevel = await StockLevel.findOneAndUpdate(
+        { productId, warehouseId: warehouse._id },
+        { $inc: { quantity: qty, availableQuantity: qty } },
+        { new: true },
+      );
+
+      if (!stockLevel && variationId) {
+        await ProductVariation.findByIdAndUpdate(variationId, {
+          $inc: { stock: qty },
+        });
+      }
+
+      if (stockLevel) {
+        await recalculateAndSyncProductStock(productId);
+      }
+
+      const movement = await StockMovement.create({
+        productId,
+        warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+        type: "RESTORE",
+        quantity: qty,
+        reason,
+        referenceType: "ORDER",
+        referenceId: String(orderId),
+        createdBy,
+        targetStatus: "cancelled",
+        sourceStatus: orderStatus,
+        notes: `Restored ${qty} units - order ${orderId} cancelled after shipping`,
+      });
+
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate("productId", "name sku")
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
+    }
+  }
+
+  return {
+    message: `Order cancelled - ${movementType} movement created`,
+    movementType,
+    movements
+  };
+}
+
 module.exports = {
   createStockEntry,
   reserveStock,
@@ -813,4 +901,5 @@ module.exports = {
   createWarehouse,
   deleteWarehouse,
   deleteStockMovement,
+  handleOrderCancellation, // ✅ Thêm hàm xử lý hủy order
 };

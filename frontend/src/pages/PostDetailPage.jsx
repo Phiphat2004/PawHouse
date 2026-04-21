@@ -26,6 +26,7 @@ export default function PostDetailPage() {
       setCanViewUnpublished(false);
     }
 
+    window.scrollTo(0, 0);
     loadPost();
     loadRelatedPosts();
   }, [slug]);
