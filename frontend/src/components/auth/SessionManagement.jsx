@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../utils/services/api';
 
 export default function SessionManagement() {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,8 +44,8 @@ export default function SessionManagement() {
       // Clear local storage
       localStorage.removeItem('pawhouse_token');
       localStorage.removeItem('pawhouse_user');
-      // Redirect to login
-      window.location.href = '/dang-nhap';
+      // Redirect to login without forcing a full page reload
+      navigate('/login', { replace: true });
     } catch (err) {
       alert('Không thể đăng xuất tất cả: ' + err.message);
     }

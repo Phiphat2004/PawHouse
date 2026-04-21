@@ -3,11 +3,21 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { STORAGE_KEYS, ROUTES } from "../../utils/constants";
 import { authApi } from "../../services/api";
 
+function getStoredUser() {
+  try {
+    const rawUser = localStorage.getItem(STORAGE_KEYS.USER);
+    return rawUser ? JSON.parse(rawUser) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function StaffLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getStoredUser());
+  const [authReady, setAuthReady] = useState(false);
   const [stockMenuOpen, setStockMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -48,6 +58,10 @@ export default function StaffLayout({ children }) {
         }
       } catch {
         navigate(ROUTES.LOGIN);
+      } finally {
+        if (isMounted) {
+          setAuthReady(true);
+        }
       }
     };
 
@@ -123,7 +137,7 @@ export default function StaffLayout({ children }) {
     ].join(" ");
   };
 
-  if (!user) return null;
+  if (!authReady && !user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
