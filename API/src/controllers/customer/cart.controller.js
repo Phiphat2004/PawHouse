@@ -87,7 +87,7 @@ const addToCart = async (req, res, next) => {
       }
 
       existingItem.quantity += qty;
-      await existingItem.save();
+      await cart.save();
     } else {
       if (qty > productStock) {
         return res.status(400).json({

@@ -1,18 +1,26 @@
 // Hook to manage cart state globally
-import { useState, useEffect } from 'react';
-import { cartApi } from '../utils/services/api';
-import { STORAGE_KEYS } from '../utils/constants';
+import { useState, useEffect } from "react";
+import { cartApi } from "../utils/services/api";
+import { STORAGE_KEYS } from "../utils/constants";
 
 let cartItemCount = 0;
 let cachedCartData = null;
 let listeners = [];
 let dataListeners = [];
 
+const getTotalQuantity = (cart) => {
+  if (!cart || !Array.isArray(cart.items)) return 0;
+  return cart.items.reduce(
+    (sum, item) => sum + (Number(item?.quantity) || 0),
+    0,
+  );
+};
+
 // Subscribe to cart changes
 export const subscribeToCart = (listener) => {
   listeners.push(listener);
   return () => {
-    listeners = listeners.filter(l => l !== listener);
+    listeners = listeners.filter((l) => l !== listener);
   };
 };
 
@@ -20,17 +28,17 @@ export const subscribeToCart = (listener) => {
 export const subscribeToCartData = (listener) => {
   dataListeners.push(listener);
   return () => {
-    dataListeners = dataListeners.filter(l => l !== listener);
+    dataListeners = dataListeners.filter((l) => l !== listener);
   };
 };
 
 // Notify all listeners
 const notifyListeners = () => {
-  listeners.forEach(listener => listener(cartItemCount));
+  listeners.forEach((listener) => listener(cartItemCount));
 };
 
 const notifyDataListeners = () => {
-  dataListeners.forEach(listener => listener(cachedCartData));
+  dataListeners.forEach((listener) => listener(cachedCartData));
 };
 
 // Update cart count and cache data
@@ -46,28 +54,26 @@ export const updateCartCount = async (forceRefresh = false) => {
 
   // Return cached data if available and not forcing refresh
   if (cachedCartData && !forceRefresh) {
+    cartItemCount = getTotalQuantity(cachedCartData);
+    notifyListeners();
     return cachedCartData;
   }
 
   try {
     const response = await cartApi.getCart();
     const cart = response.cart;
-    
+
     // Cache the cart data
     cachedCartData = cart;
-    
-    if (cart && cart.items) {
-      // Count total number of products
-      cartItemCount = cart.items.length;
-    } else {
-      cartItemCount = 0;
-    }
-    
+
+    // Count total quantity across all cart lines
+    cartItemCount = getTotalQuantity(cart);
+
     notifyListeners();
     notifyDataListeners();
     return cart;
   } catch (error) {
-    console.error('Failed to fetch cart count:', error);
+    console.error("Failed to fetch cart count:", error);
     cartItemCount = 0;
     cachedCartData = null;
     notifyListeners();
@@ -81,9 +87,7 @@ export const getCachedCart = () => cachedCartData;
 
 // Optimistic update for adding to cart
 export const optimisticAddToCart = (quantity = 1, isNewItem = false) => {
-  if (isNewItem) {
-    cartItemCount += 1;
-  }
+  cartItemCount += Number(quantity) || 1;
   notifyListeners();
 };
 

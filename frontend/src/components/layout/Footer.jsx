@@ -22,13 +22,14 @@ export default function Footer() {
             <p className="text-gray-400 mb-4">Nền tảng cung cấp sản phẩm thú cưng uy tín, chất lượng cao.</p>
             <div className="flex gap-4">
               {[FacebookFilled, InstagramFilled, YoutubeFilled].map((Icon, i) => (
-                <a
+                <button
                   key={i}
-                  href="#"
+                  type="button"
+                  aria-label="Mạng xã hội"
                   className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
                 >
                   <Icon className="text-base" />
-                </a>
+                </button>
               ))}
             </div>
           </div>

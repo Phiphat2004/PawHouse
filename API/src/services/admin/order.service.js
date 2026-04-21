@@ -51,6 +51,32 @@ function buildPaymentSnapshot(order, payment = null) {
   };
 }
 
+async function attachOrderItems(orders = []) {
+  if (!Array.isArray(orders) || orders.length === 0) {
+    return [];
+  }
+
+  const orderIds = orders.map((order) => order._id);
+  const orderItems = await OrderItem.find({ orderId: { $in: orderIds } })
+    .populate("variationId")
+    .populate("productId", "name images")
+    .lean();
+
+  const itemsByOrderId = orderItems.reduce((accumulator, item) => {
+    const key = String(item.orderId);
+    if (!accumulator[key]) {
+      accumulator[key] = [];
+    }
+    accumulator[key].push(item);
+    return accumulator;
+  }, {});
+
+  return orders.map((order) => ({
+    ...order.toObject(),
+    items: itemsByOrderId[String(order._id)] || [],
+  }));
+}
+
 /**
  * Create a new order from cart items
  */
@@ -264,8 +290,10 @@ async function searchOrders(userId, filters = {}) {
     Order.countDocuments(query),
   ]);
 
+  const ordersWithItems = await attachOrderItems(orders);
+
   return {
-    orders,
+    orders: ordersWithItems,
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -464,6 +492,8 @@ async function getDashboardStats() {
     ]),
   ]);
 
+  const recentOrdersWithItems = await attachOrderItems(recentOrders);
+
   const topProductsAgg = await OrderItem.aggregate([
     {
       $lookup: {
@@ -504,7 +534,7 @@ async function getDashboardStats() {
     },
     revenue: totalRevenueAgg?.[0]?.totalRevenue || 0,
     total,
-    recentOrders,
+    recentOrders: recentOrdersWithItems,
     dailyRevenue: dailyRevenueAgg,
     monthlyRevenue: monthlyRevenueAgg,
     topProducts: topProductsAgg,
