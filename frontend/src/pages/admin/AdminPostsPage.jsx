@@ -109,6 +109,7 @@ export default function AdminPostsPage() {
       !searchTerm ||
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.slug.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchStatus = !filterStatus || post.status === filterStatus;
@@ -122,7 +123,7 @@ export default function AdminPostsPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            <p className="mt-4 text-gray-600">Loading data...</p>
           </div>
         </div>
       </AdminLayout>
@@ -149,17 +150,17 @@ export default function AdminPostsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Quản lý Cộng đồng
+              Community Management
             </h1>
             <p className="text-gray-500 mt-1">
-              Quản lý bài viết và nội dung cộng đồng
+              Manage articles and community content
             </p>
           </div>
           <button
             onClick={handleCreate}
             className="px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
           >
-            + Tạo bài viết mới
+            + Create New Article
           </button>
         </div>
 
@@ -174,7 +175,7 @@ export default function AdminPostsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Tổng bài viết</p>
+                <p className="text-gray-500 text-sm">Total Articles</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
                   {posts.length}
                 </p>
@@ -184,7 +185,7 @@ export default function AdminPostsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Đã xuất bản</p>
+                <p className="text-gray-500 text-sm">Published</p>
                 <p className="text-2xl font-bold text-green-600 mt-1">
                   {posts.filter((p) => p.status === "published").length}
                 </p>
@@ -194,7 +195,7 @@ export default function AdminPostsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Bản nháp</p>
+                <p className="text-gray-500 text-sm">Draft</p>
                 <p className="text-2xl font-bold text-gray-600 mt-1">
                   {posts.filter((p) => p.status === "draft").length}
                 </p>
@@ -204,7 +205,7 @@ export default function AdminPostsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Ẩn</p>
+                <p className="text-gray-500 text-sm">Hidden</p>
                 <p className="text-2xl font-bold text-red-600 mt-1">
                   {posts.filter((p) => p.status === "hidden").length}
                 </p>
@@ -219,7 +220,7 @@ export default function AdminPostsPage() {
             <div className="md:col-span-2">
               <input
                 type="text"
-                placeholder="Tìm kiếm bài viết..."
+                placeholder="Search articles..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -231,10 +232,10 @@ export default function AdminPostsPage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="published">Đã xuất bản</option>
-                <option value="draft">Bản nháp</option>
-                <option value="hidden">Ẩn</option>
+                <option value="">All Status</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="hidden">Hidden</option>
               </select>
             </div>
           </div>

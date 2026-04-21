@@ -189,19 +189,38 @@ export default function StockMovementHistoryPage() {
   };
 
   const getShortReason = (movement) => {
+    // Priority: targetStatus > statusLabel > reason > type label (NO HARDCODE pending for completed)
+    if (movement?.targetStatus) return getStatusLabel(movement.targetStatus);
     if (movement?.statusLabel) return movement.statusLabel;
+    if (movement?.reason) return movement.reason;
+    if (movement?.orderStatus) return getStatusLabel(movement.orderStatus);
 
-    const map = {
-      RESERVE: 'Chờ xác nhận',
-      OUT: movement?.referenceType === 'ORDER' ? 'Đang giao hàng' : 'Xuất kho',
-      FULFILL: 'Đã giao hàng',
-      RELEASE: 'Đã hủy',
-      IN: 'Nhập kho',
-      RETURN: 'Hoàn trả',
-      ADJUSTMENT: 'Chuyển kho',
-      TRANSFER: 'Chuyển kho',
+    // FIXED: Remove hardcoded "Chờ xác nhận" for RESERVE/FULFILL - use backend reason/type only
+    const typeLabels = {
+      'IN': 'Nhập kho',
+      'OUT': 'Xuất kho',
+      'RESERVE': 'Tạm giữ đơn hàng',
+      'RELEASE': 'Hủy giữ hàng', 
+      'FULFILL': 'Giao hàng thành công',
+      'RETURN': 'Trả hàng',
+      'ADJUSTMENT': 'Điều chỉnh tồn kho',
+      'TRANSFER': 'Chuyển kho',
     };
-    return map[movement?.type] || movement?.reason || '-';
+    return typeLabels[movement?.type] || movement?.type || '-';
+  };
+
+  // Helper for status labels (match backend)
+  const getStatusLabel = (status) => {
+    const labels = {
+      pending: "Chờ xác nhận",
+      confirmed: "Xác nhận",
+      packing: "Đóng gói",
+      shipping: "Giao hàng",
+      completed: "Hoàn thành",
+      cancelled: "Hủy",
+      refunded: "Hoàn tiền"
+    };
+    return labels[status] || status;
   };
 
   // Filter movements by search term (client-side for current page)
