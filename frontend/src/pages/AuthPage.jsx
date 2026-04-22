@@ -201,12 +201,12 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Gửi lại OTP thất bại', 'error')
+        showToast(data.error || 'Failed to resend OTP', 'error')
       } else {
         showToast(data.message + (data.devOtp ? ` [DEV OTP: ${data.devOtp}]` : ''), 'info')
       }
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
@@ -346,10 +346,10 @@ export default function AuthPage() {
   const onLogin = async () => {
     const nextErrors = {}
     const email = form.email.trim()
-    if (!email) nextErrors.email = 'Vui lòng nhập email'
-    else if (!EMAIL_RE.test(email)) nextErrors.email = 'Email không hợp lệ'
+    if (!email) nextErrors.email = 'Please enter email'
+    else if (!EMAIL_RE.test(email)) nextErrors.email = 'Invalid email'
 
-    if (!form.password) nextErrors.password = 'Vui lòng nhập mật khẩu'
+    if (!form.password) nextErrors.password = 'Please enter password'
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)

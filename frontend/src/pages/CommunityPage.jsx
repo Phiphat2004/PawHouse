@@ -138,8 +138,8 @@ export default function CommunityPage() {
             </h3>
             <p className="text-gray-500">
               {searchTerm
-                ? "Không tìm thấy bài viết phù hợp"
-                : "Hãy quay lại sau nhé!"}
+                ? "No matching posts found"
+                : "Come back later!"}
             </p>
           </div>
         ) : (

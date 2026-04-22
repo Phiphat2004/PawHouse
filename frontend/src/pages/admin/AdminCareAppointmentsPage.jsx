@@ -484,7 +484,7 @@ export default function AdminCareAppointmentsPage() {
                         <tr className="border-b border-amber-100 bg-amber-50/70">
                           <td className="px-4 py-3 text-sm text-gray-700">
                             <p className="font-medium text-gray-900">
-                              {firstItem?.customerId?.profile?.fullName || firstItem?.customerId?.email || "Khách hàng"}
+                              {firstItem?.customerId?.profile?.fullName || firstItem?.customerId?.email || "Customer"}
                             </p>
                             <p className="text-gray-500">{firstItem?.customerId?.email || ""}</p>
                           </td>

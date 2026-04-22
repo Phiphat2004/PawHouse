@@ -102,8 +102,8 @@ export default function CartPage() {
       if (!Number.isNaN(stock) && stock >= 0 && newQuantity > stock) {
         setToast({
           type: "error",
-          title: "Không đủ tồn kho",
-          message: `Chỉ còn ${stock} sản phẩm trong kho`,
+          title: "Insufficient stock",
+          message: `Only ${stock} items left in stock`,
         });
         return;
       }

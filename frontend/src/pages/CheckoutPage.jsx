@@ -1,4 +1,3 @@
-// Lê Nhựt Hào
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
@@ -64,7 +63,7 @@ export default function CheckoutPage() {
 
   const fetchCartItems = async () => {
     try {
-      // Cart API trả về { message, cart, items }
+      // Cart API returns { message, cart, items }
       const response = await cartApi.getCart();
       const items = response.items || response.cart?.items || [];
       const selectedItems = items.filter((item) =>
@@ -87,7 +86,7 @@ export default function CheckoutPage() {
     if (!formData.name || !formData.phone || !formData.address) {
       setToast({
         type: "error",
-        title: "Lỗi",
+        title: "Error",
         message: "Please fill in all required fields (full name, phone, address)",
       });
       return;
@@ -96,7 +95,7 @@ export default function CheckoutPage() {
     if (cartItems.length === 0) {
       setToast({
         type: "error",
-        title: "Lỗi",
+        title: "Error",
         message: "No products found for checkout",
       });
       return;
@@ -143,13 +142,13 @@ export default function CheckoutPage() {
             }
           }
         } catch (cartErr) {
-          // Không block flow nếu xóa cart lỗi
+          // Don't block flow if removing from cart fails
           console.warn("Could not remove items from cart:", cartErr);
         }
 
         setToast({
           type: "success",
-          title: "Thành công!",
+          title: "Success!",
           message: response.message || "Order placed successfully",
         });
 
@@ -172,7 +171,7 @@ export default function CheckoutPage() {
       console.error("Failed to create order:", err);
       setToast({
         type: "error",
-        title: "Lỗi",
+        title: "Error",
         message: err.message || "Unable to create order. Please try again.",
       });
     } finally {
@@ -211,7 +210,7 @@ export default function CheckoutPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">Shipping Information</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Họ tên & SĐT */}
+              {/* Full Name & Phone */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -256,7 +255,7 @@ export default function CheckoutPage() {
                 />
               </div>
 
-              {/* Tỉnh / Quận / Phường */}
+              {/* Province / District / Ward */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Province/City</label>
@@ -293,10 +292,10 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Địa chỉ chi tiết */}
+              {/* Detailed Address */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Địa chỉ chi tiết <span className="text-red-500">*</span>
+                  Detailed Address <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -304,12 +303,12 @@ export default function CheckoutPage() {
                   value={formData.address}
                   onChange={handleInputChange}
                   required
-                  placeholder="Số nhà, tên đường..."
+                  placeholder="House number, street name..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
 
-              {/* Phương thức thanh toán */}
+              {/* Payment Method */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                 <div className="flex items-center p-3 border border-orange-500 rounded-lg bg-orange-50">
@@ -317,7 +316,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Ghi chú */}
+              {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
                 <textarea
@@ -349,7 +348,7 @@ export default function CheckoutPage() {
             </form>
           </div>
 
-          {/* ── Tóm tắt đơn hàng ── */}
+          {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-32">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Your Order</h2>
