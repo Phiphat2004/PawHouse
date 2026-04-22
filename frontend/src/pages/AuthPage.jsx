@@ -109,19 +109,19 @@ export default function AuthPage() {
 
   const onRegister = async () => {
     const nextErrors = {}
-    if (!form.fullName.trim()) nextErrors.fullName = 'Vui lòng nhập họ và tên'
+    if (!form.fullName.trim()) nextErrors.fullName = 'Please enter your full name'
 
     const email = form.email.trim()
-    if (!email) nextErrors.email = 'Vui lòng nhập email'
-    else if (!EMAIL_RE.test(email)) nextErrors.email = 'Email không hợp lệ'
+    if (!email) nextErrors.email = 'Please enter your email'
+    else if (!EMAIL_RE.test(email)) nextErrors.email = 'Invalid email address'
 
-    if (!form.password) nextErrors.password = 'Vui lòng nhập mật khẩu'
-    else if (form.password.length < 6) nextErrors.password = 'Mật khẩu tối thiểu 6 ký tự'
+    if (!form.password) nextErrors.password = 'Please enter a password'
+    else if (form.password.length < 6) nextErrors.password = 'Password must be at least 6 characters'
 
-    if (!form.confirmPassword) nextErrors.confirmPassword = 'Vui lòng nhập lại mật khẩu'
-    else if (form.confirmPassword !== form.password) nextErrors.confirmPassword = 'Mật khẩu nhập lại không khớp'
+    if (!form.confirmPassword) nextErrors.confirmPassword = 'Please confirm your password'
+    else if (form.confirmPassword !== form.password) nextErrors.confirmPassword = 'Passwords do not match'
 
-    if (!form.accept) nextErrors.accept = 'Bạn cần đồng ý Điều khoản & Chính sách'
+    if (!form.accept) nextErrors.accept = 'You must agree to the Terms & Policy'
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -142,7 +142,7 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Đăng ký thất bại', 'error')
+        showToast(data.error || 'Registration failed', 'error')
         setSubmitting(false)
         return
       }
@@ -151,14 +151,14 @@ export default function AuthPage() {
       setStep('otp')
       showToast(data.message + (data.devOtp ? ` [DEV OTP: ${data.devOtp}]` : ''), 'info')
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
 
   const onVerifyOtp = async () => {
     if (!otp || otp.length !== 6) {
-      showToast('Vui lòng nhập đủ 6 số OTP', 'error')
+      showToast('Please enter the full 6-digit OTP', 'error')
       return
     }
 
@@ -172,17 +172,17 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Xác thực thất bại', 'error')
+        showToast(data.error || 'Verification failed', 'error')
         setSubmitting(false)
         return
       }
 
-      showToast('Xác thực thành công! Đang chuyển đến đăng nhập...', 'success')
+      showToast('Verification successful! Redirecting to login...', 'success')
       setTimeout(() => {
         goMode('login')
       }, 1500)
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
@@ -214,11 +214,11 @@ export default function AuthPage() {
   const onForgotPassword = async () => {
     const email = forgotEmail.trim()
     if (!email) {
-      showToast('Vui lòng nhập email', 'error')
+      showToast('Please enter your email', 'error')
       return
     }
     if (!EMAIL_RE.test(email)) {
-      showToast('Email không hợp lệ', 'error')
+      showToast('Invalid email address', 'error')
       return
     }
 
@@ -232,7 +232,7 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Không thể gửi yêu cầu', 'error')
+        showToast(data.error || 'Unable to send request', 'error')
         setSubmitting(false)
         return
       }
@@ -241,14 +241,14 @@ export default function AuthPage() {
       setStep('reset-otp')
       showToast(data.message + (data.devOtp ? ` [DEV OTP: ${data.devOtp}]` : ''), 'info')
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
 
   const onVerifyResetOtp = async () => {
     if (!otp || otp.length !== 6) {
-      showToast('Vui lòng nhập đủ 6 số OTP', 'error')
+      showToast('Please enter the full 6-digit OTP', 'error')
       return
     }
 
@@ -262,7 +262,7 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Xác thực thất bại', 'error')
+        showToast(data.error || 'Verification failed', 'error')
         setSubmitting(false)
         return
       }
@@ -270,24 +270,24 @@ export default function AuthPage() {
       setResetToken(data.resetToken)
       setOtp('')
       setStep('reset')
-      showToast('Xác thực thành công. Vui lòng nhập mật khẩu mới.', 'success')
+      showToast('Verification successful. Please enter your new password.', 'success')
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
 
   const onResetPassword = async () => {
     if (!newPassword) {
-      showToast('Vui lòng nhập mật khẩu mới', 'error')
+      showToast('Please enter a new password', 'error')
       return
     }
     if (newPassword.length < 6) {
-      showToast('Mật khẩu tối thiểu 6 ký tự', 'error')
+      showToast('Password must be at least 6 characters', 'error')
       return
     }
     if (newPassword !== confirmNewPassword) {
-      showToast('Mật khẩu nhập lại không khớp', 'error')
+      showToast('Passwords do not match', 'error')
       return
     }
 
@@ -301,12 +301,12 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Đổi mật khẩu thất bại', 'error')
+        showToast(data.error || 'Password change failed', 'error')
         setSubmitting(false)
         return
       }
 
-      showToast('Đổi mật khẩu thành công! Đang chuyển đến đăng nhập...', 'success')
+      showToast('Password changed successfully! Redirecting to login...', 'success')
       setTimeout(() => {
         setStep('form')
         setResetToken('')
@@ -315,7 +315,7 @@ export default function AuthPage() {
         goMode('login')
       }, 1500)
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
@@ -333,12 +333,12 @@ export default function AuthPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showToast(data.error || 'Gửi lại OTP thất bại', 'error')
+        showToast(data.error || 'Failed to resend OTP', 'error')
       } else {
         showToast(data.message + (data.devOtp ? ` [DEV OTP: ${data.devOtp}]` : ''), 'info')
       }
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
@@ -369,10 +369,10 @@ export default function AuthPage() {
         if (data.needVerify) {
           setOtpEmail(data.email)
           setStep('otp')
-          showToast('Tài khoản chưa xác thực. Vui lòng nhập OTP.', 'info')
+          showToast('Account not verified. Please enter your OTP.', 'info')
           onResendOtp(data.email)
         } else {
-          showToast(data.error || 'Đăng nhập thất bại', 'error')
+          showToast(data.error || 'Login failed', 'error')
         }
         setSubmitting(false)
         return
@@ -382,7 +382,7 @@ export default function AuthPage() {
       localStorage.setItem('pawhouse_token', data.token)
       localStorage.setItem('pawhouse_user', JSON.stringify(data.user))
 
-      showToast('Đăng nhập thành công!', 'success')
+      showToast('Login successful!', 'success')
 
       // Redirect based on role
       setTimeout(() => {
@@ -393,7 +393,7 @@ export default function AuthPage() {
         }
       }, 1000)
     } catch {
-      showToast('Không thể kết nối server', 'error')
+      showToast('Unable to connect to server', 'error')
     }
     setSubmitting(false)
   }
@@ -470,7 +470,7 @@ export default function AuthPage() {
           </Link>
 
           <Link to="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-            ← Về trang chủ
+            ← Back to Home
           </Link>
         </div>
 
@@ -478,22 +478,22 @@ export default function AuthPage() {
           <div className="hidden lg:block space-y-6 animate-fade-in-up">
 
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-              Bắt đầu hành trình chăm sóc
+              Start your pet care
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-600">
                 {' '}
-                thú cưng
+                journey
               </span>
             </h1>
 
             <p className="text-gray-600 text-lg max-w-xl">
-              Đăng nhập để quản lý đơn hàng, theo dõi ưu đãi và lưu danh sách sản phẩm yêu thích của bạn.
+              Log in to manage your orders, track deals, and save your favorite products.
             </p>
 
             <div className="grid sm:grid-cols-3 gap-3 max-w-xl">
               {[
-                { title: 'Giao nhanh', sub: 'Nội ô 2 giờ', icon: '🚚' },
-                { title: 'Chính hãng', sub: '100% đảm bảo', icon: '✅' },
-                { title: 'Ưu đãi', sub: 'Voucher mỗi tuần', icon: '🎁' }
+                { title: 'Fast Delivery', sub: '2 hours in-city', icon: '🚚' },
+                { title: 'Authentic', sub: '100% guaranteed', icon: '✅' },
+                { title: 'Deals', sub: 'Weekly vouchers', icon: '🎁' }
               ].map((item) => (
                 <div
                   key={item.title}
@@ -514,24 +514,24 @@ export default function AuthPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-extrabold tracking-tight">
-                    {step === 'otp' ? 'Xác thực OTP' : 
-                     step === 'forgot' ? 'Quên mật khẩu' :
-                     step === 'reset-otp' ? 'Xác thực OTP' :
-                     step === 'reset' ? 'Đặt lại mật khẩu' :
-                     isRegister ? 'Tạo tài khoản' : 'Chào mừng quay lại'}
+                    {step === 'otp' ? 'Verify OTP' : 
+                     step === 'forgot' ? 'Forgot Password' :
+                     step === 'reset-otp' ? 'Verify OTP' :
+                     step === 'reset' ? 'Reset Password' :
+                     isRegister ? 'Create Account' : 'Welcome Back'}
                   </h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    {step === 'otp' ? `Nhập mã 6 số đã gửi đến ${otpEmail}` : 
-                     step === 'forgot' ? 'Nhập email để nhận mã xác thực' :
-                     step === 'reset-otp' ? `Nhập mã 6 số đã gửi đến ${otpEmail}` :
-                     step === 'reset' ? 'Nhập mật khẩu mới cho tài khoản' :
-                     'Kết nối với PawHouse'}
+                    {step === 'otp' ? `Enter the 6-digit code sent to ${otpEmail}` : 
+                     step === 'forgot' ? 'Enter your email to receive a verification code' :
+                     step === 'reset-otp' ? `Enter the 6-digit code sent to ${otpEmail}` :
+                     step === 'reset' ? 'Enter a new password for your account' :
+                     'Connect with PawHouse'}
                   </p>
                 </div>
                 <Link
                   to="/"
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  aria-label="Đóng"
+                  aria-label="Close"
                 >
                   <span className="text-xl">✕</span>
                 </Link>
@@ -552,7 +552,7 @@ export default function AuthPage() {
                       !isRegister ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Đăng nhập
+                    Log In
                   </button>
 
                   <button
@@ -562,7 +562,7 @@ export default function AuthPage() {
                       isRegister ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Đăng ký
+                    Register
                   </button>
                 </div>
               )}
@@ -596,7 +596,7 @@ export default function AuthPage() {
                       disabled={submitting || !forgotEmail.trim()}
                       className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Đang xử lý...' : 'Gửi mã OTP'}
+                      {submitting ? 'Processing...' : 'Send OTP Code'}
                     </button>
 
                     <div className="pt-2">
@@ -609,14 +609,14 @@ export default function AuthPage() {
                         }}
                         className="text-sm text-gray-600 hover:text-gray-900"
                       >
-                        ← Quay lại đăng nhập
+                        ← Back to Login
                       </button>
                     </div>
                   </>
                 ) : step === 'reset-otp' ? (
                   <>
                     <label className="block">
-                      <span className="text-sm font-semibold text-gray-800">Mã OTP (6 số)</span>
+                      <span className="text-sm font-semibold text-gray-800">OTP Code (6 digits)</span>
                       <div className="relative mt-2">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔑</span>
                         <input
@@ -637,7 +637,7 @@ export default function AuthPage() {
                       disabled={submitting || otp.length !== 6}
                       className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Đang xử lý...' : 'Xác nhận'}
+                      {submitting ? 'Processing...' : 'Confirm'}
                     </button>
 
                     <div className="flex items-center justify-between pt-2">
@@ -650,7 +650,7 @@ export default function AuthPage() {
                         }}
                         className="text-sm text-gray-600 hover:text-gray-900"
                       >
-                        ← Quay lại
+                        ← Back
                       </button>
                       <button
                         type="button"
@@ -658,14 +658,14 @@ export default function AuthPage() {
                         disabled={submitting}
                         className="text-sm font-semibold text-orange-700 hover:text-orange-800 disabled:opacity-50"
                       >
-                        Gửi lại OTP
+                        Resend OTP
                       </button>
                     </div>
                   </>
                 ) : step === 'reset' ? (
                   <>
                     <label className="block">
-                      <span className="text-sm font-semibold text-gray-800">Mật khẩu mới</span>
+                      <span className="text-sm font-semibold text-gray-800">New Password</span>
                       <div className="relative mt-2">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
                         <input
@@ -681,13 +681,13 @@ export default function AuthPage() {
                           onClick={() => setShowPassword((v) => !v)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
                         >
-                          {showPassword ? 'Ẩn' : 'Hiện'}
+                          {showPassword ? 'Hide' : 'Show'}
                         </button>
                       </div>
                     </label>
 
                     <label className="block">
-                      <span className="text-sm font-semibold text-gray-800">Nhập lại mật khẩu mới</span>
+                      <span className="text-sm font-semibold text-gray-800">Confirm New Password</span>
                       <div className="relative mt-2">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
                         <input
@@ -702,7 +702,7 @@ export default function AuthPage() {
                           onClick={() => setShowConfirm((v) => !v)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
                         >
-                          {showConfirm ? 'Ẩn' : 'Hiện'}
+                          {showConfirm ? 'Hide' : 'Show'}
                         </button>
                       </div>
                     </label>
@@ -712,7 +712,7 @@ export default function AuthPage() {
                       disabled={submitting || !newPassword || !confirmNewPassword}
                       className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                      {submitting ? 'Processing...' : 'Change Password'}
                     </button>
 
                     <div className="pt-2">
@@ -728,14 +728,14 @@ export default function AuthPage() {
                         }}
                         className="text-sm text-gray-600 hover:text-gray-900"
                       >
-                        ← Quay lại đăng nhập
+                        ← Back to Login
                       </button>
                     </div>
                   </>
                 ) : step === 'otp' ? (
                   <>
                     <label className="block">
-                      <span className="text-sm font-semibold text-gray-800">Mã OTP (6 số)</span>
+                      <span className="text-sm font-semibold text-gray-800">OTP Code (6 digits)</span>
                       <div className="relative mt-2">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔑</span>
                         <input
@@ -756,7 +756,7 @@ export default function AuthPage() {
                       disabled={submitting || otp.length !== 6}
                       className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Đang xử lý...' : 'Xác nhận'}
+                      {submitting ? 'Processing...' : 'Confirm'}
                     </button>
 
                     <div className="flex items-center justify-between pt-2">
@@ -769,7 +769,7 @@ export default function AuthPage() {
                         }}
                         className="text-sm text-gray-600 hover:text-gray-900"
                       >
-                        ← Quay lại
+                        ← Back
                       </button>
                       <button
                         type="button"
@@ -777,7 +777,7 @@ export default function AuthPage() {
                         disabled={submitting}
                         className="text-sm font-semibold text-orange-700 hover:text-orange-800 disabled:opacity-50"
                       >
-                        Gửi lại OTP
+                        Resend OTP
                       </button>
                     </div>
                   </>
@@ -785,7 +785,7 @@ export default function AuthPage() {
                   <>
                     <div className="grid sm:grid-cols-2 gap-3">
                       <label className="block">
-                        <span className="text-sm font-semibold text-gray-800">Họ và tên</span>
+                        <span className="text-sm font-semibold text-gray-800">Full Name</span>
                         <div className="relative mt-2">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
                           <input
@@ -819,7 +819,7 @@ export default function AuthPage() {
 
                     <div className="grid sm:grid-cols-2 gap-3">
                       <label className="block">
-                        <span className="text-sm font-semibold text-gray-800">Mật khẩu</span>
+                        <span className="text-sm font-semibold text-gray-800">Password</span>
                         <div className="relative mt-2">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
                           <input
@@ -836,16 +836,16 @@ export default function AuthPage() {
                             type="button"
                             onClick={() => setShowPassword((v) => !v)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
-                            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
                           >
-                            {showPassword ? 'Ẩn' : 'Hiện'}
+                            {showPassword ? 'Hide' : 'Show'}
                           </button>
                         </div>
                         {errors.password && <p className="mt-2 text-sm text-rose-600">{errors.password}</p>}
                       </label>
 
                       <label className="block">
-                        <span className="text-sm font-semibold text-gray-800">Nhập lại mật khẩu</span>
+                        <span className="text-sm font-semibold text-gray-800">Confirm Password</span>
                         <div className="relative mt-2">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
                           <input
@@ -862,9 +862,9 @@ export default function AuthPage() {
                             type="button"
                             onClick={() => setShowConfirm((v) => !v)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
-                            aria-label={showConfirm ? 'Ẩn mật khẩu nhập lại' : 'Hiện mật khẩu nhập lại'}
+                            aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
                           >
-                            {showConfirm ? 'Ẩn' : 'Hiện'}
+                            {showConfirm ? 'Hide' : 'Show'}
                           </button>
                         </div>
                         {errors.confirmPassword && (
@@ -881,7 +881,7 @@ export default function AuthPage() {
                           onChange={handleChange('accept')}
                           className="h-4 w-4 rounded border-gray-300 bg-white"
                         />
-                        Tôi đồng ý Điều khoản & Chính sách
+                        I agree to the Terms & Policy
                       </label>
                       {errors.accept && <p className="mt-2 text-sm text-rose-600">{errors.accept}</p>}
                     </div>
@@ -891,7 +891,7 @@ export default function AuthPage() {
                       disabled={submitting}
                       className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Đang xử lý...' : 'Đăng ký'}
+                      {submitting ? 'Processing...' : 'Register'}
                     </button>
                   </>
                 ) : (
@@ -913,7 +913,7 @@ export default function AuthPage() {
                     </label>
 
                     <label className="block">
-                      <span className="text-sm font-semibold text-gray-800">Mật khẩu</span>
+                      <span className="text-sm font-semibold text-gray-800">Password</span>
                       <div className="relative mt-2">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
                         <input
@@ -930,9 +930,9 @@ export default function AuthPage() {
                           type="button"
                           onClick={() => setShowPassword((v) => !v)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
-                          aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showPassword ? 'Ẩn' : 'Hiện'}
+                          {showPassword ? 'Hide' : 'Show'}
                         </button>
                       </div>
                       {errors.password && <p className="mt-2 text-sm text-rose-600">{errors.password}</p>}
@@ -946,7 +946,7 @@ export default function AuthPage() {
                           onChange={handleChange('remember')}
                           className="h-4 w-4 rounded border-gray-300 bg-white"
                         />
-                        Ghi nhớ đăng nhập
+                        Remember me
                       </label>
 
                       <button
@@ -957,7 +957,7 @@ export default function AuthPage() {
                         }}
                         className="text-sm font-semibold text-orange-700 hover:text-orange-800 transition-colors"
                       >
-                        Quên mật khẩu?
+                        Forgot password?
                       </button>
                     </div>
 
@@ -966,7 +966,7 @@ export default function AuthPage() {
                       disabled={submitting}
                       className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Đang xử lý...' : 'Đăng nhập'}
+                      {submitting ? 'Processing...' : 'Log In'}
                     </button>
                   </>
                 )}
@@ -977,7 +977,7 @@ export default function AuthPage() {
                   <div className="relative my-5">
                     <div className="h-px bg-gray-200" />
                     <span className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 text-xs text-gray-500 bg-white/80 backdrop-blur">
-                      hoặc
+                      or
                     </span>
                   </div>
 
@@ -990,8 +990,8 @@ export default function AuthPage() {
                       
                       // Show appropriate message based on isNewUser flag
                       const message = isNewUser 
-                        ? '🎉 Tài khoản của bạn đã được tạo thành công! Chào mừng bạn đến với PawHouse!'
-                        : '👋 Đăng nhập thành công! Chào mừng bạn trở lại!'
+                        ? '🎉 Your account has been created successfully! Welcome to PawHouse!'
+                        : '👋 Login successful! Welcome back!'
                       
                       showToast(message, 'success')
                       setTimeout(() => {
@@ -1003,18 +1003,18 @@ export default function AuthPage() {
                       }, 1000)
                     }}
                     onError={(error) => {
-                      showToast(error || 'Thao tác thất bại', 'error')
+                      showToast(error || 'Operation failed', 'error')
                     }}
                   />
 
                   <p className="mt-5 text-sm text-center text-gray-600">
-                    {isRegister ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}{' '}
+                    {isRegister ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
                     <button
                       type="button"
                       onClick={() => goMode(isRegister ? 'login' : 'register')}
                       className="font-semibold text-orange-700 hover:text-orange-800 transition-colors"
                     >
-                      {isRegister ? 'Đăng nhập' : 'Đăng ký'}
+                      {isRegister ? 'Log In' : 'Register'}
                     </button>
                   </p>
                 </>

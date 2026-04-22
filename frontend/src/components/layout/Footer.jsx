@@ -19,13 +19,13 @@ export default function Footer() {
               <ShopOutlined className="text-3xl text-orange-500" />
               <span className="text-2xl font-bold">PawHouse</span>
             </div>
-            <p className="text-gray-400 mb-4">Nền tảng cung cấp sản phẩm thú cưng uy tín, chất lượng cao.</p>
+            <p className="text-gray-400 mb-4">A trusted platform providing high-quality pet products.</p>
             <div className="flex gap-4">
               {[FacebookFilled, InstagramFilled, YoutubeFilled].map((Icon, i) => (
                 <button
                   key={i}
                   type="button"
-                  aria-label="Mạng xã hội"
+                  aria-label="Social media"
                   className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
                 >
                   <Icon className="text-base" />
@@ -35,28 +35,28 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Liên Kết</h4>
+            <h4 className="font-semibold mb-4">Links</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><Link to="/" className="hover:text-orange-500 transition-colors">Trang chủ</Link></li>
-              <li><Link to="/san-pham" className="hover:text-orange-500 transition-colors">Sản phẩm</Link></li>
-              <li><Link to="/cong-dong" className="hover:text-orange-500 transition-colors">Cộng đồng</Link></li>
-              <li><Link to="/ve-chung-toi" className="hover:text-orange-500 transition-colors">Về chúng tôi</Link></li>
-              <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Liên hệ</Link></li>
-              <li><Link to="/lich-cham-soc" className="hover:text-orange-500 transition-colors">Lịch chăm sóc</Link></li>
+              <li><Link to="/" className="hover:text-orange-500 transition-colors">Home</Link></li>
+              <li><Link to="/san-pham" className="hover:text-orange-500 transition-colors">Products</Link></li>
+              <li><Link to="/cong-dong" className="hover:text-orange-500 transition-colors">Community</Link></li>
+              <li><Link to="/ve-chung-toi" className="hover:text-orange-500 transition-colors">About us</Link></li>
+              <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Contact</Link></li>
+              <li><Link to="/lich-cham-soc" className="hover:text-orange-500 transition-colors">Care appointments</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Hỗ Trợ</h4>
+            <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-gray-400">
-              <li><Link to="/don-hang" className="hover:text-orange-500 transition-colors">Tra cứu đơn hàng</Link></li>
-              <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Chính sách đổi trả</Link></li>
-              <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Liên hệ hỗ trợ</Link></li>
+              <li><Link to="/don-hang" className="hover:text-orange-500 transition-colors">Track orders</Link></li>
+              <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Return policy</Link></li>
+              <li><Link to="/lien-he" className="hover:text-orange-500 transition-colors">Support contact</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Liên Hệ</h4>
+            <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-start gap-2">
                 <EnvironmentOutlined className="mt-0.5" />
@@ -73,7 +73,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-          <p>© 2026 PawHouse. Tất cả quyền được bảo lưu.</p>
+          <p>© 2026 PawHouse. All rights reserved.</p>
         </div>
       </div>
     </footer>

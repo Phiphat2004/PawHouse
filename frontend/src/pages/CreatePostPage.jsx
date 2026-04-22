@@ -13,7 +13,7 @@ export default function CreatePostPage() {
     // Only admin/staff can create posts
     const userData = localStorage.getItem(STORAGE_KEYS.USER);
     if (!userData) {
-      alert("Vui lòng đăng nhập để tạo bài viết");
+      alert("Please log in to create a post");
       navigate("/login");
       return;
     }
@@ -22,19 +22,19 @@ export default function CreatePostPage() {
       const parsedUser = JSON.parse(userData);
       const canCreate = isAdminUser(parsedUser) || isStaffUser(parsedUser);
       if (!canCreate) {
-        alert("Bạn không có quyền tạo bài viết. Chỉ nhân viên hoặc admin mới được đăng bài.");
+        alert("You do not have permission to create posts. Only staff or admins may publish.");
         navigate("/cong-dong");
         return;
       }
       setUser(parsedUser);
     } catch {
-      alert("Không thể xác định quyền tài khoản. Vui lòng đăng nhập lại.");
+      alert("Unable to verify account permissions. Please log in again.");
       navigate("/login");
     }
   }, [navigate]);
 
   const handleSuccess = () => {
-    alert("Bài viết của bạn đã được gửi thành công! Bài viết sẽ được quản trị viên xem xét và phê duyệt.");
+    alert("Your post has been submitted successfully! It will be reviewed and approved by an administrator.");
     navigate("/cong-dong");
   };
 
@@ -60,15 +60,15 @@ export default function CreatePostPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md mb-6 animate-fade-in-down">
             <span className="text-2xl">✨</span>
-            <span className="text-sm font-semibold text-orange-600">Chia sẻ câu chuyện của bạn</span>
+            <span className="text-sm font-semibold text-orange-600">Share your story</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 animate-fade-in-up">
             <span className="bg-linear-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-              Tạo bài viết mới
+              Create New Post
             </span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
-            Chia sẻ kinh nghiệm, câu chuyện và kiến thức về thú cưng của bạn với cộng đồng PawHouse
+            Share your experiences, stories, and knowledge about your pets with the PawHouse community
           </p>
         </div>
       </div>

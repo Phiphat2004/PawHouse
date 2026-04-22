@@ -35,7 +35,7 @@ export default function WarehousesPage() {
       setWarehouses(response.warehouses || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Không thể tải danh sách kho');
+      setError(err.message || 'Failed to load warehouse list');
       console.error('Error fetching warehouses:', err);
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ export default function WarehousesPage() {
       
       await warehouseApi.create(warehouseData);
       
-      setSuccess('✅ Tạo kho thành công!');
+      setSuccess('✅ Warehouse created successfully!');
       
       // Reset form
       setFormData({
@@ -99,7 +99,7 @@ export default function WarehousesPage() {
       }, 2000);
       
     } catch (err) {
-      setError(err.message || 'Không thể tạo kho');
+      setError(err.message || 'Failed to create warehouse');
       console.error('Error creating warehouse:', err);
     } finally {
       setFormLoading(false);
@@ -126,8 +126,8 @@ export default function WarehousesPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Quản Lý Kho</h1>
-          <p className="text-gray-600 mt-1">Quản lý các kho hàng trong hệ thống</p>
+          <h1 className="text-3xl font-bold text-gray-800">Warehouse Management</h1>
+          <p className="text-gray-600 mt-1">Manage warehouses in the system</p>
         </div>
         {!showForm && (
           <button
@@ -137,7 +137,7 @@ export default function WarehousesPage() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Tạo Kho Mới
+            Create New Warehouse
           </button>
         )}
       </div>
@@ -157,12 +157,12 @@ export default function WarehousesPage() {
       {/* Create Form */}
       {showForm && (
         <div className="mb-6 bg-white rounded-lg shadow-md p-6 border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Tạo Kho Mới</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Warehouse</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tên Kho <span className="text-red-500">*</span>
+                  Warehouse Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -170,14 +170,14 @@ export default function WarehousesPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  placeholder="VD: Kho Hà Nội"
+                  placeholder="e.g., Hanoi Warehouse"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mã Kho <span className="text-red-500">*</span>
+                  Warehouse Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -185,7 +185,7 @@ export default function WarehousesPage() {
                   value={formData.code}
                   onChange={handleChange}
                   required
-                  placeholder="VD: WH-HN-001"
+                  placeholder="e.g., WH-HN-001"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
               </div>
@@ -193,14 +193,14 @@ export default function WarehousesPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Địa Chỉ
+                Address
               </label>
               <input
                 type="text"
                 name="street"
                 value={formData.street}
                 onChange={handleChange}
-                placeholder="VD: 123 Đường Trần Hưng Đạo"
+                placeholder="e.g., 123 Tran Hung Dao Street"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
@@ -208,7 +208,7 @@ export default function WarehousesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Thành Phố
+                  City
                 </label>
                 <input
                   type="text"
@@ -222,28 +222,28 @@ export default function WarehousesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tỉnh/Thành
+                  State/Province
                 </label>
                 <input
                   type="text"
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
-                  placeholder="VD: Hà Nội"
+                  placeholder="e.g., Hanoi"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mã Bưu Chính
+                  Postal Code
                 </label>
                 <input
                   type="text"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
-                  placeholder="VD: 100000"
+                  placeholder="e.g., 100000"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
               </div>
@@ -251,14 +251,14 @@ export default function WarehousesPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quốc Gia
+                Country
               </label>
               <input
                 type="text"
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
-                placeholder="VD: Vietnam"
+                placeholder="e.g., Vietnam"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
@@ -269,7 +269,7 @@ export default function WarehousesPage() {
                 disabled={formLoading || !formData.name.trim() || !formData.code.trim()}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-medium transition-colors"
               >
-                {formLoading ? 'Đang tạo...' : 'Tạo Kho'}
+                {formLoading ? 'Creating...' : 'Create Warehouse'}
               </button>
               <button
                 type="button"
@@ -277,7 +277,7 @@ export default function WarehousesPage() {
                 disabled={formLoading}
                 className="flex-1 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-medium transition-colors"
               >
-                Hủy
+                Cancel
               </button>
             </div>
           </form>
@@ -285,25 +285,25 @@ export default function WarehousesPage() {
       )}
 
       {/* Warehouse List */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800">
-            Danh Sách Kho ({warehouses.length})
+            Warehouse List ({warehouses.length})
           </h2>
         </div>
 
         {loading ? (
           <div className="p-8 text-center text-gray-500">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p>Đang tải danh sách kho...</p>
+            <p>Loading warehouse list...</p>
           </div>
         ) : warehouses.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <p className="text-lg font-medium mb-2">Chưa có kho nào</p>
-            <p className="text-sm">Nhấn nút "Tạo Kho Mới" để thêm kho đầu tiên</p>
+            <p className="text-lg font-medium mb-2">No warehouses</p>
+            <p className="text-sm">Click "Create New Warehouse" button to add the first warehouse</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -311,19 +311,19 @@ export default function WarehousesPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên Kho
+                    Warehouse Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mã Kho
+                    Warehouse Code
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Địa Chỉ
+                    Address
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng Thái
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ngày Tạo
+                    Created Date
                   </th>
                 </tr>
               </thead>
@@ -354,7 +354,7 @@ export default function WarehousesPage() {
                         {!warehouse.address?.street && 
                          !warehouse.address?.city && 
                          !warehouse.address?.state && (
-                          <span className="text-gray-400 italic">Chưa có địa chỉ</span>
+                          <span className="text-gray-400 italic">No address</span>
                         )}
                       </div>
                     </td>
@@ -364,7 +364,7 @@ export default function WarehousesPage() {
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {warehouse.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                        {warehouse.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

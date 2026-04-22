@@ -35,7 +35,7 @@ export default function CreateStockEntryPage() {
       const response = await api.get('/stock/warehouses');
       const list = response?.warehouses || response?.data?.warehouses || [];
       setWarehouses(list);
-      // Tự động chọn kho đầu tiên nếu có
+      // Automatically select the first warehouse if available
       if (list.length > 0) {
         setFormData(prev => ({ ...prev, warehouseId: list[0]._id }));
       }
@@ -88,7 +88,7 @@ export default function CreateStockEntryPage() {
         timestamp: new Date()
       });
 
-      setSuccess('✅ Tạo phiếu nhập kho thành công!');
+      setSuccess('✅ Stock entry created successfully!');
       console.log('Stock entry created:', response);
       
       // Reset form sau 2 giây và scroll lên top
@@ -104,7 +104,7 @@ export default function CreateStockEntryPage() {
       
     } catch (error) {
       console.error('Error creating stock entry:', error);
-      setError(error.response?.data?.error || 'Không thể tạo phiếu nhập kho');
+      setError(error.response?.data?.error || 'Failed to create stock entry');
     } finally {
       setLoading(false);
     }
@@ -122,8 +122,8 @@ export default function CreateStockEntryPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">📦 Tạo Phiếu Nhập Kho</h1>
-              <p className="text-gray-600 mt-2">Quản lý tồn kho và nhập hàng mới</p>
+              <h1 className="text-4xl font-bold text-gray-900">📦 Create Stock Entry</h1>
+              <p className="text-gray-600 mt-2">Manage inventory and import new goods</p>
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function CreateStockEntryPage() {
         {loadingData && (
           <div className="bg-white shadow-lg rounded-xl p-12 text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mx-auto"></div>
-            <p className="mt-6 text-gray-600 text-lg font-medium">Đang tải dữ liệu...</p>
+            <p className="mt-6 text-gray-600 text-lg font-medium">Loading data...</p>
           </div>
         )}
 
@@ -160,13 +160,13 @@ export default function CreateStockEntryPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800">Phiếu Nhập Kho</h3>
-                  <p className="text-sm text-gray-500">Mã phiếu: #{Date.now().toString().slice(-8)}</p>
+                  <h3 className="text-2xl font-bold text-gray-800">Stock Entry</h3>
+                  <p className="text-sm text-gray-500">Entry ID: #{Date.now().toString().slice(-8)}</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className="inline-block bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-md">
-                  ✓ Đã hoàn tất
+                  ✓ Completed
                 </span>
                 <p className="text-xs text-gray-500 mt-2">
                   {lastEntry.timestamp.toLocaleString('vi-VN', {
@@ -188,7 +188,7 @@ export default function CreateStockEntryPage() {
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Sản phẩm</h4>
+                  <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Product</h4>
                 </div>
                 <p className="text-lg font-bold text-gray-900 mb-1">{lastEntry.product?.name}</p>
                 {lastEntry.product?.sku && (
@@ -206,7 +206,7 @@ export default function CreateStockEntryPage() {
                   <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
-                  <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Kho nhập</h4>
+                  <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Warehouse</h4>
                 </div>
                 <p className="text-lg font-bold text-gray-900 mb-1">{lastEntry.warehouse?.name}</p>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -227,11 +227,11 @@ export default function CreateStockEntryPage() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Số lượng nhập
+                  Quantity Imported
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-4xl font-black text-green-600">+{lastEntry.quantity}</p>
-                  <span className="text-sm text-gray-500">đơn vị</span>
+                  <span className="text-sm text-gray-500">units</span>
                 </div>
               </div>
 
@@ -241,7 +241,7 @@ export default function CreateStockEntryPage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Lý do nhập
+                    Reason for Import
                   </p>
                   <p className="text-gray-800 italic leading-relaxed">"{lastEntry.reason}"</p>
                 </div>
@@ -260,7 +260,7 @@ export default function CreateStockEntryPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Tạo phiếu mới
+                Create New Entry
               </button>
               <Link
                 to={`/san-pham/${lastEntry.product?._id}`}
@@ -270,7 +270,7 @@ export default function CreateStockEntryPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                Xem chi tiết sản phẩm
+                View Product Details
               </Link>
               <Link
                 to="/quan-tri/lich-su-xuat-nhap-kho"
@@ -279,7 +279,7 @@ export default function CreateStockEntryPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                Xem lịch sử
+                View History
               </Link>
             </div>
           </div>
@@ -292,7 +292,7 @@ export default function CreateStockEntryPage() {
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl shadow-lg border border-orange-200 hover:shadow-xl transition-all">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-orange-600 font-medium mb-1">Tổng sản phẩm</div>
+                    <div className="text-sm text-orange-600 font-medium mb-1">Total Products</div>
                     <div className="text-3xl font-black text-orange-700">{products.length}</div>
                   </div>
                   <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-3 rounded-full shadow-lg">
@@ -305,21 +305,21 @@ export default function CreateStockEntryPage() {
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-lg border border-green-200 hover:shadow-xl transition-all">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-green-600 font-medium mb-1">Trạng thái</div>
+                    <div className="text-sm text-green-600 font-medium mb-1">Status</div>
                     <div className="text-lg font-bold text-green-700">
                       {products.length > 0 ? (
                         <span className="flex items-center gap-1">
                           <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          Sẵn sàng
+                          Ready
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
                           <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
-                          Chưa có sản phẩm
+                          No products
                         </span>
                       )}
                     </div>
@@ -336,11 +336,11 @@ export default function CreateStockEntryPage() {
             {/* Warning if no products */}
             {products.length === 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-                <h3 className="font-bold text-yellow-800 mb-3">⚠️ Cần chuẩn bị dữ liệu</h3>
+                <h3 className="font-bold text-yellow-800 mb-3">⚠️ Data preparation needed</h3>
                 <div>
-                  <p className="text-yellow-700 mb-2">• Chưa có sản phẩm nào.</p>
+                  <p className="text-yellow-700 mb-2">• No products available.</p>
                   <Link to="/quan-tri/san-pham" className="text-blue-600 hover:underline">
-                    → Tạo sản phẩm mới
+                    → Create new product
                   </Link>
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function CreateStockEntryPage() {
                     <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    Sản Phẩm <span className="text-red-500">*</span>
+                    Product <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <select
@@ -366,7 +366,7 @@ export default function CreateStockEntryPage() {
                       disabled={products.length === 0}
                       style={{ backgroundImage: 'none' }}
                     >
-                      <option value="">-- Chọn sản phẩm --</option>
+                      <option value="">-- Select product --</option>
                       {products.map(product => (
                         <option key={product._id} value={product._id}>
                           {product.name} {product.sku ? `(${product.sku})` : ''}
@@ -384,7 +384,7 @@ export default function CreateStockEntryPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p className="text-sm text-gray-500">
-                      {products.length === 0 ? '⚠️ Không có sản phẩm' : `${products.length} sản phẩm khả dụng`}
+                      {products.length === 0 ? '⚠️ No products' : `${products.length} products available`}
                     </p>
                   </div>
                 </div>
@@ -395,18 +395,18 @@ export default function CreateStockEntryPage() {
                     <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
-                    Kho
+                    Warehouse
                   </label>
                   <div className="w-full border-2 border-amber-300 rounded-xl py-4 px-5 bg-amber-50 flex items-center gap-3">
                     <span className="text-2xl">🏢</span>
                     <div>
-                      <span className="text-amber-800 font-bold text-base">{warehouses[0]?.name || 'Chưa có kho'}</span>
+                      <span className="text-amber-800 font-bold text-base">{warehouses[0]?.name || 'No warehouse'}</span>
                       {warehouses[0]?.code && (
                         <span className="ml-2 text-sm text-amber-600">({warehouses[0].code})</span>
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">{warehouses[0]?.name ? '' : 'Chưa có kho'}</p>
+                  <p className="text-sm text-gray-500 mt-2">{warehouses[0]?.name ? '' : 'No warehouse'}</p>
                 </div>
 
                 {/* Quantity */}
@@ -415,7 +415,7 @@ export default function CreateStockEntryPage() {
                     <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                     </svg>
-                    Số Lượng <span className="text-red-500">*</span>
+                    Quantity <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <input
@@ -425,7 +425,7 @@ export default function CreateStockEntryPage() {
                       onChange={handleChange}
                       min="1"
                       className="w-full border-2 border-gray-300 rounded-xl py-4 px-5 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all bg-gray-50 hover:bg-white text-base"
-                      placeholder="Nhập số lượng (VD: 100)"
+                      placeholder="Enter quantity (e.g., 100)"
                       required
                     />
                   </div>
@@ -433,7 +433,7 @@ export default function CreateStockEntryPage() {
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm text-gray-500">Nhập số lượng tối thiểu là 1</p>
+                    <p className="text-sm text-gray-500">Minimum quantity is 1</p>
                   </div>
                 </div>
 
@@ -443,21 +443,21 @@ export default function CreateStockEntryPage() {
                     <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Lý Do
+                    Reason
                   </label>
                   <textarea
                     name="reason"
                     value={formData.reason}
                     onChange={handleChange}
                     className="w-full border-2 border-gray-300 rounded-xl py-4 px-5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all bg-gray-50 hover:bg-white resize-none text-base"
-                    placeholder="VD: Nhập hàng từ nhà cung cấp ABC..."
+                    placeholder="e.g., Imported goods from supplier ABC..."
                     rows="4"
                   />
                   <div className="flex items-center gap-2 mt-2">
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm text-gray-500">Ghi rõ nguồn gốc hoặc lý do nhập kho (không bắt buộc)</p>
+                    <p className="text-sm text-gray-500">Specify source or reason for import (optional)</p>
                   </div>
                 </div>
 
@@ -478,14 +478,14 @@ export default function CreateStockEntryPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Đang xử lý...
+                        Processing...
                       </>
                     ) : (
                       <>
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Tạo Phiếu Nhập Kho
+                        Create Stock Entry
                       </>
                     )}
                   </button>
@@ -500,24 +500,24 @@ export default function CreateStockEntryPage() {
                   <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <h3 className="font-bold text-orange-800 text-lg">Hướng dẫn</h3>
+                  <h3 className="font-bold text-orange-800 text-lg">Instructions</h3>
                 </div>
                 <ul className="text-sm text-orange-700 space-y-2 ml-2">
                   <li className="flex items-start gap-2">
                     <span className="text-orange-500 mt-0.5">•</span>
-                    <span>Chọn sản phẩm cần nhập</span>
+                    <span>Select product to import</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-orange-500 mt-0.5">•</span>
-                    <span>{warehouses[0]?.name ? `Kho mặc định: ${warehouses[0].name}` : 'Chưa có kho'}</span>
+                    <span>{warehouses[0]?.name ? `Default warehouse: ${warehouses[0].name}` : 'No warehouse'}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-orange-500 mt-0.5">•</span>
-                    <span>Nhập số lượng (≥ 1)</span>
+                    <span>Enter quantity (≥ 1)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-orange-500 mt-0.5">•</span>
-                    <span>Ghi rõ lý do để dễ tra cứu</span>
+                    <span>Specify reason for easy reference</span>
                   </li>
                 </ul>
               </div>
@@ -526,20 +526,20 @@ export default function CreateStockEntryPage() {
                   <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
-                  <h3 className="font-bold text-amber-800 text-lg">Lưu ý</h3>
+                  <h3 className="font-bold text-amber-800 text-lg">Notes</h3>
                 </div>
                 <ul className="text-sm text-amber-700 space-y-2 ml-2">
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">•</span>
-                    <span>Kiểm tra thông tin trước khi submit</span>
+                    <span>Check information before submitting</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">•</span>
-                    <span>Số lượng sẽ được cộng vào tồn kho</span>
+                    <span>Quantity will be added to inventory</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">•</span>
-                    <span>Lịch sử được lưu trong hệ thống</span>
+                    <span>History is saved in the system</span>
                   </li>
                 </ul>
               </div>

@@ -35,8 +35,8 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
     if (selectedItems.length === 0 && cart.length === 0) {
       setToast({
         type: "error",
-        title: "Giỏ hàng trống",
-        message: "Vui lòng chọn ít nhất một sản phẩm để thanh toán",
+        title: "Cart is empty",
+        message: "Please select at least one product to checkout",
       });
       return;
     }
@@ -57,8 +57,8 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
             <ShoppingCartOutlined className="text-xl" />
           </div>
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/80">Thanh toán nhanh</p>
-            <h2 className="text-2xl font-extrabold leading-tight">Tóm tắt đơn hàng</h2>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/80">Quick checkout</p>
+              <h2 className="text-2xl font-extrabold leading-tight">Order summary</h2>
           </div>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span className="inline-flex items-center gap-2">
               <RocketOutlined className="text-orange-500" />
-              Tạm tính
+                      Subtotal
             </span>
             <span className="text-xl font-extrabold text-gray-900">
               {selectedTotal.toLocaleString("vi-VN")}₫
@@ -78,7 +78,7 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
           <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
             <span className="inline-flex items-center gap-2">
               <GiftOutlined className="text-orange-500" />
-              Tổng số sản phẩm
+                      Total products
             </span>
             <span className="font-semibold text-gray-900">{count}</span>
           </div>
@@ -86,7 +86,7 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
 
         <div className="mb-5 rounded-2xl border border-amber-100 bg-linear-to-r from-amber-50 via-orange-50 to-white px-4 py-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-base font-bold text-gray-900">Tổng cộng</span>
+                <span className="text-base font-bold text-gray-900">Grand total</span>
             <span className="text-3xl font-extrabold tracking-tight text-orange-600">
               {finalTotal.toLocaleString("vi-VN")}₫
             </span>
@@ -98,12 +98,12 @@ export default function CartSummary({ total, count, cart = [], selectedItems = [
           disabled={selectedItems.length === 0 && cart.length === 0}
           className="group w-full rounded-full bg-linear-to-r from-orange-500 via-orange-500 to-amber-500 py-4 font-semibold text-white shadow-[0_16px_30px_rgba(249,115,22,0.28)] transition hover:shadow-[0_20px_40px_rgba(249,115,22,0.36)] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-2"
         >
-          <span>Tiến hành thanh toán</span>
+          <span>Proceed to checkout</span>
           <ArrowRightOutlined className="transition-transform group-hover:translate-x-1" />
         </button>
 
         <p className="mt-3 text-center text-xs text-gray-400">
-          Hoàn tất đơn hàng trong vài bước, không mất thời gian.
+          Complete your order in just a few quick steps.
         </p>
       </div>
 

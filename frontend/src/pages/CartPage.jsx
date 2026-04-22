@@ -17,12 +17,12 @@ export default function CartPage() {
   const [toast, setToast] = useState(null);
 
   const showErrorToast = (message) => {
-    const msg = message || "Không thể cập nhật số lượng";
-    const isStockError = msg.toLowerCase().includes("chỉ còn") || msg.toLowerCase().includes("tồn kho");
+    const msg = message || "Unable to update quantity";
+    const isStockError = msg.toLowerCase().includes("only") || msg.toLowerCase().includes("stock");
 
     setToast({
       type: "error",
-      title: isStockError ? "Không đủ tồn kho" : "Có lỗi xảy ra",
+      title: isStockError ? "Insufficient stock" : "An error occurred",
       message: msg,
     });
   };
@@ -31,7 +31,7 @@ export default function CartPage() {
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!token) {
-      alert("Vui lòng đăng nhập để xem giỏ hàng");
+      alert("Please log in to view your cart");
       navigate("/login");
       return;
     }
@@ -82,7 +82,7 @@ export default function CartPage() {
       console.error("Failed to fetch cart:", err);
       // If cart doesn't exist, it's not an error
       if (err.status !== 404) {
-        setError("Không thể tải giỏ hàng. Vui lòng thử lại.");
+        setError("Unable to load cart. Please try again.");
       }
       setCartItems([]);
       setSelectedItems([]);
@@ -113,7 +113,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      showErrorToast(err.message || err.data?.message || "Không thể cập nhật số lượng");
+      showErrorToast(err.message || err.data?.message || "Unable to update quantity");
     }
   };
 
@@ -129,7 +129,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      showErrorToast(err.message || err.data?.message || "Không thể cập nhật số lượng");
+      showErrorToast(err.message || err.data?.message || "Unable to update quantity");
     }
   };
 
@@ -146,8 +146,8 @@ export default function CartPage() {
       if (!Number.isNaN(stock) && stock >= 0 && validQuantity > stock) {
         setToast({
           type: "error",
-          title: "Không đủ tồn kho",
-          message: `Chỉ còn ${stock} sản phẩm trong kho`,
+          title: "Insufficient stock",
+          message: `Only ${stock} items left in stock`,
         });
         return;
       }
@@ -157,7 +157,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to update quantity:", err);
-      showErrorToast(err.message || err.data?.message || "Không thể cập nhật số lượng");
+      showErrorToast(err.message || err.data?.message || "Unable to update quantity");
     }
   };
 
@@ -167,7 +167,7 @@ export default function CartPage() {
       const item = cartItems.find((i) => i._id === itemId);
       if (!item) return;
 
-      if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?")) {
+      if (!confirm("Are you sure you want to remove this product from your cart?")) {
         return;
       }
 
@@ -176,14 +176,14 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to remove item:", err);
-      alert(err.data?.message || "Không thể xóa sản phẩm");
+      alert(err.data?.message || "Unable to remove product");
     }
   };
 
   // Handle clear cart
   const handleClearCart = async () => {
     try {
-      if (!confirm("Bạn có chắc chắn muốn xóa tất cả sản phẩm khỏi giỏ hàng?")) {
+      if (!confirm("Are you sure you want to remove all products from your cart?")) {
         return;
       }
 
@@ -193,7 +193,7 @@ export default function CartPage() {
       updateCartCount(); // Update cart count in header
     } catch (err) {
       console.error("Failed to clear cart:", err);
-      alert(err.data?.message || "Không thể xóa giỏ hàng");
+      alert(err.data?.message || "Unable to clear cart");
     }
   };
 
@@ -241,7 +241,7 @@ export default function CartPage() {
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
           <div className="text-center">
-            <p className="text-gray-600">Đang tải giỏ hàng...</p>
+            <p className="text-gray-600">Loading cart...</p>
           </div>
         </main>
         <Footer />
@@ -254,11 +254,11 @@ export default function CartPage() {
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Giỏ hàng</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
           <p className="text-gray-600">
             {cartItems.length > 0
-              ? `${totalQuantity} sản phẩm trong giỏ hàng`
-              : "Giỏ hàng của bạn đang trống"}
+              ? `${totalQuantity} item(s) in your cart`
+              : "Your cart is empty"}
           </p>
         </div>
 
@@ -272,16 +272,16 @@ export default function CartPage() {
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">🛒</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Giỏ hàng trống
+              Your Cart is Empty
             </h2>
             <p className="text-gray-600 mb-6">
-              Bạn chưa có sản phẩm nào trong giỏ hàng
+              You have no products in your cart yet
             </p>
             <button
               onClick={() => navigate("/san-pham")}
               className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
             >
-              Tiếp tục mua sắm
+              Continue Shopping
             </button>
           </div>
         ) : (
@@ -301,14 +301,14 @@ export default function CartPage() {
                     className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
                   />
                   <span className="ml-2 text-gray-700 font-medium">
-                    Chọn tất cả ({cartItems.length})
+                    Select All ({cartItems.length})
                   </span>
                 </label>
                 <button
                   onClick={handleClearCart}
                   className="text-red-600 hover:text-red-700 text-sm font-medium"
                 >
-                  Xóa tất cả
+                  Remove All
                 </button>
               </div>
 

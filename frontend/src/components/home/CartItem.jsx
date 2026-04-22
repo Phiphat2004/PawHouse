@@ -1,5 +1,5 @@
 // frontend/src/components/home/CartItem.jsx
-//Lê Nhựt Hào
+// Author note
 import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useEffect, useState } from "react";
 
@@ -51,10 +51,10 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
 
             <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-gray-900 text-lg leading-tight truncate">
-                    {item?.product_id?.name || "Sản phẩm"}
+                    {item?.product_id?.name || "Product"}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                    Đơn giá: {unitPrice.toLocaleString("vi-VN")}₫
+                    Unit price: {unitPrice.toLocaleString("vi-VN")}₫
                 </p>
 
                 <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
@@ -92,7 +92,7 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
             <button
                 onClick={() => onRemove(itemId)}
                 className="self-start text-red-500 hover:text-red-700 transition p-1"
-                title="Xóa sản phẩm"
+                title="Remove product"
             >
                 <DeleteOutlined className="text-lg" />
             </button>

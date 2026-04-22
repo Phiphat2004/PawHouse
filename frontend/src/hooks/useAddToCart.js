@@ -13,17 +13,17 @@ export function useAddToCart() {
     // Check if user is logged in
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!token) {
-      const shouldLogin = confirm("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Bạn có muốn đăng nhập không?");
+      const shouldLogin = confirm("You need to log in to add products to your cart. Would you like to log in?");
       if (shouldLogin) {
         navigate("/login");
       }
-      return { success: false, message: "Cần đăng nhập" };
+      return { success: false, message: "Login required" };
     }
 
     try {
       setLoading(true);
       
-      // Optimistic update - cập nhật UI ngay lập tức
+      // Optimistic update - update UI immediately
       optimisticAddToCart(quantity);
       
       const response = await cartApi.addToCart({ product_id, quantity });
@@ -34,7 +34,7 @@ export function useAddToCart() {
         await updateCartCount(true);
         return { 
           success: true, 
-          message: response.message || "Đã thêm vào giỏ hàng thành công!",
+          message: response.message || "Added to cart successfully!",
           data: response.cart 
         };
       } else if (response.status === "success") {
@@ -42,30 +42,30 @@ export function useAddToCart() {
         await updateCartCount(true);
         return { 
           success: true, 
-          message: response.message || "Đã thêm vào giỏ hàng thành công!",
+          message: response.message || "Added to cart successfully!",
           data: response.data 
         };
       } else {
         return { 
           success: false, 
-          message: response.message || "Không thể thêm vào giỏ hàng" 
+          message: response.message || "Unable to add to cart" 
         };
       }
     } catch (error) {
       console.error("Add to cart error:", error);
-      const errorMessage = error.message || "Không thể thêm vào giỏ hàng";
+      const errorMessage = error.message || "Unable to add to cart";
       
       // Handle specific error cases
       if (error.status === 401) {
-        const shouldLogin = confirm("Phiên đăng nhập đã hết hạn. Bạn có muốn đăng nhập lại không?");
+        const shouldLogin = confirm("Your session has expired. Would you like to log in again?");
         if (shouldLogin) {
           navigate("/login");
         }
-        return { success: false, message: "Phiên đăng nhập đã hết hạn" };
+        return { success: false, message: "Session expired" };
       }
       
       if (error.status === 403) {
-        return { success: false, message: "Bạn không có quyền thực hiện thao tác này" };
+        return { success: false, message: "You do not have permission to perform this action" };
       }
 
       return { success: false, message: errorMessage };

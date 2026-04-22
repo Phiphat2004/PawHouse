@@ -33,10 +33,10 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
 
     try {
       if (!formData.title.trim()) {
-        throw new Error("Vui lòng nhập tiêu đề");
+        throw new Error("Please enter a title");
       }
       if (!formData.content.trim()) {
-        throw new Error("Vui lòng nhập nội dung");
+        throw new Error("Please enter content");
       }
 
       if (post) {
@@ -49,7 +49,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
     } catch (err) {
       console.error("Error creating post:", err);
       console.error("Error response:", err.response);
-      const errorMessage = err.response?.data?.message || err.message || "Có lỗi xảy ra";
+      const errorMessage = err.response?.data?.message || err.message || "Something went wrong";
       setError(errorMessage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
@@ -95,7 +95,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
     } catch (err) {
       console.error('Upload error', err);
       setImageError(true);
-      alert('Tải ảnh lên thất bại');
+      alert('Image upload failed');
     } finally {
       setImageLoading(false);
     }
@@ -108,7 +108,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
   }, [localPreviewUrl]);
 
   const renderMarkdownPreview = (text) => {
-    if (!text) return <p className="text-gray-400 italic">Nội dung preview sẽ hiển thị ở đây...</p>;
+    if (!text) return <p className="text-gray-400 italic">Preview content will appear here...</p>;
     
     return text.split('\n').map((line, i) => {
       // Headings
@@ -145,7 +145,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
           <div className="flex items-center">
             <span className="text-2xl mr-3">⚠️</span>
             <div>
-              <p className="font-semibold text-red-800">Có lỗi xảy ra</p>
+              <p className="font-semibold text-red-800">Something went wrong</p>
               <p className="text-red-700 text-sm mt-1">{error}</p>
             </div>
           </div>
@@ -161,9 +161,9 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
             </div>
           </div>
           <div className="flex-1">
-            <p className="font-bold text-blue-900 mb-2">Quy trình phê duyệt bài viết</p>
+            <p className="font-bold text-blue-900 mb-2">Post approval process</p>
             <p className="text-blue-800 text-sm leading-relaxed">
-              Bài viết của bạn sẽ được lưu dưới dạng <span className="font-semibold">bản nháp</span> và cần được quản trị viên xem xét, phê duyệt trước khi xuất bản công khai trên cộng đồng.
+              Your post will be saved as a <span className="font-semibold">draft</span> and must be reviewed and approved by an admin before being published publicly.
             </p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
           {/* Author Card */}
           {user && (
             <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
-              <p className="text-sm font-medium text-gray-500 mb-3">Tác giả</p>
+              <p className="text-sm font-medium text-gray-500 mb-3">Author</p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {user?.profile?.fullName?.charAt(0)?.toUpperCase() || 'U'}
@@ -194,7 +194,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
             <div className="flex items-center justify-between mb-3">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <span className="text-xl">📌</span>
-                <span>Tiêu đề bài viết</span>
+                <span>Post title</span>
                 <span className="text-red-500">*</span>
               </label>
               <span className={`text-xs font-medium ${
@@ -208,7 +208,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="Nhập tiêu đề hấp dẫn cho bài viết của bạn..."
+              placeholder="Enter an engaging title for your post..."
               maxLength={100}
               className="w-full px-4 py-3 text-lg border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
               required
@@ -220,7 +220,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
             <div className="flex items-center justify-between mb-3">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <span className="text-xl">✏️</span>
-                <span>Mô tả ngắn</span>
+                <span>Short description</span>
               </label>
               <span className={`text-xs font-medium ${
                 excerptLength > 200 ? 'text-red-500' : excerptLength > 160 ? 'text-orange-500' : 'text-gray-400'
@@ -232,7 +232,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
               name="excerpt"
               value={formData.excerpt}
               onChange={handleChange}
-              placeholder="Tóm tắt ngắn gọn về nội dung bài viết (hiển thị trong danh sách bài viết)..."
+              placeholder="Briefly summarize your post content (shown in the post list)..."
               rows="3"
               maxLength={200}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none"
@@ -243,7 +243,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
           <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
               <span className="text-xl">🖼️</span>
-              <span>Ảnh bìa</span>
+              <span>Cover image</span>
             </label>
             <div className="flex flex-col sm:flex-row gap-4">
               <input
@@ -280,8 +280,8 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
                   <div className="h-48 w-full bg-red-50 border-2 border-red-200 rounded-xl flex items-center justify-center text-red-600">
                     <div className="text-center">
                       <span className="text-4xl">🚫</span>
-                      <p className="mt-2 font-medium">URL ảnh không hợp lệ</p>
-                      <p className="text-sm text-red-500 mt-1">Vui lòng kiểm tra lại đường dẫn</p>
+                      <p className="mt-2 font-medium">Invalid image URL</p>
+                      <p className="text-sm text-red-500 mt-1">Please check the URL path</p>
                     </div>
                   </div>
                 )}
@@ -291,7 +291,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
             {!formData.coverImageUrl && (
               <div className="mt-4 p-6 border-2 border-dashed border-gray-300 rounded-xl text-center">
                 <span className="text-4xl">📷</span>
-                <p className="text-sm text-gray-500 mt-2">Thêm ảnh bìa để bài viết hấp dẫn hơn</p>
+                <p className="text-sm text-gray-500 mt-2">Add a cover image to make your post more engaging</p>
               </div>
             )}
           </div>
@@ -314,7 +314,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
               >
                 <span className="flex items-center justify-center gap-2">
                   <span>✍️</span>
-                  <span>Viết</span>
+                  <span>Write</span>
                 </span>
               </button>
               <button
@@ -328,7 +328,7 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
               >
                 <span className="flex items-center justify-center gap-2">
                   <span>👁️</span>
-                  <span>Xem trước</span>
+                  <span>Preview</span>
                 </span>
               </button>
             </div>
@@ -339,30 +339,30 @@ export default function UserPostForm({ post = null, onSuccess, onCancel, user })
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <span>Nội dung</span>
+                      <span>Content</span>
                       <span className="text-red-500">*</span>
                     </label>
                     <span className={`text-xs font-medium ${
                       contentLength < 100 ? 'text-orange-500' : 'text-green-500'
                     }`}>
-                      {contentLength} ký tự
+                      {contentLength} characters
                     </span>
                   </div>
                   <textarea
                     name="content"
                     value={formData.content}
                     onChange={handleChange}
-                    placeholder="Nhập nội dung bài viết... 
+                    placeholder="Enter post content... 
 
-# Tiêu đề lớn
-## Tiêu đề nhỏ
+# Main title
+## Sub title
 
-**Chữ in đậm** hoặc *chữ in nghiêng*
+**Bold text** or *italic text*
 
-- Danh sách 1
-- Danh sách 2
+- List item 1
+- List item 2
 
-Viết những câu chuyện, kinh nghiệm thú vị về thú cưng của bạn..."
+Write your interesting pet stories and experiences..."
                     rows="20"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all resize-none font-mono text-sm"
                     required
@@ -370,7 +370,7 @@ Viết những câu chuyện, kinh nghiệm thú vị về thú cưng của bạ
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
                       <span>💡</span>
-                      <span>Hỗ trợ Markdown</span>
+                      <span>Markdown supported</span>
                     </span>
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
                       <span># H1</span>
@@ -385,7 +385,7 @@ Viết những câu chuyện, kinh nghiệm thú vị về thú cưng của bạ
                 </div>
               ) : (
                 <div className="prose prose-orange max-w-none min-h-[500px]">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Xem trước</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Preview</h3>
                   {renderMarkdownPreview(formData.content)}
                 </div>
               )}
@@ -405,12 +405,12 @@ Viết những câu chuyện, kinh nghiệm thú vị về thú cưng của bạ
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-3 border-white border-t-transparent"></div>
-                <span>Đang xử lý...</span>
+                <span>Processing...</span>
               </>
             ) : (
               <>
                 <span className="text-xl">{post ? '💾' : '🚀'}</span>
-                <span>{post ? 'Cập nhật bài viết' : 'Gửi bài viết'}</span>
+                <span>{post ? 'Update post' : 'Submit post'}</span>
               </>
             )}
           </button>
@@ -421,7 +421,7 @@ Viết những câu chuyện, kinh nghiệm thú vị về thú cưng của bạ
               className="px-8 py-4 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2"
             >
               <span>❌</span>
-              <span>Hủy</span>
+              <span>Cancel</span>
             </button>
           )}
         </div>

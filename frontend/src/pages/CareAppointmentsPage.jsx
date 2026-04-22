@@ -49,13 +49,13 @@ const initialPetEntry = {
   serviceType: "",
 };
 
-const petTypeOptions = ["Chó", "Mèo", "Thỏ", "Hamster", "Chim", "Khác"];
+const petTypeOptions = ["Dog", "Cat", "Rabbit", "Hamster", "Bird", "Other"];
 const serviceTypeOptions = [
-  "Tắm spa",
-  "Cắt tỉa lông",
-  "Vệ sinh tai và móng",
-  "Chăm sóc da lông",
-  "Gói chăm sóc toàn diện",
+  "Spa bath",
+  "Grooming",
+  "Ear & nail care",
+  "Coat & skin care",
+  "Full care package",
 ];
 
 const BUSINESS_START_HOUR = 8;
@@ -66,15 +66,15 @@ const APPOINTMENT_FETCH_LIMIT = 50;
 const BATCH_NOTE_REGEX = /\[BATCH:([A-Za-z0-9_-]+):(\d+)\/(\d+)\]\s*$/;
 
 const statusLabel = {
-  pending: "Chờ duyệt",
-  approved: "Đã duyệt",
-  confirmed: "Đã xác nhận",
-  checked_in: "Đã check-in",
-  in_progress: "Đang chăm sóc",
-  completed: "Hoàn tất",
-  rejected: "Từ chối",
-  cancelled: "Đã hủy",
-  mixed: "Nhiều trạng thái",
+  pending: "Pending",
+  approved: "Approved",
+  confirmed: "Confirmed",
+  checked_in: "Checked In",
+  in_progress: "In Progress",
+  completed: "Completed",
+  rejected: "Rejected",
+  cancelled: "Cancelled",
+  mixed: "Multiple Statuses",
 };
 
 const statusClassMap = {
@@ -91,7 +91,7 @@ const statusClassMap = {
 
 function renderStatusBadge(status) {
   const normalized = String(status || "").toLowerCase();
-  const label = statusLabel[normalized] || normalized || "Không xác định";
+  const label = statusLabel[normalized] || normalized || "Unknown";
   const className =
     statusClassMap[normalized] || "bg-gray-100 text-gray-700 border-gray-200";
 
@@ -177,7 +177,7 @@ export default function CareAppointmentsPage() {
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
-    setErrorPopup(message || "Đã xảy ra lỗi, vui lòng thử lại");
+    setErrorPopup(message || "An error occurred, please try again");
   };
 
   const fetchMyAppointments = useCallback(async () => {
@@ -200,7 +200,7 @@ export default function CareAppointmentsPage() {
 
       setAppointments(allAppointments);
     } catch (err) {
-      showErrorPopup(err.message || "Không thể tải lịch chăm sóc");
+      showErrorPopup(err.message || "Unable to load appointments");
     } finally {
       setLoading(false);
     }
@@ -275,7 +275,7 @@ export default function CareAppointmentsPage() {
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate < today) {
-      return "Không được đặt lịch trong quá khứ";
+      return "Cannot book appointments in the past";
     }
 
     if (selectedDate.getTime() === today.getTime()) {
@@ -283,7 +283,7 @@ export default function CareAppointmentsPage() {
       const startMinutes = h * 60 + m;
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
       if (startMinutes <= nowMinutes) {
-        return "Giờ bắt đầu phải lớn hơn thời điểm hiện tại";
+        return "Start time must be later than the current time";
       }
     }
 
@@ -339,12 +339,12 @@ export default function CareAppointmentsPage() {
     e.preventDefault();
 
     if (!form.appointmentDate || !form.startTime) {
-      showErrorPopup("Vui lòng điền đầy đủ thông tin bắt buộc");
+      showErrorPopup("Please fill in all required fields");
       return;
     }
 
     if (petEntries.length < 1) {
-      showErrorPopup("Vui lòng thêm ít nhất 1 thú cưng");
+      showErrorPopup("Please add at least 1 pet");
       return;
     }
 
@@ -355,13 +355,13 @@ export default function CareAppointmentsPage() {
         !String(entry.serviceType || "").trim(),
     );
     if (hasInvalidPet) {
-      showErrorPopup("Vui lòng nhập đầy đủ tên, loại và dịch vụ cho từng thú cưng");
+      showErrorPopup("Please enter the name, type and service for each pet");
       return;
     }
 
     const slotTimes = buildSequentialTimes(form.startTime, petEntries.length);
     if (slotTimes.length !== petEntries.length) {
-      showErrorPopup("Khung giờ không đủ để xếp lịch liên tiếp cho tất cả thú cưng trong ngày");
+      showErrorPopup("Not enough time slots to schedule all pets consecutively in this day");
       return;
     }
 
@@ -405,7 +405,7 @@ export default function CareAppointmentsPage() {
       setForm(initialForm);
       setPetEntries([{ ...initialPetEntry }]);
     } catch (err) {
-      showErrorPopup(err.message || "Không thể đặt lịch");
+      showErrorPopup(err.message || "Unable to book appointment");
     } finally {
       setSubmitting(false);
     }
@@ -432,7 +432,7 @@ export default function CareAppointmentsPage() {
     if (!editingId) return;
 
     if (!editForm.petName || !editForm.petType || !editForm.serviceType || !editForm.appointmentDate || !editForm.startTime) {
-      showErrorPopup("Vui lòng điền đầy đủ thông tin bắt buộc khi chỉnh sửa");
+      showErrorPopup("Please fill in all required fields when editing");
       return;
     }
 
@@ -448,7 +448,7 @@ export default function CareAppointmentsPage() {
       await fetchMyAppointments();
       cancelEdit();
     } catch (err) {
-      showErrorPopup(err.message || "Không thể cập nhật lịch hẹn");
+      showErrorPopup(err.message || "Unable to update appointment");
     } finally {
       setSavingEdit(false);
     }
@@ -477,7 +477,7 @@ export default function CareAppointmentsPage() {
   const submitCancelAppointment = async () => {
     const reason = String(cancelPopup.reason || "").trim();
     if (!reason) {
-      showErrorPopup("Vui lòng nhập lý do hủy lịch");
+      showErrorPopup("Please enter a reason for cancellation");
       return;
     }
 
@@ -488,7 +488,7 @@ export default function CareAppointmentsPage() {
         : [];
 
       if (!ids.length) {
-        showErrorPopup("Không tìm thấy lịch để hủy");
+        showErrorPopup("No appointment found to cancel");
         return;
       }
 
@@ -502,7 +502,7 @@ export default function CareAppointmentsPage() {
         cancelEdit();
       }
     } catch (err) {
-      showErrorPopup(err.message || "Không thể hủy lịch hẹn");
+      showErrorPopup(err.message || "Unable to cancel appointment");
     } finally {
       setCanceling(false);
     }
@@ -622,10 +622,10 @@ export default function CareAppointmentsPage() {
       <section className="bg-linear-to-r from-orange-500 to-amber-500 text-white pt-28 pb-10 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-            ✂️ Đặt lịch chăm sóc PawHouse
+            ✂️ Book a PawHouse Care Appointment
           </h1>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            Đặt lịch nhanh cho nhiều thú cưng với dịch vụ phù hợp cho từng bé
+            Book quickly for multiple pets with services tailored for each one
           </p>
         </div>
       </section>
@@ -640,21 +640,21 @@ export default function CareAppointmentsPage() {
               title={
                 <div className="flex items-center gap-2 text-slate-800">
                   <ScissorOutlined />
-                  <span className="font-semibold text-lg">Thông tin lịch hẹn</span>
+                  <span className="font-semibold text-lg">Appointment Details</span>
                 </div>
               }
             >
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <Text strong>Danh sách thú cưng</Text>
+                    <Text strong>Pet List</Text>
                     <Button
                       type="default"
                       size="small"
                       icon={<PlusOutlined />}
                       onClick={addPetEntry}
                     >
-                      Thêm thú cưng
+                      Add Pet
                     </Button>
                   </div>
 
@@ -664,7 +664,7 @@ export default function CareAppointmentsPage() {
                       className="rounded-xl border border-slate-200 p-3 bg-slate-50"
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <Text className="text-slate-700!">Thú cưng {index + 1}</Text>
+                        <Text className="text-slate-700!">Pet {index + 1}</Text>
                         <Button
                           type="text"
                           danger
@@ -673,7 +673,7 @@ export default function CareAppointmentsPage() {
                           onClick={() => removePetEntry(index)}
                           disabled={petEntries.length === 1}
                         >
-                          Xóa
+                          Remove
                         </Button>
                       </div>
 
@@ -682,14 +682,14 @@ export default function CareAppointmentsPage() {
                           size="large"
                           value={pet.petName}
                           onChange={(e) => handlePetChange(index, "petName", e.target.value)}
-                          placeholder="Tên thú cưng"
+                          placeholder="Pet name"
                         />
                         <Select
                           size="large"
                           value={pet.petType || undefined}
                           onChange={(value) => handlePetChange(index, "petType", value || "")}
                           options={selectPetOptions}
-                          placeholder="Chọn loại thú cưng"
+                          placeholder="Select pet type"
                           className="w-full"
                         />
                         <Select
@@ -697,7 +697,7 @@ export default function CareAppointmentsPage() {
                           value={pet.serviceType || undefined}
                           onChange={(value) => handlePetChange(index, "serviceType", value || "")}
                           options={selectServiceOptions}
-                          placeholder="Chọn dịch vụ"
+                          placeholder="Select service"
                           className="sm:col-span-2 w-full"
                         />
                       </div>
@@ -707,7 +707,7 @@ export default function CareAppointmentsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <Text strong>Ngày hẹn *</Text>
+                    <Text strong>Appointment Date *</Text>
                     <DatePicker
                       size="large"
                       className="mt-1 w-full"
@@ -720,12 +720,12 @@ export default function CareAppointmentsPage() {
                         }))
                       }
                       disabledDate={disabledDate}
-                      placeholder="Chọn ngày"
+                      placeholder="Select date"
                     />
                   </div>
 
                   <div>
-                    <Text strong>Giờ bắt đầu *</Text>
+                    <Text strong>Start Time *</Text>
                     <TimePicker
                       size="large"
                       className="mt-1 w-full"
@@ -739,18 +739,18 @@ export default function CareAppointmentsPage() {
                         }))
                       }
                       disabledTime={() => getDisabledTime(form.appointmentDate)}
-                      placeholder="Chọn giờ"
+                      placeholder="Select time"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Text strong>Ghi chú</Text>
+                  <Text strong>Note</Text>
                   <TextArea
                     rows={4}
                     value={form.note}
                     onChange={handleChange("note")}
-                    placeholder="Nhập thêm yêu cầu đặc biệt nếu có"
+                    placeholder="Enter any special requests if applicable"
                     className="mt-1"
                   />
                 </div>
@@ -760,7 +760,7 @@ export default function CareAppointmentsPage() {
                   showIcon
                   icon={<InfoCircleOutlined />}
                   className="rounded-xl"
-                  message="Khung giờ phục vụ từ 08:00 đến 20:00, cách nhau 30 phút."
+                  message="Service hours are from 08:00 to 20:00, with 30-minute intervals."
                 />
                 </div>
 
@@ -772,7 +772,7 @@ export default function CareAppointmentsPage() {
                   className="h-11! rounded-xl! bg-orange-500! font-medium! hover:bg-orange-600!"
                   block
                 >
-                  {submitting ? "Đang gửi lịch..." : "Đặt lịch ngay"}
+                  {submitting ? "Submitting..." : "Book Now"}
                 </Button>
               </form>
             </Card>
@@ -786,7 +786,7 @@ export default function CareAppointmentsPage() {
               title={
                 <div className="flex items-center gap-2 text-slate-800">
                   <CalendarOutlined />
-                  <span className="font-semibold text-lg">Lịch chăm sóc của bạn</span>
+                  <span className="font-semibold text-lg">Your Care Schedule</span>
                 </div>
               }
             >
@@ -798,7 +798,7 @@ export default function CareAppointmentsPage() {
               ) : groupedAppointments.length === 0 ? (
                 <Empty
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Bạn chưa có lịch hẹn nào"
+                  description="You have no appointments yet"
                 />
               ) : (
                 <div className="space-y-3">
@@ -815,12 +815,12 @@ export default function CareAppointmentsPage() {
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div>
                                   <span className="text-sm text-orange-700 font-medium">
-                                    Lịch nhóm {group.total || group.items.length} thú cưng
+                                    Group schedule for {group.total || group.items.length} pet(s)
                                   </span>
                                   {group.items.length > 0 ? (
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
                                       <span>
-                                        <CalendarOutlined /> {new Date(group.items[0].appointmentDate).toLocaleDateString("vi-VN")}
+                                        <CalendarOutlined /> {new Date(group.items[0].appointmentDate).toLocaleDateString("en-US")}
                                       </span>
                                       <span>
                                         <ClockCircleOutlined /> {group.items[0].startTime}
@@ -835,7 +835,7 @@ export default function CareAppointmentsPage() {
                                     size="small"
                                     onClick={() => toggleGroupDetails(group.key)}
                                   >
-                                    {expandedGroups[group.key] ? "Ẩn chi tiết" : "Xem chi tiết nhóm"}
+                                    {expandedGroups[group.key] ? "Hide Details" : "View Group Details"}
                                   </Button>
                                   {group.canGroupEdit && group.editTargetItem ? (
                                     <Button
@@ -844,7 +844,7 @@ export default function CareAppointmentsPage() {
                                       icon={<EditOutlined />}
                                       onClick={() => startEdit(group.editTargetItem)}
                                     >
-                                      Chỉnh sửa
+                                      Edit
                                     </Button>
                                   ) : null}
                                   {group.canGroupCancel ? (
@@ -857,7 +857,7 @@ export default function CareAppointmentsPage() {
                                         )
                                       }
                                     >
-                                      Hủy lịch
+                                      Cancel Appointment
                                     </Button>
                                   ) : null}
                                 </div>
@@ -880,7 +880,7 @@ export default function CareAppointmentsPage() {
                                         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
                                           <span className="inline-flex items-center gap-1">
                                             <CalendarOutlined />
-                                            {new Date(item.appointmentDate).toLocaleDateString("vi-VN")}
+                                            {new Date(item.appointmentDate).toLocaleDateString("en-US")}
                                           </span>
                                           <span className="inline-flex items-center gap-1">
                                             <ClockCircleOutlined />
@@ -888,7 +888,7 @@ export default function CareAppointmentsPage() {
                                           </span>
                                         </div>
                                         <p className="text-sm text-slate-500 mt-1">
-                                          Loại thú cưng: {item.petType}
+                                          Pet type: {item.petType}
                                         </p>
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -897,7 +897,7 @@ export default function CareAppointmentsPage() {
                                           size="small"
                                           onClick={() => setSelectedAppointment(item)}
                                         >
-                                          Xem chi tiết
+                                          View Details
                                         </Button>
                                         {!group.isBatch ? renderStatusBadge(item.status) : null}
                                         {!group.isBatch && item.status === "pending" && editingId !== item._id ? (
@@ -907,7 +907,7 @@ export default function CareAppointmentsPage() {
                                             icon={<EditOutlined />}
                                             onClick={() => startEdit(item)}
                                           >
-                                            Chỉnh sửa
+                                            Edit
                                           </Button>
                                         ) : null}
                                         {!group.isBatch && canCancelAppointment(item.status) ? (
@@ -916,7 +916,7 @@ export default function CareAppointmentsPage() {
                                             size="small"
                                             onClick={() => openCancelPopup(item._id)}
                                           >
-                                            Hủy lịch
+                                            Cancel
                                           </Button>
                                         ) : null}
                                       </div>
@@ -924,19 +924,19 @@ export default function CareAppointmentsPage() {
 
                                     {item._displayNote && (
                                       <p className="mt-2 text-sm text-slate-600">
-                                        Ghi chú: {item._displayNote}
+                                        Note: {item._displayNote}
                                       </p>
                                     )}
 
                                     {editingId === item._id ? (
                                       <div className="mt-4 p-4 rounded-xl border border-blue-200 bg-white space-y-3">
-                                        <h3 className="font-semibold text-slate-800">Chỉnh sửa lịch hẹn</h3>
+                                        <h3 className="font-semibold text-slate-800">Edit Appointment</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                           <Input
                                             size="large"
                                             value={editForm.petName}
                                             onChange={handleEditChange("petName")}
-                                            placeholder="Tên thú cưng"
+                                            placeholder="Pet name"
                                           />
                                           <Select
                                             size="large"
@@ -945,7 +945,7 @@ export default function CareAppointmentsPage() {
                                               setEditForm((prev) => ({ ...prev, petType: value || "" }))
                                             }
                                             options={selectPetOptions}
-                                            placeholder="Chọn loại thú cưng"
+                                            placeholder="Pet type"
                                           />
                                           <Select
                                             size="large"
@@ -954,7 +954,7 @@ export default function CareAppointmentsPage() {
                                               setEditForm((prev) => ({ ...prev, serviceType: value || "" }))
                                             }
                                             options={selectServiceOptions}
-                                            placeholder="Chọn dịch vụ"
+                                            placeholder="Service type"
                                             className="md:col-span-2"
                                           />
                                           <DatePicker
@@ -969,7 +969,7 @@ export default function CareAppointmentsPage() {
                                               }))
                                             }
                                             disabledDate={disabledDate}
-                                            placeholder="Chọn ngày"
+                                            placeholder="Date"
                                           />
                                           <div>
                                             <TimePicker
@@ -985,7 +985,7 @@ export default function CareAppointmentsPage() {
                                                 }))
                                               }
                                               disabledTime={() => getDisabledTime(editForm.appointmentDate)}
-                                              placeholder="Chọn giờ"
+                                              placeholder="Time"
                                             />
                                           </div>
                                           <TextArea
@@ -1003,10 +1003,10 @@ export default function CareAppointmentsPage() {
                                             type="primary"
                                             loading={savingEdit}
                                           >
-                                            Lưu thay đổi
+                                            Save Changes
                                           </Button>
                                           <Button onClick={cancelEdit} disabled={savingEdit}>
-                                            Hủy
+                                            Cancel
                                           </Button>
                                         </div>
                                       </div>
@@ -1039,41 +1039,41 @@ export default function CareAppointmentsPage() {
       </main>
 
       <Modal
-        title="Chi tiết lịch hẹn"
+        title="Appointment Details"
         open={Boolean(selectedAppointment)}
         onCancel={() => setSelectedAppointment(null)}
         footer={[
           <Button key="close-detail" type="primary" onClick={() => setSelectedAppointment(null)}>
-            Đóng
+            Close
           </Button>,
         ]}
       >
         {selectedAppointment ? (
           <div className="space-y-2 text-sm text-slate-700">
-            <p><strong>Thú cưng:</strong> {selectedAppointment.petName}</p>
-            <p><strong>Loại:</strong> {selectedAppointment.petType}</p>
-            <p><strong>Dịch vụ:</strong> {selectedAppointment.serviceType}</p>
-            <p><strong>Ngày hẹn:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString("vi-VN")}</p>
-            <p><strong>Giờ:</strong> {selectedAppointment.startTime}</p>
-            <p><strong>Trạng thái:</strong> {statusLabel[String(selectedAppointment.status || "").toLowerCase()] || selectedAppointment.status}</p>
-            <p><strong>Ghi chú:</strong> {selectedAppointment._displayNote || "Không có ghi chú"}</p>
+            <p><strong>Pet:</strong> {selectedAppointment.petName}</p>
+            <p><strong>Type:</strong> {selectedAppointment.petType}</p>
+            <p><strong>Service:</strong> {selectedAppointment.serviceType}</p>
+            <p><strong>Date:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString("en-US")}</p>
+            <p><strong>Time:</strong> {selectedAppointment.startTime}</p>
+            <p><strong>Status:</strong> {statusLabel[String(selectedAppointment.status || "").toLowerCase()] || selectedAppointment.status}</p>
+            <p><strong>Note:</strong> {selectedAppointment._displayNote || "No notes"}</p>
             {selectedAppointment.rejectionReason ? (
-              <p className="text-rose-600"><strong>Lý do từ chối:</strong> {selectedAppointment.rejectionReason}</p>
+              <p className="text-rose-600"><strong>Rejection reason:</strong> {selectedAppointment.rejectionReason}</p>
             ) : null}
             {selectedAppointment.cancellationReason ? (
-              <p className="text-amber-700"><strong>Lý do hủy:</strong> {selectedAppointment.cancellationReason}</p>
+              <p className="text-amber-700"><strong>Cancellation reason:</strong> {selectedAppointment.cancellationReason}</p>
             ) : null}
           </div>
         ) : null}
       </Modal>
 
       <Modal
-        title="Hủy lịch hẹn"
+        title="Cancel Appointment"
         open={cancelPopup.open}
         onCancel={closeCancelPopup}
         footer={[
           <Button key="close-cancel" onClick={closeCancelPopup} disabled={canceling}>
-            Đóng
+            Close
           </Button>,
           <Button
             key="confirm-cancel"
@@ -1082,30 +1082,30 @@ export default function CareAppointmentsPage() {
             loading={canceling}
             onClick={submitCancelAppointment}
           >
-            Xác nhận hủy
+            Confirm Cancellation
           </Button>,
         ]}
       >
         <div className="space-y-2">
-          <Text>Vui lòng nhập lý do hủy lịch:</Text>
+          <Text>Please enter a reason for cancellation:</Text>
           <TextArea
             rows={4}
             value={cancelPopup.reason}
             onChange={(e) =>
               setCancelPopup((prev) => ({ ...prev, reason: e.target.value }))
             }
-            placeholder="Nhập lý do hủy..."
+            placeholder="Enter reason for cancellation..."
           />
         </div>
       </Modal>
 
       <Modal
-        title="Thông báo"
+        title="Notice"
         open={Boolean(errorPopup)}
         onCancel={() => setErrorPopup("")}
         footer={[
           <Button key="ok" type="primary" onClick={() => setErrorPopup("")}>
-            Đã hiểu
+            OK
           </Button>,
         ]}
       >

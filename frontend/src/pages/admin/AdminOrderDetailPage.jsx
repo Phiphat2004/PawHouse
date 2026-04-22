@@ -27,11 +27,11 @@ export default function AdminOrderDetailPage() {
       if (response.order) {
         setOrder(response.order);
       } else {
-        setError("Không tìm thấy đơn hàng");
+        setError("Order not found");
       }
     } catch (err) {
       console.error("Failed to fetch order detail:", err);
-      setError("Đã xảy ra lỗi khi tải chi tiết đơn hàng");
+      setError("An error occurred while loading order details");
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export default function AdminOrderDetailPage() {
     fetchOrderDetail();
   }, [fetchOrderDetail]);
 
-  const submitStatusChange = async (newStatus, note = "Cập nhật từ trang quản trị") => {
+  const submitStatusChange = async (newStatus, note = "Updated from admin panel") => {
     try {
       setUpdatingStatus(true);
       await orderApi.updateOrderStatus(id, newStatus, note);
@@ -51,13 +51,13 @@ export default function AdminOrderDetailPage() {
       } catch (err) {
         console.warn("Failed to notify other tabs (localStorage):", err);
       }
-      toast.success("Cập nhật trạng thái đơn hàng thành công");
-      // Refresh toàn bộ order để statusHistory được cập nhật
+      toast.success("Order status updated successfully");
+      // Refresh entire order so statusHistory is updated
       await fetchOrderDetail();
       return true;
     } catch (error) {
       console.error("Failed to update status:", error);
-      toast.error(error.message || "Không thể cập nhật trạng thái đơn hàng");
+      toast.error(error.message || "Cannot update order status");
       return false;
     } finally {
       setUpdatingStatus(false);
@@ -79,7 +79,7 @@ export default function AdminOrderDetailPage() {
   const handleConfirmCancelOrder = async () => {
     const trimmedReason = cancelReason.trim();
     if (!trimmedReason) {
-      toast.error("Vui lòng nhập lý do hủy đơn");
+      toast.error("Please enter the cancellation reason");
       return;
     }
 
@@ -105,13 +105,13 @@ export default function AdminOrderDetailPage() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { label: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-700" },
-      confirmed: { label: "Đã xác nhận", color: "bg-blue-100 text-blue-700" },
-      packing: { label: "Đang đóng gói", color: "bg-purple-100 text-purple-700" },
-      shipping: { label: "Đang giao", color: "bg-indigo-100 text-indigo-700" },
-      completed: { label: "Hoàn thành", color: "bg-green-100 text-green-700" },
-      cancelled: { label: "Đã hủy", color: "bg-red-100 text-red-700" },
-      refunded: { label: "Đã hoàn tiền", color: "bg-gray-100 text-gray-700" },
+      pending: { label: "Pending Confirmation", color: "bg-yellow-100 text-yellow-700" },
+      confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-700" },
+      packing: { label: "Packing", color: "bg-purple-100 text-purple-700" },
+      shipping: { label: "Shipping", color: "bg-indigo-100 text-indigo-700" },
+      completed: { label: "Completed", color: "bg-green-100 text-green-700" },
+      cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700" },
+      refunded: { label: "Refunded", color: "bg-gray-100 text-gray-700" },
     };
 
     const info = statusMap[status] || { label: status, color: "bg-gray-100 text-gray-700" };
@@ -122,7 +122,7 @@ export default function AdminOrderDetailPage() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-100">
-          <p className="text-gray-500">Đang tải chi tiết đơn hàng...</p>
+          <p className="text-gray-500">Loading order details...</p>
         </div>
       </AdminLayout>
     );
@@ -137,12 +137,12 @@ export default function AdminOrderDetailPage() {
             onClick={() => navigate("/quan-tri/don-hang")}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
           >
-            <ArrowLeftOutlined className="text-[18px]" /> Quay lại danh sách đơn hàng
+            <ArrowLeftOutlined className="text-[18px]" /> Back to order list
           </Button>
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
             <p className="text-gray-600 text-lg">
-              {error || "Không tìm thấy đơn hàng"}
+              {error || "Order not found"}
             </p>
           </div>
         </div>
@@ -159,13 +159,13 @@ export default function AdminOrderDetailPage() {
           onClick={() => navigate("/quan-tri/don-hang")}
           className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
         >
-          <ArrowLeftOutlined className="text-[18px]" /> Quay lại danh sách đơn hàng
+          <ArrowLeftOutlined className="text-[18px]" /> Back to order list
         </Button>
 
         <div className="flex items-center gap-2 mb-2">
           <InboxOutlined className="text-[#846551] text-[24px]" />
           <h2 className="text-2xl font-bold text-[#2c2c2c]">
-            Chi tiết đơn hàng
+            Order details
           </h2>
         </div>
 
@@ -173,25 +173,25 @@ export default function AdminOrderDetailPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Mã đơn hàng</p>
+              <p className="text-gray-500 text-sm mb-1">Order code</p>
               <p className="text-lg font-semibold text-gray-900">
                 {order.orderCode || order.orderNumber || order._id}
               </p>
             </div>
             <div>
-              <p className="text-gray-500 text-sm mb-1">Ngày đặt</p>
+              <p className="text-gray-500 text-sm mb-1">Order date</p>
               <p className="text-lg font-semibold text-gray-900">
                 {formatDate(order.createdAt)}
               </p>
             </div>
             <div>
-              <p className="text-gray-500 text-sm mb-1">Tổng tiền</p>
+              <p className="text-gray-500 text-sm mb-1">Total amount</p>
               <p className="text-lg font-semibold text-gray-900">
                 {formatPrice(order.totalAmount || order.total)}
               </p>
             </div>
             <div>
-              <p className="text-gray-500 text-sm mb-1">Trạng thái</p>
+              <p className="text-gray-500 text-sm mb-1">Status</p>
               <div className="flex items-center gap-2">
                 {getStatusBadge(order.status)}
               </div>
@@ -200,7 +200,7 @@ export default function AdminOrderDetailPage() {
 
           {/* Status Change */}
           <div className="border-t pt-6">
-            <p className="text-gray-500 text-sm mb-4">Hành động cập nhật trạng thái đơn hàng</p>
+            <p className="text-gray-500 text-sm mb-4">Order status update actions</p>
             <div className="flex items-center gap-3">
               {order.status === 'pending' && (
                 <>
@@ -209,7 +209,7 @@ export default function AdminOrderDetailPage() {
                     disabled={updatingStatus}
                     className="bg-blue-300 hover:bg-blue-500 text-white shadow-sm"
                   >
-                    Xác nhận đơn
+                    Confirm order
                   </Button>
                   <Button
                     onClick={() => handleStatusChange('cancelled')}
@@ -217,7 +217,7 @@ export default function AdminOrderDetailPage() {
                     variant="destructive"
                     className="shadow-sm border border-red-200"
                   >
-                    Hủy đơn
+                    Cancel order
                   </Button>
                 </>
               )}
@@ -228,7 +228,7 @@ export default function AdminOrderDetailPage() {
                     disabled={updatingStatus}
                     className="bg-purple-200 hover:bg-purple-400 text-white shadow-sm"
                   >
-                    Chuẩn bị hàng
+                    Prepare items
                   </Button>
                   <Button
                     onClick={() => handleStatusChange('cancelled')}
@@ -236,7 +236,7 @@ export default function AdminOrderDetailPage() {
                     variant="destructive"
                     className="shadow-sm border border-red-200"
                   >
-                    Hủy đơn
+                    Cancel order
                   </Button>
                 </>
               )}
@@ -247,7 +247,7 @@ export default function AdminOrderDetailPage() {
                     disabled={updatingStatus}
                     className="bg-indigo-300 hover:bg-indigo-500 text-white shadow-sm"
                   >
-                    Giao hàng
+                    Start shipping
                   </Button>
                   <Button
                     onClick={() => handleStatusChange('cancelled')}
@@ -255,7 +255,7 @@ export default function AdminOrderDetailPage() {
                     variant="destructive"
                     className="shadow-sm border border-red-200"
                   >
-                    Hủy đơn
+                    Cancel order
                   </Button>
                 </>
               )}
@@ -265,19 +265,19 @@ export default function AdminOrderDetailPage() {
                   disabled={updatingStatus}
                   className="bg-green-300 hover:bg-green-500 text-white shadow-sm"
                 >
-                  Đã giao hàng
+                  Mark as delivered
                 </Button>
               )}
 
               {['completed', 'cancelled', 'refunded'].includes(order.status) && (
                 <span className="text-sm text-gray-500 italic bg-gray-50 px-4 py-2 rounded-md border border-gray-100 font-medium">
-                  Đơn hàng đã kết thúc, không thể thay đổi trạng thái
+                  This order is finalized and its status can no longer be changed
                 </span>
               )}
               {updatingStatus && (
                 <span className="text-gray-500 text-sm animate-pulse ml-2 flex items-center font-medium">
                   <LoadingOutlined className="-ml-1 mr-2 h-4 w-4 text-gray-500" spin />
-                  Đang xử lý...
+                  Processing...
                 </span>
               )}
             </div>
@@ -289,11 +289,11 @@ export default function AdminOrderDetailPage() {
           {/* Customer Info */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Thông tin khách hàng
+              Customer information
             </h3>
             <div className="space-y-3">
               <div>
-                <p className="text-gray-500 text-sm">Họ tên</p>
+                <p className="text-gray-500 text-sm">Full name</p>
                 <p className="text-gray-900 font-medium">
                   {order.customerName ||
                     order.customer?.name ||
@@ -311,7 +311,7 @@ export default function AdminOrderDetailPage() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 text-sm">Số điện thoại</p>
+                <p className="text-gray-500 text-sm">Phone number</p>
                 <p className="text-gray-900 font-medium">
                   {order.customerPhone ||
                     order.shippingAddress?.phone ||
@@ -325,11 +325,11 @@ export default function AdminOrderDetailPage() {
           {/* Shipping Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Địa chỉ giao hàng
+              Shipping address
             </h3>
             <div className="space-y-3">
               <div>
-                <p className="text-gray-500 text-sm">Địa chỉ</p>
+                <p className="text-gray-500 text-sm">Street address</p>
                 <p className="text-gray-900 font-medium">
                   {order.shippingAddress?.street ||
                     order.shipAddress?.street ||
@@ -338,7 +338,7 @@ export default function AdminOrderDetailPage() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 text-sm">Tỉnh/Thành phố</p>
+                <p className="text-gray-500 text-sm">Province/City</p>
                 <p className="text-gray-900 font-medium">
                   {order.shippingAddress?.city ||
                     order.shipAddress?.city ||
@@ -347,7 +347,7 @@ export default function AdminOrderDetailPage() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 text-sm">Quận/Huyện</p>
+                <p className="text-gray-500 text-sm">District</p>
                 <p className="text-gray-900 font-medium">
                   {order.shippingAddress?.district ||
                     order.shipAddress?.district ||
@@ -362,26 +362,26 @@ export default function AdminOrderDetailPage() {
         {/* Order Items */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">
-            Sản phẩm trong đơn ({order.items?.length || 0})
+            Items in order ({order.items?.length || 0})
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-3 px-4 text-gray-500 font-semibold text-sm">
-                    Tên sản phẩm
+                    Product name
                   </th>
                   <th className="text-left py-3 px-4 text-gray-500 font-semibold text-sm">
                     SKU
                   </th>
                   <th className="text-center py-3 px-4 text-gray-500 font-semibold text-sm">
-                    Số lượng
+                    Quantity
                   </th>
                   <th className="text-right py-3 px-4 text-gray-500 font-semibold text-sm">
-                    Đơn giá
+                    Unit price
                   </th>
                   <th className="text-right py-3 px-4 text-gray-500 font-semibold text-sm">
-                    Thành tiền
+                    Line total
                   </th>
                 </tr>
               </thead>
@@ -417,7 +417,7 @@ export default function AdminOrderDetailPage() {
                       colSpan="5"
                       className="py-8 text-center text-gray-500"
                     >
-                      Không có sản phẩm nào trong đơn hàng
+                      There are no products in this order
                     </td>
                   </tr>
                 )}
@@ -429,18 +429,18 @@ export default function AdminOrderDetailPage() {
         {/* Order Summary */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">
-            Tóm tắt đơn hàng
+            Order summary
           </h3>
           <div className="space-y-3 border-t pt-4">
             <div className="flex justify-between">
-              <span className="text-gray-600">Tạm tính:</span>
+              <span className="text-gray-600">Subtotal:</span>
               <span className="text-gray-900 font-medium">
                 {formatPrice(order.subtotal || order.totalAmount)}
               </span>
             </div>
             {order.shippingCost && order.shippingCost > 0 && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Phí vận chuyển:</span>
+                <span className="text-gray-600">Shipping fee:</span>
                 <span className="text-gray-900 font-medium">
                   {formatPrice(order.shippingCost)}
                 </span>
@@ -448,14 +448,14 @@ export default function AdminOrderDetailPage() {
             )}
             {order.taxAmount && order.taxAmount > 0 && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Thuế:</span>
+                <span className="text-gray-600">Tax:</span>
                 <span className="text-gray-900 font-medium">
                   {formatPrice(order.taxAmount)}
                 </span>
               </div>
             )}
             <div className="border-t pt-3 flex justify-between">
-              <span className="text-gray-900 font-bold">Tổng cộng:</span>
+              <span className="text-gray-900 font-bold">Total:</span>
               <span className="text-lg font-bold text-gray-900">
                 {formatPrice(order.totalAmount || order.total)}
               </span>
@@ -467,23 +467,23 @@ export default function AdminOrderDetailPage() {
         {order.payment && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Thông tin thanh toán
+              Payment information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <p className="text-gray-500 text-sm">Phương thức</p>
+                <p className="text-gray-500 text-sm">Method</p>
                 <p className="text-gray-900 font-medium capitalize">
-                  {order.payment.method === 'cash' ? 'Tiền mặt (COD)' : order.payment.method || '-'}
+                  {order.payment.method === 'cash' ? 'Cash on delivery (COD)' : order.payment.method || '-'}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 text-sm">Trạng thái thanh toán</p>
+                <p className="text-gray-500 text-sm">Payment status</p>
                 <Badge className={order.payment.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
-                  {order.payment.status === 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                  {order.payment.status === 'paid' ? 'Paid' : 'Pending payment'}
                 </Badge>
               </div>
               <div>
-                <p className="text-gray-500 text-sm">Số tiền</p>
+                <p className="text-gray-500 text-sm">Amount</p>
                 <p className="text-gray-900 font-medium">{formatPrice(order.payment.amount)}</p>
               </div>
             </div>
@@ -493,14 +493,14 @@ export default function AdminOrderDetailPage() {
         {/* Status History */}
         {order.statusHistory && order.statusHistory.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Lịch sử trạng thái</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Status history</h3>
             <div className="relative">
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
               <div className="space-y-4">
                 {[...order.statusHistory].reverse().map((history, index) => {
                   const statusLabels = {
-                    pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', packing: 'Đang đóng gói',
-                    shipping: 'Đang giao', completed: 'Hoàn thành', cancelled: 'Đã hủy', refunded: 'Đã hoàn tiền'
+                    pending: 'Pending Confirmation', confirmed: 'Confirmed', packing: 'Packing',
+                    shipping: 'Shipping', completed: 'Completed', cancelled: 'Cancelled', refunded: 'Refunded'
                   };
                   const statusColors = {
                     pending: 'bg-yellow-400', confirmed: 'bg-blue-400', packing: 'bg-purple-400',
@@ -513,7 +513,7 @@ export default function AdminOrderDetailPage() {
                         <p className="text-sm font-semibold text-gray-900">
                           {statusLabels[history.to] || history.to}
                           {history.from && (
-                            <span className="text-gray-400 font-normal ml-2 text-xs">(từ: {statusLabels[history.from] || history.from})</span>
+                            <span className="text-gray-400 font-normal ml-2 text-xs">(from: {statusLabels[history.from] || history.from})</span>
                           )}
                         </p>
                         {history.note && <p className="text-xs text-gray-500 mt-0.5">{history.note}</p>}
@@ -532,9 +532,9 @@ export default function AdminOrderDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
             <div className="border-b border-gray-100 px-5 py-4">
-              <h4 className="text-lg font-semibold text-gray-900">Lý do hủy đơn</h4>
+              <h4 className="text-lg font-semibold text-gray-900">Cancellation reason</h4>
               <p className="mt-1 text-sm text-gray-500">
-                Vui lòng nhập lý do trước khi xác nhận hủy đơn hàng.
+                Please enter a reason before confirming order cancellation.
               </p>
             </div>
             <div className="px-5 py-4">
@@ -542,7 +542,7 @@ export default function AdminOrderDetailPage() {
                 rows={4}
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Nhập lý do hủy đơn..."
+                placeholder="Enter cancellation reason..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
               />
             </div>
@@ -556,14 +556,14 @@ export default function AdminOrderDetailPage() {
                 }}
                 disabled={updatingStatus}
               >
-                Hủy
+                Close
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleConfirmCancelOrder}
                 disabled={updatingStatus}
               >
-                {updatingStatus ? "Đang xử lý..." : "Xác nhận hủy đơn"}
+                {updatingStatus ? "Processing..." : "Confirm cancellation"}
               </Button>
             </div>
           </div>

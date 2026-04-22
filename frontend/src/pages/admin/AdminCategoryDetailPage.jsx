@@ -32,7 +32,7 @@ export default function AdminCategoryDetailPage() {
       setCategory(categoryData.category || categoryData);
       setCategories(categoriesData.categories || categoriesData || []);
 
-      // Tìm tất cả các danh mục con (đệ quy)
+      // Find all sub-categories (recursively)
       const catsList = categoriesData.categories || categoriesData || [];
       const categoryTree = {};
       catsList.forEach(c => {
@@ -54,7 +54,7 @@ export default function AdminCategoryDetailPage() {
 
       const validIds = getDescendants(id);
 
-      // Lọc sản phẩm thuộc danh mục này (bao gồm danh mục con)
+      // Filter products belonging to this category (including sub-categories)
       const allProducts = productsData.products || productsData || [];
       const categoryProducts = allProducts.filter((product) =>
         product.categoryIds?.some((catId) => {
@@ -93,12 +93,12 @@ export default function AdminCategoryDetailPage() {
     if (!canManage) return;
     try {
       await categoryApi.delete(id);
-      addToast("success", "Thành công!", "Đã xóa danh mục thành công");
+      addToast("success", "Success!", "Category deleted successfully");
       setTimeout(() => {
         navigate("/quan-tri/danh-muc");
       }, 1500);
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message || "Không thể xóa danh mục";
+      const errorMessage = err.response?.data?.error || err.message || "Cannot delete category";
       addToast("error", "", errorMessage);
     } finally {
       setShowDeleteModal(false);
@@ -120,9 +120,9 @@ export default function AdminCategoryDetailPage() {
       const updated = await categoryApi.update(id, formData);
       setCategory(updated.category || updated);
       setShowEditForm(false);
-      addToast("success", "Thành công!", "Đã cập nhật danh mục thành công");
+      addToast("success", "Success!", "Category updated successfully");
     } catch (err) {
-      addToast("error", "Lỗi!", "Không thể cập nhật danh mục: " + err.message);
+      addToast("error", "Error!", "Cannot update category: " + err.message);
       throw err;
     }
   };
@@ -149,7 +149,7 @@ export default function AdminCategoryDetailPage() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải...</p>
+            <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </div>
       </AdminLayout>
@@ -160,7 +160,7 @@ export default function AdminCategoryDetailPage() {
     return (
       <AdminLayout>
         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
-          {error || "Không tìm thấy danh mục"}
+          {error || "Category not found"}
         </div>
       </AdminLayout>
     );
@@ -176,13 +176,13 @@ export default function AdminCategoryDetailPage() {
               to="/quan-tri/danh-muc"
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
-              ← Quay lại
+              ← Back
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {category.name}
               </h1>
-              <p className="text-gray-600 mt-1">Chi tiết danh mục</p>
+              <p className="text-gray-600 mt-1">Category details</p>
             </div>
           </div>
           {canManage ? (
@@ -191,18 +191,18 @@ export default function AdminCategoryDetailPage() {
                 onClick={handleEditClick}
                 className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                <EditOutlined /> Chỉnh sửa
+                <EditOutlined /> Edit
               </button>
                   <button
                     onClick={handleDeleteClick}
                     className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium flex items-center justify-center gap-2 transition-colors"
                   >
-                    <DeleteOutlined /> Xóa
+                    <DeleteOutlined /> Delete
                   </button>
                 </div>
           ) : (
             <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
-              Chế độ chỉ xem
+              View-only mode
             </span>
           )}
         </div>
@@ -213,28 +213,28 @@ export default function AdminCategoryDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4"> Mô tả</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Description</h2>
               <div className="prose max-w-none">
                 {category.description ? (
                   <p className="text-gray-700 whitespace-pre-wrap">
                     {category.description}
                   </p>
                 ) : (
-                  <p className="text-gray-400 italic">Chưa có mô tả</p>
+                  <p className="text-gray-400 italic">No description yet</p>
                 )}
               </div>
             </div>
 
-            {/* Hiện danh mục cha hoặc danh mục con tùy theo vị trí */}
+            {/* Display parent category or sub-categories depending on position */}
             {category.parentCategory && (
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Danh mục cha</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Parent category</h2>
                 {(() => {
                   const parentId = category.parentCategory._id || category.parentCategory;
                   const parentName =
                     category.parentCategory.name ||
                     categories.find((c) => c._id === parentId || c._id?.toString() === parentId?.toString())?.name ||
-                    "Danh mục cha";
+                    "Parent category";
                   return (
                     <Link
                       to={`/quan-tri/danh-muc/${parentId}`}
@@ -249,7 +249,7 @@ export default function AdminCategoryDetailPage() {
             )}
 
 
-            {/* Subcategories - chỉ hiện khi là danh mục cha có con */}
+            {/* Subcategories - only show when parent category has children */}
             {(() => {
               const subs = categories.filter(
                 (c) =>
@@ -259,7 +259,7 @@ export default function AdminCategoryDetailPage() {
               return subs.length > 0 ? (
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">
-                    Danh mục con ({subs.length})
+                    Sub-categories ({subs.length})
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     {subs.map((sub) => (
@@ -281,7 +281,7 @@ export default function AdminCategoryDetailPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Sản phẩm ({products.length})
+                  Products ({products.length})
                 </h2>
               </div>
               {products.length > 0 ? (
@@ -318,7 +318,7 @@ export default function AdminCategoryDetailPage() {
                         </div>
                         {product.stock !== undefined && (
                           <div className="text-xs text-gray-500">
-                            Tồn kho: {product.stock}
+                            Stock: {product.stock}
                           </div>
                         )}
                       </div>
@@ -328,7 +328,7 @@ export default function AdminCategoryDetailPage() {
               ) : (
                 <div className="text-center py-8">
                   <div className="text-4xl mb-2">📦</div>
-                  <p className="text-gray-500">Chưa có sản phẩm nào</p>
+                  <p className="text-gray-500">No products yet</p>
                 </div>
               )}
             </div>
@@ -344,7 +344,7 @@ export default function AdminCategoryDetailPage() {
 
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Trạng thái
+                Status
               </h2>
               <div className="space-y-4">
                 <div>
@@ -359,7 +359,7 @@ export default function AdminCategoryDetailPage() {
             {/* Basic Info Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Thông tin
+                Information
               </h2>
               <div className="space-y-4">
                 <div>
@@ -369,14 +369,14 @@ export default function AdminCategoryDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Ngày tạo</span>
+                  <span className="text-sm text-gray-600">Created Date</span>
                   <p className="mt-1 text-gray-900">
                     {new Date(category.createdAt).toLocaleString("vi-VN")}
                   </p>
                 </div>
                 <div>
                   <span className="text-sm text-gray-600">
-                    Cập nhật lần cuối
+                    Last Updated
                   </span>
                   <p className="mt-1 text-gray-900">
                     {new Date(category.updatedAt).toLocaleString("vi-VN")}
@@ -388,23 +388,23 @@ export default function AdminCategoryDetailPage() {
             {/* Statistics Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Thống kê
+                Statistics
               </h2>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Số lượng sản phẩm</span>
+                  <span className="text-gray-600">Product quantity</span>
                   <span className="font-bold text-gray-900 text-lg">
                     {products.length}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">Sản phẩm đang bán</span>
+                  <span className="text-gray-600">Active products</span>
                   <span className="font-bold text-green-600 text-lg">
                     {products.filter((p) => p.isActive).length}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">Sản phẩm tạm ngưng</span>
+                  <span className="text-gray-600">Inactive products</span>
                   <span className="font-bold text-gray-600 text-lg">
                     {products.filter((p) => !p.isActive).length}
                   </span>
@@ -436,20 +436,20 @@ export default function AdminCategoryDetailPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                Xác nhận xóa danh mục
+                Confirm category deletion
               </h3>
               <p className="text-gray-600 text-center mb-6">
-                Bạn có chắc chắn muốn xóa danh mục{" "}
+                Are you sure you want to delete category{" "}
                 <strong className="text-gray-900">{category.name}</strong>?
                 <br />
                 <span className="text-sm text-red-600">
-                  Hành động này không thể hoàn tác.
+                  This action cannot be undone.
                 </span>
                 {products.length > 0 && (
                   <>
                     <br />
                     <span className="text-sm text-amber-600 font-medium">
-                      Lưu ý: Danh mục có {products.length} sản phẩm.
+                      Note: Category has {products.length} products.
                     </span>
                   </>
                 )}
@@ -459,13 +459,13 @@ export default function AdminCategoryDetailPage() {
                   onClick={handleDeleteCancel}
                   className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
                 >
-                  Xóa
+                  Delete
                 </button>
               </div>
             </div>

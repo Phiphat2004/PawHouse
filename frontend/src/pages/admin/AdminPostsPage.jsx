@@ -52,13 +52,13 @@ export default function AdminPostsPage() {
   };
 
   const handleDelete = async (postId) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa bài viết này?")) return;
+    if (!confirm("Are you sure you want to delete this post?")) return;
 
     try {
       await postApi.delete(postId);
       setPosts(posts.filter((p) => p._id !== postId));
     } catch (err) {
-      alert("Lỗi khi xóa bài viết: " + err.message);
+      alert("Failed to delete post: " + err.message);
     }
   };
 
@@ -90,7 +90,7 @@ export default function AdminPostsPage() {
 
   const handleToggleStatus = async (postId, currentStatus) => {
     if (!canApprove) {
-      alert("Chỉ admin mới có quyền duyệt/xuất bản bài viết.");
+      alert("Only admins can approve/publish posts.");
       return;
     }
 
@@ -100,7 +100,7 @@ export default function AdminPostsPage() {
         posts.map((p) => (p._id === postId ? updated.post || updated : p))
       );
     } catch (err) {
-      alert("Lỗi khi thay đổi trạng thái: " + err.message);
+      alert("Failed to change status: " + err.message);
     }
   };
 
@@ -153,14 +153,14 @@ export default function AdminPostsPage() {
               Community Management
             </h1>
             <p className="text-gray-500 mt-1">
-              Manage articles and community content
+              Manage posts and community content
             </p>
           </div>
           <button
             onClick={handleCreate}
             className="px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-all shadow-md hover:shadow-lg"
           >
-            + Create New Article
+            + Create New Post
           </button>
         </div>
 
@@ -175,7 +175,7 @@ export default function AdminPostsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Total Articles</p>
+                <p className="text-gray-500 text-sm">Total Posts</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
                   {posts.length}
                 </p>
@@ -220,7 +220,7 @@ export default function AdminPostsPage() {
             <div className="md:col-span-2">
               <input
                 type="text"
-                placeholder="Search articles..."
+                placeholder="Search posts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -232,7 +232,7 @@ export default function AdminPostsPage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
-                <option value="">All Status</option>
+                <option value="">All Statuses</option>
                 <option value="published">Published</option>
                 <option value="draft">Draft</option>
                 <option value="hidden">Hidden</option>

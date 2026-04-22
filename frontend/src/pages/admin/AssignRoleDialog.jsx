@@ -32,21 +32,21 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
     const roles = [
         {
             value: AccountRole.USER,
-            label: 'Người dùng',
+            label: 'User',
             icon: UserOutlined,
-            description: 'Tài khoản cơ bản với quyền hạn giới hạn',
+            description: 'Basic account with limited permissions',
         },
         {
             value: AccountRole.STAFF,
-            label: 'Nhân viên',
+            label: 'Staff',
             icon: SolutionOutlined,
-            description: 'Có quyền quản trị vận hành, không quản lý tài khoản',
+            description: 'Can manage operations, cannot manage accounts',
         },
         {
             value: AccountRole.ADMIN,
-            label: 'Quản trị viên',
+            label: 'Administrator',
             icon: CrownOutlined,
-            description: 'Toàn quyền truy cập tất cả tính năng và cài đặt',
+            description: 'Full access to all features and settings',
         },
     ];
 
@@ -54,9 +54,9 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
         <Dialog open={!!account} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
-                    <DialogTitle>Phân công vai trò</DialogTitle>
+                    <DialogTitle>Assign Role</DialogTitle>
                     <DialogDescription>
-                        Phân công vai trò cho <span className="font-medium text-gray-900">{account.name}</span>
+                        Assign Role cho <span className="font-medium text-gray-900">{account.name}</span>
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
@@ -94,10 +94,10 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>
-                        Hủy
+                        Cancel
                     </Button>
                     <Button onClick={handleAssign} className="bg-[#846551] hover:bg-[#6B503F]">
-                        Xác nhận
+                        Confirm
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -33,12 +33,12 @@ export default function Testimonials() {
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Cộng Đồng PawHouse</h2>
-          <p className="text-gray-600">Chia sẻ kinh nghiệm và câu chuyện về thú cưng của bạn</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">PawHouse Community</h2>
+          <p className="text-gray-600">Share your pet stories and experiences</p>
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400 py-8">Đang tải bài viết...</div>
+          <div className="text-center text-gray-400 py-8">Loading posts...</div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">
             {posts.map((post) => (
@@ -72,7 +72,7 @@ export default function Testimonials() {
                   </h3>
 
                   <p className="text-gray-600 text-base line-clamp-2 min-h-[3.25rem] mb-5">
-                    {post.excerpt || 'Bài viết chia sẻ kinh nghiệm chăm sóc thú cưng từ cộng đồng PawHouse.'}
+                    {post.excerpt || 'A post sharing pet care experiences from the PawHouse community.'}
                   </p>
 
                   <div className="flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-4">
@@ -94,7 +94,7 @@ export default function Testimonials() {
             to="/cong-dong"
             className="inline-flex items-center gap-2 px-8 py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-full hover:bg-orange-500 hover:text-white transition-all duration-300"
           >
-            Xem tất cả bài viết <RightOutlined />
+            View all posts <RightOutlined />
           </Link>
         </div>
       </div>

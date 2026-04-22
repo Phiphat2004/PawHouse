@@ -40,19 +40,19 @@ export default function DeleteCategoryModal({ category, onConfirm, onCancel }) {
 
           {/* Title */}
           <h2 className="text-2xl font-bold text-gray-900">
-            Xác nhận xoá danh mục
+            Confirm category deletion
           </h2>
 
           {/* Message */}
           <p className="text-gray-600">
-            Bạn có chắc chắn muốn xoá danh mục{" "}
-            <span className="font-bold text-gray-900">{category.name}</span>{" "}
-            không?
+            Are you sure you want to delete category{" "}
+            <span className="font-bold text-gray-900">{category.name}</span>
+            ?
           </p>
 
           {/* Warning Text */}
           <p className="text-red-600 font-medium text-sm">
-            Hành động này không thể hoàn tác.
+            This action cannot be undone.
           </p>
 
           {/* Actions */}
@@ -63,7 +63,7 @@ export default function DeleteCategoryModal({ category, onConfirm, onCancel }) {
               className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
               disabled={loading}
             >
-              Huỷ
+              Cancel
             </button>
             <button
               type="button"
@@ -71,7 +71,7 @@ export default function DeleteCategoryModal({ category, onConfirm, onCancel }) {
               disabled={loading}
               className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition disabled:bg-red-400 disabled:cursor-not-allowed"
             >
-              {loading ? "Đang xoá..." : "Xoá"}
+              {loading ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>

@@ -62,7 +62,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
     } catch (err) {
       setErrors((prev) => ({
         ...prev,
-        coverImageUrl: err.message || "Upload ảnh thất bại",
+        coverImageUrl: err.message || "Image upload failed",
       }));
     } finally {
       setUploadingImage(false);
@@ -84,17 +84,17 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = "Tiêu đề là bắt buộc";
+      newErrors.title = "Title is required";
     }
 
     if (!formData.content.trim()) {
-      newErrors.content = "Nội dung là bắt buộc";
+      newErrors.content = "Content is required";
     }
 
     if (!formData.slug.trim()) {
-      newErrors.slug = "Slug là bắt buộc";
+      newErrors.slug = "Slug is required";
     } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      newErrors.slug = "Slug chỉ được chứa chữ thường, số và dấu gạch ngang";
+      newErrors.slug = "Slug can only contain lowercase letters, numbers, and hyphens";
     }
 
     setErrors(newErrors);
@@ -115,7 +115,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
       await onSubmit(payload);
     } catch (err) {
       setErrors({
-        submit: err.response?.data?.message || err.message || "Có lỗi xảy ra",
+        submit: err.response?.data?.message || err.message || "Something went wrong",
       });
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900">
-          {post ? "Chỉnh sửa bài viết" : "Tạo bài viết mới"}
+          {post ? "Edit post" : "Create new post"}
         </h2>
         <button
           onClick={onCancel}
@@ -140,7 +140,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
         {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tiêu đề <span className="text-red-500">*</span>
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -150,7 +150,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
               errors.title ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="Nhập tiêu đề bài viết"
+            placeholder="Enter post title"
           />
           {errors.title && (
             <p className="text-red-500 text-sm mt-1">{errors.title}</p>
@@ -170,20 +170,20 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
               errors.slug ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="slug-bai-viet"
+            placeholder="post-slug"
           />
           {errors.slug && (
             <p className="text-red-500 text-sm mt-1">{errors.slug}</p>
           )}
           <p className="text-gray-500 text-sm mt-1">
-            URL: /cong-dong/{formData.slug || "slug-bai-viet"}
+            URL: /community/{formData.slug || "post-slug"}
           </p>
         </div>
 
         {/* Excerpt */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tóm tắt
+            Summary
           </label>
           <textarea
             name="excerpt"
@@ -191,14 +191,14 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
             onChange={handleChange}
             rows={2}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            placeholder="Tóm tắt ngắn gọn về bài viết"
+            placeholder="A short summary of the post"
           />
         </div>
 
         {/* Content */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nội dung <span className="text-red-500">*</span>
+            Content <span className="text-red-500">*</span>
           </label>
           <textarea
             name="content"
@@ -208,7 +208,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
               errors.content ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="Nhập nội dung bài viết..."
+            placeholder="Enter post content..."
           />
           {errors.content && (
             <p className="text-red-500 text-sm mt-1">{errors.content}</p>
@@ -218,7 +218,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
         {/* Cover Image */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Ảnh bìa
+            Cover image
           </label>
           <input
             ref={fileInputRef}
@@ -246,7 +246,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
               </div>
             ) : (
               <div className="flex min-h-45 w-full items-center justify-center text-gray-500">
-                Chọn ảnh từ máy
+                Choose image from device
               </div>
             )}
 
@@ -264,7 +264,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
                 onClick={handleRemoveImage}
                 className="text-sm text-red-600 hover:text-red-700"
               >
-                Xóa ảnh
+                Remove image
               </button>
             </div>
           )}
@@ -278,7 +278,7 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
         {canApprove ? (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Trạng thái
+              Status
             </label>
             <select
               name="status"
@@ -286,14 +286,14 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
-              <option value="draft">Bản nháp</option>
-              <option value="published">Đã xuất bản</option>
-              <option value="hidden">Ẩn</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="hidden">Hidden</option>
             </select>
           </div>
         ) : (
           <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-            Bài viết của bạn sẽ chuyển sang <strong>Chờ duyệt</strong> và chỉ hiển thị công khai sau khi admin phê duyệt.
+            Your post will move to <strong>Pending approval</strong> and will only be publicly visible after admin approval.
           </div>
         )}
 
@@ -311,14 +311,14 @@ export default function PostForm({ post, canApprove = false, onSubmit, onCancel 
             disabled={loading || uploadingImage}
             className="flex-1 bg-linear-to-r from-orange-500 to-amber-500 text-white py-3 rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Đang xử lý..." : post ? "Cập nhật" : "Tạo bài viết"}
+            {loading ? "Processing..." : post ? "Update" : "Create post"}
           </button>
           <button
             type="button"
             onClick={onCancel}
             className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Hủy
+            Cancel
           </button>
         </div>
       </form>

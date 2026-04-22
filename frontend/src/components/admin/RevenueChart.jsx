@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('vi-VN', {
@@ -13,7 +13,7 @@ function formatCurrency(amount) {
 function formatMonthLabel(dateStr) {
   // dateStr = "2026-03"
   const parts = String(dateStr || '').split('-')
-  return parts.length > 1 ? `T${parseInt(parts[1], 10)}` : '-'
+  return parts.length > 1 ? `M${parseInt(parts[1], 10)}` : '-'
 }
 
 export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], loading = false }) {
@@ -54,9 +54,9 @@ export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], l
     return (
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Doanh thu</h2>
+          <h2 className="text-xl font-bold text-gray-900">Revenue</h2>
         </div>
-        <div className="p-12 text-center text-gray-400">Đang tải...</div>
+        <div className="p-12 text-center text-gray-400">Loading...</div>
       </div>
     )
   }
@@ -65,7 +65,7 @@ export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], l
     <div className="bg-white rounded-xl shadow-sm">
       <div className="p-6 border-b">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Doanh thu</h2>
+          <h2 className="text-xl font-bold text-gray-900">Revenue</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setPeriod('week')}
@@ -75,7 +75,7 @@ export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], l
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Tuần
+              Week
             </button>
             <button
               onClick={() => setPeriod('month')}
@@ -85,7 +85,7 @@ export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], l
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              Tháng
+              Month
             </button>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], l
       <div className="p-6">
         {currentData.length === 0 ? (
           <div className="h-64 flex items-center justify-center text-gray-400">
-            Chưa có dữ liệu doanh thu
+            No revenue data available
           </div>
         ) : (
           <div className="flex items-end justify-between gap-4 h-64">
@@ -114,7 +114,7 @@ export default function RevenueChart({ dailyRevenue = [], monthlyRevenue = [], l
                   />
                 </div>
                 <span className="text-sm font-medium text-gray-600">{item.day}</span>
-                <span className="text-xs text-gray-500">{item.count} đơn</span>
+                <span className="text-xs text-gray-500">{item.count} orders</span>
               </div>
             ))}
           </div>

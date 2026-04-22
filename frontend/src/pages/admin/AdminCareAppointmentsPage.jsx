@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+﻿import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { DatePicker } from "antd";
 import { AdminLayout } from "../../components/admin";
@@ -6,15 +6,15 @@ import { careAppointmentApi } from "../../services/api";
 import { toast } from "react-toastify";
 
 const statusLabel = {
-  all: "Tất cả",
-  pending: "Chờ duyệt",
-  approved: "Đã xác nhận",
-  confirmed: "Đã xác nhận",
-  rejected: "Từ chối",
-  cancelled: "Đã hủy",
-  checked_in: "Đã check-in",
-  in_progress: "Đang chăm sóc",
-  completed: "Hoàn tất",
+  all: "All",
+  pending: "Pending",
+  approved: "Confirmed",
+  confirmed: "Confirmed",
+  rejected: "Rejected",
+  cancelled: "Cancelled",
+  checked_in: "Checked In",
+  in_progress: "In Progress",
+  completed: "Completed",
 };
 
 const statusClassName = {
@@ -42,10 +42,10 @@ function renderStatusBadge(status) {
 }
 
 const statusActions = {
-  confirmed: { label: "Xác nhận", type: "confirm" },
+  confirmed: { label: "Confirm", type: "confirm" },
   checked_in: { label: "Check-in", type: "progress" },
-  in_progress: { label: "Bắt đầu dịch vụ", type: "progress" },
-  completed: { label: "Hoàn tất", type: "progress" },
+  in_progress: { label: "Start Service", type: "progress" },
+  completed: { label: "Complete", type: "progress" },
 };
 
 function getNextStatus(currentStatus) {
@@ -109,7 +109,7 @@ export default function AdminCareAppointmentsPage() {
   const [errorPopup, setErrorPopup] = useState("");
 
   const showErrorPopup = (message) => {
-    setErrorPopup(message || "Đã xảy ra lỗi, vui lòng thử lại");
+    setErrorPopup(message || "An error occurred, please try again");
   };
 
   const fetchAppointments = useCallback(async () => {
@@ -122,7 +122,7 @@ export default function AdminCareAppointmentsPage() {
       });
       setAppointments(res.appointments || []);
     } catch (err) {
-      showErrorPopup(err.message || "Không thể tải danh sách lịch hẹn");
+      showErrorPopup(err.message || "Unable to load appointments");
     } finally {
       setLoading(false);
     }
@@ -148,11 +148,11 @@ export default function AdminCareAppointmentsPage() {
     try {
       setProcessingId(id);
       await careAppointmentApi.approveAppointment(id);
-      toast.success("Xác nhận lịch thành công và đã gửi email cho khách");
+      toast.success("Appointment confirmed and email sent to customer");
       await fetchAppointments();
       return true;
     } catch (err) {
-      showErrorPopup(err.message || "Không thể duyệt lịch");
+      showErrorPopup(err.message || "Unable to confirm appointment");
       return false;
     } finally {
       setProcessingId("");
@@ -183,7 +183,7 @@ export default function AdminCareAppointmentsPage() {
   async function submitReject() {
     const reason = rejectPopup.reason.trim();
     if (!reason) {
-      showErrorPopup("Vui lòng nhập lý do từ chối");
+      showErrorPopup("Please enter a rejection reason");
       return;
     }
 
@@ -192,21 +192,21 @@ export default function AdminCareAppointmentsPage() {
       : [];
 
     if (!ids.length) {
-      showErrorPopup("Không tìm thấy lịch hẹn để từ chối");
+      showErrorPopup("No appointment found to reject");
       return;
     }
 
     try {
       setProcessingId(`reject-${ids.join("-")}`);
       await Promise.all(ids.map((id) => careAppointmentApi.rejectAppointment(id, reason)));
-      toast.success(ids.length > 1 ? `Đã từ chối ${ids.length} lịch hẹn` : "Đã từ chối lịch hẹn");
+      toast.success(ids.length > 1 ? `Rejected ${ids.length} appointments` : "Appointment rejected");
       await fetchAppointments();
       if (selectedAppointment && ids.includes(selectedAppointment._id)) {
         setSelectedAppointment(null);
       }
       closeRejectPopup();
     } catch (err) {
-      showErrorPopup(err.message || "Không thể từ chối lịch");
+      showErrorPopup(err.message || "Unable to reject appointment");
     } finally {
       setProcessingId("");
     }
@@ -221,11 +221,11 @@ export default function AdminCareAppointmentsPage() {
     try {
       setProcessingId(item._id);
       await careAppointmentApi.updateAppointmentStatus(item._id, nextStatus);
-      toast.success(`Đã cập nhật trạng thái: ${statusLabel[nextStatus] || nextStatus}`);
+      toast.success(`Status updated: ${statusLabel[nextStatus] || nextStatus}`);
       await fetchAppointments();
       return true;
     } catch (err) {
-      showErrorPopup(err.message || "Không thể cập nhật trạng thái");
+      showErrorPopup(err.message || "Unable to update status");
       return false;
     } finally {
       setProcessingId("");
@@ -302,10 +302,10 @@ export default function AdminCareAppointmentsPage() {
     try {
       setProcessingId(group.key);
       await Promise.all(ids.map((id) => careAppointmentApi.approveAppointment(id)));
-      toast.success(`Đã xác nhận ${ids.length} lịch và đã gửi email cho khách`);
+      toast.success(`Confirmed ${ids.length} appointments and sent email to customer`);
       await fetchAppointments();
     } catch (err) {
-      showErrorPopup(err.message || "Không thể duyệt lịch nhóm");
+      showErrorPopup(err.message || "Unable to confirm group appointments");
     } finally {
       setProcessingId("");
     }
@@ -325,10 +325,10 @@ export default function AdminCareAppointmentsPage() {
     try {
       setProcessingId(group.key);
       await Promise.all(ids.map((id) => careAppointmentApi.updateAppointmentStatus(id, nextStatus)));
-      toast.success(`Đã cập nhật ${ids.length} lịch sang trạng thái: ${statusLabel[nextStatus] || nextStatus}`);
+      toast.success(`Updated ${ids.length} appointments to status: ${statusLabel[nextStatus] || nextStatus}`);
       await fetchAppointments();
     } catch (err) {
-      showErrorPopup(err.message || "Không thể cập nhật trạng thái lịch nhóm");
+      showErrorPopup(err.message || "Unable to update group appointment status");
     } finally {
       setProcessingId("");
     }
@@ -345,8 +345,8 @@ export default function AdminCareAppointmentsPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-[#2c2c2c] mb-2">Lịch chăm sóc thú cưng</h2>
-          <p className="text-gray-500">Duyệt lịch hẹn spa mà khách hàng đã đăng ký.</p>
+          <h2 className="text-2xl font-bold text-[#2c2c2c] mb-2">Pet Care Appointments</h2>
+          <p className="text-gray-500">Review and manage spa appointments booked by customers.</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col md:flex-row gap-3">
@@ -355,15 +355,15 @@ export default function AdminCareAppointmentsPage() {
             onChange={(e) => setStatus(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2"
           >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="approved">Đã xác nhận (legacy)</option>
-            <option value="confirmed">Đã xác nhận</option>
-            <option value="rejected">Từ chối</option>
-            <option value="cancelled">Đã hủy</option>
-            <option value="checked_in">Đã check-in</option>
-            <option value="in_progress">Đang chăm sóc</option>
-            <option value="completed">Hoàn tất</option>
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Confirmed (legacy)</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="checked_in">Checked In</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
           </select>
           <DatePicker.RangePicker
             className="min-w-70"
@@ -377,7 +377,7 @@ export default function AdminCareAppointmentsPage() {
               const nextEnd = values?.[1] ? values[1].format("YYYY-MM-DD") : "";
               setDateRange([nextStart, nextEnd]);
             }}
-            placeholder={["Từ ngày", "Đến ngày"]}
+            placeholder={["From date", "To date"]}
             allowClear
           />
           <button
@@ -387,26 +387,26 @@ export default function AdminCareAppointmentsPage() {
             }}
             className="px-4 py-2 bg-gray-100 rounded-lg text-gray-700"
           >
-            Đặt lại
+                        Reset
           </button>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Đang tải...</div>
+            <div className="p-8 text-center text-gray-500">Loading...</div>
           ) : groupedAppointments.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">Không có lịch hẹn nào</div>
+            <div className="p-8 text-center text-gray-500">No appointments found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Khách hàng</th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Thú cưng</th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Dịch vụ</th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Lịch hẹn</th>
-                    <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">Thao tác</th>
-                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Trạng thái</th>
+                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Customer</th>
+                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Pet</th>
+                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Service</th>
+                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Appointment</th>
+                    <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">Actions</th>
+                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -416,7 +416,7 @@ export default function AdminCareAppointmentsPage() {
                       return (
                         <tr key={item._id} className="border-b border-gray-100">
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            <p className="font-medium text-gray-900">{item.customerId?.profile?.fullName || item.customerId?.email || "Khách hàng"}</p>
+                            <p className="font-medium text-gray-900">{item.customerId?.profile?.fullName || item.customerId?.email || "Customer"}</p>
                             <p className="text-gray-500">{item.customerId?.email || ""}</p>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
@@ -425,7 +425,7 @@ export default function AdminCareAppointmentsPage() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">{item.serviceType}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            <p>{new Date(item.appointmentDate).toLocaleDateString("vi-VN")}</p>
+                            <p>{new Date(item.appointmentDate).toLocaleDateString("en-US")}</p>
                             <p className="text-gray-500">{item.startTime}</p>
                           </td>
                           <td className="px-4 py-3 text-sm text-right">
@@ -434,7 +434,7 @@ export default function AdminCareAppointmentsPage() {
                                 onClick={() => setSelectedAppointment(item)}
                                 className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
                               >
-                                Xem chi tiết
+                                View Details
                               </button>
                               <div className="flex items-center gap-1.5 w-full sm:w-auto">
                                 {item.status === "pending" ? (
@@ -444,14 +444,14 @@ export default function AdminCareAppointmentsPage() {
                                       disabled={processingId === item._id}
                                       className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 text-xs font-medium"
                                     >
-                                      Xác nhận
+                                      Confirm
                                     </button>
                                     <button
                                       onClick={() => openRejectPopup(item._id)}
                                       disabled={processingId === item._id}
                                       className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50 text-xs font-medium"
                                     >
-                                      Từ chối
+                                      Reject
                                     </button>
                                   </>
                                 ) : null}
@@ -461,7 +461,7 @@ export default function AdminCareAppointmentsPage() {
                                     disabled={processingId === item._id}
                                     className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 text-xs font-medium"
                                   >
-                                    {statusActions[getNextStatus(item.status)]?.label || "Cập nhật"}
+                                    {statusActions[getNextStatus(item.status)]?.label || "Update"}
                                   </button>
                                 ) : null}
                               </div>
@@ -489,7 +489,7 @@ export default function AdminCareAppointmentsPage() {
                             <p className="text-gray-500">{firstItem?.customerId?.email || ""}</p>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            <p className="font-medium text-amber-800">Nhóm {groupSize} thú cưng</p>
+                            <p className="font-medium text-amber-800">Group of {groupSize} pets</p>
                             <p className="text-gray-500 truncate max-w-56">
                               {group.items.map((item) => item.petName).filter(Boolean).join(", ")}
                             </p>
@@ -498,11 +498,11 @@ export default function AdminCareAppointmentsPage() {
                             <p className="truncate max-w-56">{serviceSummary || "-"}</p>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            <p>{new Date(firstItem?.appointmentDate).toLocaleDateString("vi-VN")}</p>
+                            <p>{new Date(firstItem?.appointmentDate).toLocaleDateString("en-US")}</p>
                             <p className="text-gray-500">
                               {firstItem?.startTime}
                               {group.items.length > 1
-                                ? ` (${group.items.length} khung giờ liên tiếp)`
+                                ? ` (${group.items.length} consecutive slots)`
                                 : ""}
                             </p>
                           </td>
@@ -512,7 +512,7 @@ export default function AdminCareAppointmentsPage() {
                                 onClick={() => toggleGroupDetails(group.key)}
                                 className="px-2.5 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
                               >
-                                {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
+                                {isExpanded ? "Hide Details" : "View Details"}
                               </button>
                               {group.pendingItems.length > 0 ? (
                                 <button
@@ -520,7 +520,7 @@ export default function AdminCareAppointmentsPage() {
                                   disabled={processingId === group.key}
                                   className="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 text-xs font-medium"
                                 >
-                                  Xác nhận
+                                  Confirm
                                 </button>
                               ) : null}
                               {group.pendingItems.length > 0 ? (
@@ -529,7 +529,7 @@ export default function AdminCareAppointmentsPage() {
                                   disabled={processingId === group.key}
                                   className="px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-50 text-xs font-medium"
                                 >
-                                  Từ chối
+                                  Reject
                                 </button>
                               ) : null}
                               {group.nextStatus && group.nextStatus !== "confirmed" ? (
@@ -538,7 +538,7 @@ export default function AdminCareAppointmentsPage() {
                                   disabled={processingId === group.key}
                                   className="px-2.5 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 text-xs font-medium"
                                 >
-                                  {statusActions[group.nextStatus]?.label || "Cập nhật nhóm"}
+                                  {statusActions[group.nextStatus]?.label || "Update Group"}
                                 </button>
                               ) : null}
                             </div>
@@ -558,7 +558,7 @@ export default function AdminCareAppointmentsPage() {
                                     <div className="text-sm text-gray-700">
                                       <p className="font-medium text-gray-900">{item.petName} - {item.petType}</p>
                                       <p>
-                                        {item.serviceType} | {new Date(item.appointmentDate).toLocaleDateString("vi-VN")} | {item.startTime}
+                                        {item.serviceType} | {new Date(item.appointmentDate).toLocaleDateString("en-US")} | {item.startTime}
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -567,7 +567,7 @@ export default function AdminCareAppointmentsPage() {
                                         onClick={() => setSelectedAppointment(item)}
                                         className="px-2.5 py-1.5 rounded-lg bg-sky-100 text-sky-700 hover:bg-sky-200 text-xs font-medium"
                                       >
-                                        Xem
+                                        View
                                       </button>
                                     </div>
                                   </div>
@@ -589,22 +589,22 @@ export default function AdminCareAppointmentsPage() {
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
               <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Chi tiết lịch hẹn</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Appointment Details</h3>
                 <button
                   onClick={() => setSelectedAppointment(null)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  Đóng
+                  Close
                 </button>
               </div>
 
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-500">Khách hàng</p>
+                  <p className="text-gray-500">Customer</p>
                   <p className="font-medium text-gray-900">
                     {selectedAppointment.customerId?.profile?.fullName ||
                       selectedAppointment.customerId?.email ||
-                      "Khách hàng"}
+                      "Customer"}
                   </p>
                 </div>
                 <div>
@@ -614,40 +614,40 @@ export default function AdminCareAppointmentsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Thú cưng</p>
+                  <p className="text-gray-500">Pet</p>
                   <p className="font-medium text-gray-900">{selectedAppointment.petName}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Loại thú cưng</p>
+                  <p className="text-gray-500">Pet Type</p>
                   <p className="font-medium text-gray-900">{selectedAppointment.petType}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Dịch vụ</p>
+                  <p className="text-gray-500">Service</p>
                   <p className="font-medium text-gray-900">{selectedAppointment.serviceType}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Trạng thái</p>
+                  <p className="text-gray-500">Status</p>
                   <div className="mt-1">{renderStatusBadge(selectedAppointment.status)}</div>
                 </div>
                 <div>
-                  <p className="text-gray-500">Ngày hẹn</p>
+                  <p className="text-gray-500">Appointment Date</p>
                   <p className="font-medium text-gray-900">
-                    {new Date(selectedAppointment.appointmentDate).toLocaleDateString("vi-VN")}
+                    {new Date(selectedAppointment.appointmentDate).toLocaleDateString("en-US")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Khung giờ</p>
+                  <p className="text-gray-500">Time Slot</p>
                   <p className="font-medium text-gray-900">{selectedAppointment.startTime}</p>
                 </div>
                 <div className="md:col-span-2">
-                  <p className="text-gray-500">Ghi chú</p>
+                  <p className="text-gray-500">Note</p>
                   <p className="font-medium text-gray-900 whitespace-pre-wrap">
-                    {selectedAppointment.note || "Không có ghi chú"}
+                    {selectedAppointment.note || "No notes"}
                   </p>
                 </div>
                 {selectedAppointment.rejectionReason ? (
                   <div className="md:col-span-2">
-                    <p className="text-gray-500">Lý do từ chối</p>
+                    <p className="text-gray-500">Rejection Reason</p>
                     <p className="font-medium text-rose-700 whitespace-pre-wrap">
                       {selectedAppointment.rejectionReason}
                     </p>
@@ -655,7 +655,7 @@ export default function AdminCareAppointmentsPage() {
                 ) : null}
                 {selectedAppointment.cancellationReason ? (
                   <div className="md:col-span-2">
-                    <p className="text-gray-500">Lý do hủy</p>
+                    <p className="text-gray-500">Cancellation Reason</p>
                     <p className="font-medium text-amber-700 whitespace-pre-wrap">
                       {selectedAppointment.cancellationReason}
                     </p>
@@ -674,14 +674,14 @@ export default function AdminCareAppointmentsPage() {
                       disabled={processingId === selectedAppointment._id}
                       className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      Xác nhận
+                      Confirm
                     </button>
                     <button
                       onClick={() => openRejectPopup(selectedAppointment._id)}
                       disabled={processingId === selectedAppointment._id}
                       className="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
                     >
-                      Từ chối
+                      Reject
                     </button>
                   </>
                 ) : null}
@@ -695,14 +695,14 @@ export default function AdminCareAppointmentsPage() {
                     disabled={processingId === selectedAppointment._id}
                     className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
                   >
-                    {statusActions[getNextStatus(selectedAppointment.status)]?.label || "Cập nhật"}
+                    {statusActions[getNextStatus(selectedAppointment.status)]?.label || "Update"}
                   </button>
                 ) : null}
                 <button
                   onClick={() => setSelectedAppointment(null)}
                   className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700"
                 >
-                  Đóng
+                  Close
                 </button>
               </div>
             </div>
@@ -713,17 +713,17 @@ export default function AdminCareAppointmentsPage() {
           <div className="fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4">
             <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
               <div className="border-b border-gray-200 px-5 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Từ chối lịch hẹn</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Reject Appointment</h3>
               </div>
               <div className="px-5 py-4 space-y-2">
-                <p className="text-sm text-gray-600">Vui lòng nhập lý do từ chối để gửi cho khách hàng.</p>
+                <p className="text-sm text-gray-600">Please enter a rejection reason to send to the customer.</p>
                 <textarea
                   rows={4}
                   value={rejectPopup.reason}
                   onChange={(e) =>
                     setRejectPopup((prev) => ({ ...prev, reason: e.target.value }))
                   }
-                  placeholder="Nhập lý do từ chối..."
+                  placeholder="Enter rejection reason..."
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-rose-400 focus:outline-none"
                 />
               </div>
@@ -732,14 +732,14 @@ export default function AdminCareAppointmentsPage() {
                   onClick={closeRejectPopup}
                   className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   onClick={submitReject}
                   disabled={processingId.startsWith("reject-")}
                   className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
                 >
-                  {processingId.startsWith("reject-") ? "Đang gửi..." : "Xác nhận từ chối"}
+                  {processingId.startsWith("reject-") ? "Submitting..." : "Confirm Rejection"}
                 </button>
               </div>
             </div>
@@ -750,7 +750,7 @@ export default function AdminCareAppointmentsPage() {
           <div className="fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4">
             <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
               <div className="border-b border-gray-200 px-5 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Thông báo lỗi</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Error</h3>
               </div>
               <div className="px-5 py-4">
                 <p className="text-sm text-gray-700">{errorPopup}</p>
@@ -760,7 +760,7 @@ export default function AdminCareAppointmentsPage() {
                   onClick={() => setErrorPopup("")}
                   className="rounded-lg bg-[#846551] px-4 py-2 text-sm font-medium text-white hover:bg-[#6d5041]"
                 >
-                  Đã hiểu
+                  Got it
                 </button>
               </div>
             </div>

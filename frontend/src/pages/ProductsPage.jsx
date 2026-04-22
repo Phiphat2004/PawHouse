@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { productApi, categoryApi } from "../services/api";
@@ -127,10 +127,10 @@ export default function ProductsPage() {
       <section className="bg-linear-to-r from-orange-500 to-amber-500 text-white pt-28 pb-10 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-            🛍️ Sản phẩm PawHouse
+            🛍️ PawHouse Products
           </h1>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            Khám phá bộ sưu tập sản phẩm chăm sóc thú cưng chất lượng cao
+            Explore our premium collection of pet care products
           </p>
         </div>
       </section>
@@ -141,19 +141,19 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tìm kiếm sản phẩm
+                Search Products
               </label>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tên sản phẩm, thương hiệu..."
+                placeholder="Product name, brand..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Danh mục
+                Category
               </label>
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -163,8 +163,8 @@ export default function ProductsPage() {
                 >
                   <span className="truncate font-medium text-gray-700">
                     {filterCategory 
-                      ? categories.find(c => c._id === filterCategory)?.name || "Đã chọn"
-                      : "Tất cả danh mục"}
+                      ? categories.find(c => c._id === filterCategory)?.name || "Selected"
+                      : "All Category"}
                   </span>
                   <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
@@ -175,7 +175,7 @@ export default function ProductsPage() {
                       onClick={() => handleSelectCategory("")}
                       className={`px-4 py-3.5 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 ${!filterCategory ? "font-bold text-orange-600 bg-orange-50/50" : "text-gray-700"}`}
                     >
-                      Tất cả danh mục
+                      All Category
                     </div>
                     
                     {categories.filter(c => !c.parentCategory && c.isActive).map(root => {
@@ -230,7 +230,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Đang tải sản phẩm...</p>
+              <p className="mt-4 text-gray-600">Loading products...</p>
             </div>
           </div>
         )}
@@ -249,25 +249,25 @@ export default function ProductsPage() {
               <div className="text-center py-20">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Không tìm thấy sản phẩm
+                  No Products Found
                 </h3>
                 <p className="text-gray-600">
-                  Thử thay đổi bộ lọc hoặc tìm kiếm khác
+                  Try adjusting your filters or search term
                 </p>
               </div>
             ) : (
               <>
                 <div className="mb-6 text-gray-600">
-                  Hiển thị{" "}
+                  Showing{" "}
                   <span className="font-semibold text-gray-900">
                     {startIndex + 1} -{" "}
                     {Math.min(endIndex, filteredProducts.length)}
                   </span>{" "}
-                  trong tổng số{" "}
+                  of{" "}
                   <span className="font-semibold text-gray-900">
                     {filteredProducts.length}
                   </span>{" "}
-                  sản phẩm
+                  products
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
@@ -284,7 +284,7 @@ export default function ProductsPage() {
                       disabled={currentPage === 1}
                       className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
-                      ← Trước
+                      ← Previous
                     </button>
 
                     {/* Page Numbers */}
@@ -332,7 +332,7 @@ export default function ProductsPage() {
                       disabled={currentPage === totalPages}
                       className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
-                      Sau →
+                      Next →
                     </button>
                   </div>
                 )}
@@ -371,9 +371,9 @@ function ProductCard({ product }) {
 
     const result = await addToCart(product._id, 1);
     if (result.success) {
-      toast.success(result.message || "Đã thêm vào giỏ hàng!");
-    } else if (result.message !== "Cần đăng nhập") {
-      toast.error(result.message || "Có lỗi xảy ra");
+      toast.success(result.message || "Added to cart!");
+    } else if (result.message !== "Login required") {
+      toast.error(result.message || "An error occurred");
     }
   };
 
@@ -405,7 +405,7 @@ function ProductCard({ product }) {
         {/* Badge Section */}
         {product.stock <= 0 ? (
           <span className="absolute top-3 left-3 px-3 py-1 bg-[#ff4d2e] text-white text-[10px] font-bold rounded-full uppercase tracking-widest z-20 backdrop-blur-md shadow-sm">
-            Hết hàng
+            Out of Stock
           </span>
         ) : (
           hasDiscount && (
@@ -421,7 +421,7 @@ function ProductCard({ product }) {
             onClick={handleAddToCart}
             disabled={cartLoading}
             className="absolute bottom-3 right-3 w-10 h-10 bg-[#ff4d2e] text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#e64529] z-10"
-            title="Thêm vào giỏ hàng"
+            title="Add to Cart"
           >
             <ShoppingCartOutlined className="text-lg" />
           </button>

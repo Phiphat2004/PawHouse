@@ -98,20 +98,20 @@ export default function StaffLayout({ children }) {
   };
 
   const menuItems = [
-    { icon: "📊", label: "Tổng quan", path: "/quan-tri", exact: true },
-    { icon: "📦", label: "Sản phẩm", path: "/quan-tri/san-pham" },
-    { icon: "🛍️", label: "Đơn hàng", path: "/quan-tri/don-hang" },
-    { icon: "🗓️", label: "Lịch chăm sóc", path: "/quan-tri/lich-cham-soc" },
-    { icon: "📂", label: "Danh mục", path: "/quan-tri/danh-muc" },
+    { icon: "📊", label: "Overview", path: "/quan-tri", exact: true },
+    { icon: "📦", label: "Products", path: "/quan-tri/san-pham" },
+    { icon: "🛍️", label: "Orders", path: "/quan-tri/don-hang" },
+    { icon: "🗓️", label: "Care appointments", path: "/quan-tri/lich-cham-soc" },
+    { icon: "📂", label: "Categories", path: "/quan-tri/danh-muc" },
   ];
 
   const menuItemsAfterStock = [
-    { icon: "🌐", label: "Cộng đồng", path: "/quan-tri/cong-dong" },
+    { icon: "🌐", label: "Community", path: "/quan-tri/cong-dong" },
   ];
 
   const stockSubMenu = [
-    { label: "Danh sách tồn kho", path: "/quan-tri/ton-kho" },
-    { label: "Nhập kho", path: "/quan-tri/nhap-kho" },
+    { label: "Inventory list", path: "/quan-tri/ton-kho" },
+    { label: "Stock intake", path: "/quan-tri/nhap-kho" },
   ];
 
   const isActive = (item) => {
@@ -217,7 +217,7 @@ export default function StaffLayout({ children }) {
                   ? "bg-linear-to-r from-orange-500 to-amber-500 text-white shadow-md"
                   : "text-gray-700 hover:bg-orange-50",
               ].join(" ")}
-              title={!sidebarOpen ? "Tồn kho" : ""}
+              title={!sidebarOpen ? "Inventory" : ""}
             >
               <div
                 className={`flex items-center ${
@@ -225,7 +225,7 @@ export default function StaffLayout({ children }) {
                 }`}
               >
                 <span className="text-xl shrink-0">📦</span>
-                {sidebarOpen && <span className="font-medium">Tồn kho</span>}
+                {sidebarOpen && <span className="font-medium">Inventory</span>}
               </div>
 
               {sidebarOpen && (
@@ -287,10 +287,10 @@ export default function StaffLayout({ children }) {
                 ? "w-full gap-3 px-4 py-3 justify-start"
                 : "w-12 h-12 mx-auto justify-center p-0"
             }`}
-            title={!sidebarOpen ? "Đăng xuất" : ""}
+            title={!sidebarOpen ? "Sign out" : ""}
           >
             <span className="text-xl shrink-0">🚪</span>
-            {sidebarOpen && <span className="font-medium">Đăng xuất</span>}
+            {sidebarOpen && <span className="font-medium">Sign out</span>}
           </button>
         </div>
         </div>
@@ -300,9 +300,9 @@ export default function StaffLayout({ children }) {
         <header className="bg-white shadow-sm sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Nhân viên</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Staff</h1>
               <p className="text-sm text-gray-500">
-                Xin chào, {user?.profile?.fullName || user?.email}
+                Hello, {user?.profile?.fullName || user?.email}
               </p>
             </div>
 
@@ -346,7 +346,7 @@ export default function StaffLayout({ children }) {
                       onClick={() => setDropdownOpen(false)}
                       className="block px-4 py-2 hover:bg-orange-50"
                     >
-                      👤 Hồ sơ
+                      👤 Profile
                     </Link>
 
                     <hr className="my-2" />
@@ -354,7 +354,7 @@ export default function StaffLayout({ children }) {
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
                     >
-                      🚪 Đăng xuất
+                      🚪 Sign out
                     </button>
                   </div>
                 )}

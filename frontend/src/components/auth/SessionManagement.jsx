@@ -26,18 +26,18 @@ export default function SessionManagement() {
   };
 
   const handleRevokeSession = async (sessionId) => {
-    if (!confirm('Bạn có chắc muốn đăng xuất khỏi thiết bị này?')) return;
+    if (!confirm('Are you sure you want to sign out from this device?')) return;
 
     try {
       await authApi.revokeSession(sessionId);
       await loadSessions(); // Reload sessions
     } catch (err) {
-      alert('Không thể thu hồi session: ' + err.message);
+      alert('Cannot revoke session: ' + err.message);
     }
   };
 
   const handleLogoutAll = async () => {
-    if (!confirm('Bạn có chắc muốn đăng xuất khỏi TẤT CẢ thiết bị? Bạn sẽ bị đăng xuất ngay lập tức.')) return;
+    if (!confirm('Are you sure you want to sign out from ALL devices? You will be signed out immediately.')) return;
 
     try {
       await authApi.logoutAll();
@@ -47,7 +47,7 @@ export default function SessionManagement() {
       // Redirect to login without forcing a full page reload
       navigate('/login', { replace: true });
     } catch (err) {
-      alert('Không thể đăng xuất tất cả: ' + err.message);
+      alert('Cannot sign out all devices: ' + err.message);
     }
   };
 
@@ -96,14 +96,14 @@ export default function SessionManagement() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Quản lý phiên đăng nhập</h2>
-            <p className="text-gray-600 mt-1">Xem và quản lý các thiết bị đang đăng nhập vào tài khoản của bạn</p>
+            <h2 className="text-2xl font-bold text-gray-800">Login Session Management</h2>
+            <p className="text-gray-600 mt-1">View and manage devices currently signed in to your account</p>
           </div>
           <button
             onClick={handleLogoutAll}
             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
-            Đăng xuất tất cả
+            Sign out all devices
           </button>
         </div>
 
@@ -116,7 +116,7 @@ export default function SessionManagement() {
         <div className="space-y-4">
           {sessions.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Không có phiên đăng nhập nào</p>
+              <p className="text-gray-500">No active login sessions</p>
             </div>
           ) : (
             sessions.map((session) => (
@@ -132,28 +132,28 @@ export default function SessionManagement() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="text-lg font-semibold text-gray-800">
-                          {session.device || 'Thiết bị không xác định'}
+                          {session.device || 'Unknown device'}
                         </h3>
                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-                          Đang hoạt động
+                          Active
                         </span>
                       </div>
                       <div className="space-y-1 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <span>{getBrowserIcon(session.browser)}</span>
-                          <span>{session.browser || 'Không xác định'} trên {session.os || 'Không xác định'}</span>
+                          <span>{session.browser || 'Unknown'} on {session.os || 'Unknown'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span>📍</span>
-                          <span>{session.ip || 'IP không xác định'}</span>
+                          <span>{session.ip || 'Unknown IP'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span>🕐</span>
-                          <span>Đăng nhập: {formatDate(session.createdAt)}</span>
+                          <span>Logged in: {formatDate(session.createdAt)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span>⚡</span>
-                          <span>Hoạt động gần nhất: {formatDate(session.lastActivityAt)}</span>
+                          <span>Last active: {formatDate(session.lastActivityAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -162,7 +162,7 @@ export default function SessionManagement() {
                     onClick={() => handleRevokeSession(session.id)}
                     className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
-                    Thu hồi
+                    Revoke
                   </button>
                 </div>
               </div>
@@ -174,11 +174,11 @@ export default function SessionManagement() {
           <div className="flex gap-2">
             <span className="text-blue-500">ℹ️</span>
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Lưu ý về bảo mật:</p>
+              <p className="font-medium mb-1">Security notes:</p>
               <ul className="list-disc list-inside space-y-1 text-blue-700">
-                <li>Nếu bạn thấy thiết bị không quen thuộc, hãy thu hồi ngay lập tức</li>
-                <li>Sử dụng "Đăng xuất tất cả" nếu bạn nghi ngờ tài khoản bị xâm nhập</li>
-                <li>Thay đổi mật khẩu ngay nếu phát hiện hoạt động đáng ngờ</li>
+                <li>If you see an unfamiliar device, revoke it immediately</li>
+                <li>Use "Sign out all devices" if you suspect your account is compromised</li>
+                <li>Change your password immediately if you detect suspicious activity</li>
               </ul>
             </div>
           </div>

@@ -28,13 +28,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!token) {
-      alert("Vui lòng đăng nhập để thanh toán");
+      alert("Please log in to proceed to checkout");
       navigate("/login");
       return;
     }
 
     if (!selectedItemIds || selectedItemIds.length === 0) {
-      alert("Không có sản phẩm để thanh toán");
+      alert("No products selected for checkout");
       navigate("/gio-hang");
       return;
     }
@@ -58,7 +58,7 @@ export default function CheckoutPage() {
         address: user.profile?.address?.addressLine || user.address?.addressLine || user.address?.street || prev.address,
       }));
     } catch {
-      // Không bắt buộc — bỏ qua nếu lỗi
+      // Not required — skip on error
     }
   };
 
@@ -88,7 +88,7 @@ export default function CheckoutPage() {
       setToast({
         type: "error",
         title: "Lỗi",
-        message: "Vui lòng điền đầy đủ thông tin bắt buộc (họ tên, SĐT, địa chỉ)",
+        message: "Please fill in all required fields (full name, phone, address)",
       });
       return;
     }
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
       setToast({
         type: "error",
         title: "Lỗi",
-        message: "Không tìm thấy sản phẩm để thanh toán",
+        message: "No products found for checkout",
       });
       return;
     }
@@ -109,7 +109,7 @@ export default function CheckoutPage() {
           variationId: item.variation_id?._id || item.product_id?._id || item.product_id,
           productId: item.product_id?._id || item.product_id || null,
           sku: item.product_id?.sku || '',
-          productName: item.product_id?.name || item.variation_id?.name || 'Sản phẩm',
+          productName: item.product_id?.name || item.variation_id?.name || 'Product',
           variationName: item.variation_id?.name || '',
           image: item.product_id?.images?.[0]?.url || item.variation_id?.image || '',
           unitPrice: item.variation_id?.price ?? item.product_id?.price ?? 0,
@@ -134,7 +134,7 @@ export default function CheckoutPage() {
       const orderId = response.order?._id || response.data?._id;
 
       if (response.order || response.message || response.success) {
-        // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
+        // Remove ordered products from cart
         try {
           for (const item of cartItems) {
             const productId = item.product_id?._id || item.product_id;
@@ -150,7 +150,7 @@ export default function CheckoutPage() {
         setToast({
           type: "success",
           title: "Thành công!",
-          message: response.message || "Đơn hàng đã được tạo thành công",
+          message: response.message || "Order placed successfully",
         });
 
         setTimeout(() => {
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
       setToast({
         type: "error",
         title: "Lỗi",
-        message: err.message || "Không thể tạo đơn hàng. Vui lòng thử lại.",
+        message: err.message || "Unable to create order. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -194,7 +194,7 @@ export default function CheckoutPage() {
     <div className="font-['Inter',sans-serif] bg-gray-50 min-h-screen">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Thanh toán</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
 
         {toast && (
           <Toast
@@ -208,14 +208,14 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Form thông tin ── */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Thông tin giao hàng</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Shipping Information</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Họ tên & SĐT */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ và tên <span className="text-red-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -229,7 +229,7 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại <span className="text-red-500">*</span>
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -259,35 +259,35 @@ export default function CheckoutPage() {
               {/* Tỉnh / Quận / Phường */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Province/City</label>
                   <input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    placeholder="Hồ Chí Minh"
+                    placeholder="Ho Chi Minh City"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
                   <input
                     type="text"
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
-                    placeholder="Quận 1"
+                    placeholder="District 1"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ward/Commune</label>
                   <input
                     type="text"
                     name="ward"
                     value={formData.ward}
                     onChange={handleInputChange}
-                    placeholder="Phường Bến Nghé"
+                    placeholder="Ben Nghe Ward"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
@@ -311,21 +311,21 @@ export default function CheckoutPage() {
 
               {/* Phương thức thanh toán */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phương thức thanh toán</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                 <div className="flex items-center p-3 border border-orange-500 rounded-lg bg-orange-50">
-                  <span className="text-orange-600 font-medium">💵 Thanh toán khi nhận hàng (COD)</span>
+                  <span className="text-orange-600 font-medium">💵 Cash on Delivery (COD)</span>
                 </div>
               </div>
 
               {/* Ghi chú */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
                 <textarea
                   name="note"
                   value={formData.note}
                   onChange={handleInputChange}
                   rows={3}
-                  placeholder="Ghi chú cho người giao hàng (tuỳ chọn)..."
+                  placeholder="Notes for the delivery driver (optional)..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
@@ -342,9 +342,9 @@ export default function CheckoutPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
-                    Đang xử lý...
+                    Processing...
                   </>
-                ) : "Đặt hàng"}
+                ) : "Place Order"}
               </button>
             </form>
           </div>
@@ -352,11 +352,11 @@ export default function CheckoutPage() {
           {/* ── Tóm tắt đơn hàng ── */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-32">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Đơn hàng của bạn</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Your Order</h2>
 
               <div className="space-y-3 mb-4">
                 {cartItems.map((item) => {
-                  const productName = item.product_id?.name || item.variation_id?.name || "Sản phẩm";
+                  const productName = item.product_id?.name || item.variation_id?.name || "Product";
                   const variationName = item.variation_id?.name || "";
                   const image = item.product_id?.images?.[0]?.url || item.variation_id?.image || null;
                   const price = item.variation_id?.price ?? item.product_id?.price ?? 0;
@@ -386,15 +386,15 @@ export default function CheckoutPage() {
 
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-gray-600 text-sm">
-                  <span>Tạm tính:</span>
+                  <span>Subtotal:</span>
                   <span>{subtotal.toLocaleString("vi-VN")}₫</span>
                 </div>
                 <div className="flex justify-between text-gray-600 text-sm">
-                  <span>Phí vận chuyển:</span>
-                  <span>{shippingFee === 0 ? "Miễn phí" : `${shippingFee.toLocaleString("vi-VN")}₫`}</span>
+                  <span>Shipping Fee:</span>
+                  <span>{shippingFee === 0 ? "Free" : `${shippingFee.toLocaleString("vi-VN")}₫`}</span>
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
-                  <span>Tổng cộng:</span>
+                  <span>Total:</span>
                   <span className="text-orange-600">{finalTotal.toLocaleString("vi-VN")}₫</span>
                 </div>
               </div>

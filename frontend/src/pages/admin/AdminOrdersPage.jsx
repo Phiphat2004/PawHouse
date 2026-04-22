@@ -38,43 +38,43 @@ export default function AdminOrdersPage() {
   const [stats, setStats] = useState(null);
 
   const statusOptions = [
-    { value: "all", label: "Tất cả trạng thái" },
-    { value: "pending", label: "Chờ xác nhận" },
-    { value: "confirmed", label: "Đã xác nhận" },
-    { value: "packing", label: "Đang đóng gói" },
-    { value: "shipping", label: "Đang giao" },
-    { value: "completed", label: "Hoàn thành" },
-    { value: "cancelled", label: "Đã hủy" },
-    { value: "refunded", label: "Đã hoàn tiền" },
+    { value: "all", label: "All Statuses" },
+    { value: "pending", label: "Pending" },
+    { value: "confirmed", label: "Confirmed" },
+    { value: "packing", label: "Packing" },
+    { value: "shipping", label: "Shipping" },
+    { value: "completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" },
+    { value: "refunded", label: "Refunded" },
   ];
 
   const statusMeta = {
     pending: {
-      label: "Chờ xác nhận",
+      label: "Pending",
       className: "bg-yellow-100 text-yellow-800 border border-yellow-200",
     },
     confirmed: {
-      label: "Đã xác nhận",
+      label: "Confirmed",
       className: "bg-blue-100 text-blue-800 border border-blue-200",
     },
     packing: {
-      label: "Đang đóng gói",
+      label: "Packing",
       className: "bg-purple-100 text-purple-800 border border-purple-200",
     },
     shipping: {
-      label: "Đang giao",
+      label: "Shipping",
       className: "bg-indigo-100 text-indigo-800 border border-indigo-200",
     },
     completed: {
-      label: "Hoàn thành",
+      label: "Completed",
       className: "bg-green-100 text-green-800 border border-green-200",
     },
     cancelled: {
-      label: "Đã hủy",
+      label: "Cancelled",
       className: "bg-red-100 text-red-800 border border-red-200",
     },
     refunded: {
-      label: "Đã hoàn tiền",
+      label: "Refunded",
       className: "bg-gray-100 text-gray-800 border border-gray-200",
     },
   };
@@ -126,7 +126,7 @@ export default function AdminOrdersPage() {
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast.error("Không thể tải danh sách đơn hàng");
+      toast.error("Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -159,7 +159,7 @@ export default function AdminOrdersPage() {
     const normalized = normalizeStatus(status);
 
     const info = statusMeta[normalized] || {
-      label: status || "Không xác định",
+      label: status || "Unknown",
       className: "bg-gray-100 text-gray-800 border border-gray-200",
     };
 
@@ -177,10 +177,10 @@ export default function AdminOrdersPage() {
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-[#2c2c2c] mb-2">
             <InboxOutlined className="text-[#846551] text-[24px]" />
-            Quản lý đơn hàng
+            Order Management
           </h2>
           <p className="text-gray-500">
-            Hiển thị {orders.length} trong tổng số {pagination.totalItems || 0} đơn hàng
+            Showing {orders.length} of {pagination.totalItems || 0} orders
           </p>
         </div>
 
@@ -188,7 +188,7 @@ export default function AdminOrdersPage() {
         {stats?.byStatus && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Tổng quan đơn hàng
+              Order Overview
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
               {[
@@ -226,7 +226,7 @@ export default function AdminOrdersPage() {
               <SearchOutlined className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 type="text"
-                placeholder="Tìm theo mã đơn, tên hoặc email khách hàng..."
+                placeholder="Search by order code, customer name or email..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -248,7 +248,7 @@ export default function AdminOrdersPage() {
                   {
                     statusOptions.find(
                       (item) => item.value === normalizeStatus(statusFilter)
-                    )?.label || "Tất cả trạng thái"
+                    )?.label || "All Statuses"
                   }
                 </span>
               </SelectTrigger>
@@ -271,13 +271,13 @@ export default function AdminOrdersPage() {
                 setCurrentPage(1);
               }}
             >
-              Đặt lại
+              Reset
             </Button>
           </div>
 
           <div className="mt-4">
             <span className="inline-flex rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-600">
-              Hiển thị {orders.length} / {pagination.totalItems || 0} đơn hàng
+              Showing {orders.length} / {pagination.totalItems || 0} orders
             </span>
           </div>
         </div>
@@ -285,31 +285,31 @@ export default function AdminOrdersPage() {
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Đang tải...</div>
+            <div className="p-8 text-center text-gray-500">Loading...</div>
           ) : orders.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">Không có đơn hàng nào</div>
+            <div className="p-8 text-center text-gray-500">No orders found</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="text-gray-700 font-semibold">
-                      MÃ ĐƠN HÀNG
+                      ORDER ID
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold">
-                      KHÁCH HÀNG
+                      CUSTOMER
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold text-right">
-                      TỔNG TIỀN
+                      TOTAL
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold">
-                      TRẠNG THÁI
+                      STATUS
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold">
-                      NGÀY ĐẶT
+                      ORDER DATE
                     </TableHead>
                     <TableHead className="text-gray-700 font-semibold text-center">
-                      THAO TÁC
+                      ACTIONS
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -320,7 +320,7 @@ export default function AdminOrdersPage() {
                       order.customerName ||
                       order.customer?.name ||
                       order.addressSnapshot?.fullName ||
-                      "Không xác định";
+                      "Unknown";
 
                     const customerEmail =
                       order.customerEmail ||
@@ -368,7 +368,7 @@ export default function AdminOrdersPage() {
                             onClick={() => navigate(`/quan-tri/don-hang/${order._id}`)}
                             className="h-8 rounded-lg text-[#846551] border-[#d8c8bc] bg-[#f6f1ed] hover:bg-[#efe6df] hover:text-[#6d5443] font-medium px-3"
                           >
-                            Xem chi tiết
+                            View Details
                           </Button>
                         </TableCell>
                       </TableRow>

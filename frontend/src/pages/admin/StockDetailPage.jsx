@@ -29,7 +29,7 @@ export default function StockDetailPage() {
       setError('');
     } catch (error) {
       console.error('Error loading stock detail:', error);
-      setError('Không thể tải thông tin tồn kho');
+      setError('Failed to load stock information');
     } finally {
       setLoading(false);
     }
@@ -80,14 +80,14 @@ export default function StockDetailPage() {
 
   const getMovementTypeLabel = (type) => {
     const types = {
-      'IN': 'Nhập kho',
-      'OUT': 'Xuất kho',
-      'ADJUSTMENT': 'Điều chỉnh',
-      'TRANSFER': 'Chuyển kho',
-      'RETURN': 'Trả hàng',
-      'RESERVE': 'Chờ xác nhận',
-      'RELEASE': 'Đã hủy',
-      'FULFILL': 'Đã giao hàng'
+      'IN': 'Import',
+      'OUT': 'Export',
+      'ADJUSTMENT': 'Adjustment',
+      'TRANSFER': 'Transfer',
+      'RETURN': 'Return',
+      'RESERVE': 'Hold',
+      'RELEASE': 'Cancelled',
+      'FULFILL': 'Delivered'
     };
     return types[type] || type;
   };
@@ -109,14 +109,14 @@ export default function StockDetailPage() {
   const getMovementReason = (movement) => {
     if (movement?.statusLabel) return movement.statusLabel;
     const map = {
-      RESERVE: 'Chờ xác nhận',
-      OUT: movement?.referenceType === 'ORDER' ? 'Đang giao hàng' : 'Xuất kho',
-      FULFILL: 'Đã giao hàng',
-      RELEASE: 'Đã hủy',
-      IN: 'Nhập kho',
-      RETURN: 'Hoàn trả',
-      ADJUSTMENT: 'Điều chỉnh',
-      TRANSFER: 'Chuyển kho'
+      RESERVE: 'Pending confirmation',
+      OUT: movement?.referenceType === 'ORDER' ? 'Delivering' : 'Export',
+      FULFILL: 'Delivered',
+      RELEASE: 'Cancelled',
+      IN: 'Import',
+      RETURN: 'Return',
+      ADJUSTMENT: 'Adjustment',
+      TRANSFER: 'Transfer'
     };
     return map[movement?.type] || movement?.reason || '-';
   };
@@ -127,7 +127,7 @@ export default function StockDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            <p className="mt-4 text-gray-600">Loading data...</p>
           </div>
         </div>
       </div>
@@ -139,14 +139,14 @@ export default function StockDetailPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error || 'Không tìm thấy thông tin tồn kho'}
+            {error || 'Stock information not found'}
           </div>
           <div className="mt-4">
             <button
               onClick={() => navigate('/quan-tri/ton-kho')}
               className="text-orange-600 hover:text-orange-700 font-medium"
             >
-              ← Quay lại
+              ← Back
             </button>
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function StockDetailPage() {
               <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Quay lại danh sách
+              Back to list
             </Link>
           </div>
           
@@ -179,8 +179,8 @@ export default function StockDetailPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Chi tiết tồn kho</h1>
-                <p className="mt-2 text-gray-600">Thông tin chi tiết về tồn kho sản phẩm</p>
+                <h1 className="text-3xl font-bold text-gray-900">Stock Details</h1>
+                <p className="mt-2 text-gray-600">Detailed stock information for products</p>
               </div>
             </div>
             <div>
@@ -191,7 +191,7 @@ export default function StockDetailPage() {
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Cập nhật tồn kho
+                Update Stock
               </button>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function StockDetailPage() {
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Tổng tồn kho</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Stock</p>
                 <p className="text-3xl font-bold text-gray-900">{stockData.total || 0}</p>
               </div>
               <div className="bg-blue-100 rounded-full p-3">
@@ -216,7 +216,7 @@ export default function StockDetailPage() {
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Khả dụng</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Available</p>
                 <p className="text-3xl font-bold text-green-600">{stockData.available || 0}</p>
               </div>
               <div className="bg-green-100 rounded-full p-3">
@@ -230,7 +230,7 @@ export default function StockDetailPage() {
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Đã đặt trước</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">Reserved</p>
                 <p className="text-3xl font-bold text-yellow-600">{stockData.reserved || 0}</p>
               </div>
               <div className="bg-yellow-100 rounded-full p-3">
@@ -245,22 +245,22 @@ export default function StockDetailPage() {
         {/* Stock by Warehouse */}
         {stockData.byWarehouse && stockData.byWarehouse.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Tồn kho theo kho hàng</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Stock by warehouse</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Kho hàng
+                      Warehouse
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tổng số lượng
+                      Total Quantity
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Khả dụng
+                      Available
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Đã đặt
+                      Reserved
                     </th>
                   </tr>
                 </thead>
@@ -269,7 +269,7 @@ export default function StockDetailPage() {
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="font-medium text-gray-900">
-                          {warehouse.warehouseId?.name || 'Chưa có kho'}
+                          {warehouse.warehouseId?.name || 'No warehouse'}
                         </div>
                         {warehouse.warehouseId?.code && (
                           <div className="text-xs text-gray-500">({warehouse.warehouseId.code})</div>
@@ -300,16 +300,16 @@ export default function StockDetailPage() {
 
         {/* Stock Movements History */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Lịch sử xuất nhập kho</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Stock Movement History</h2>
           
           {movementsLoading ? (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-              <p className="mt-2 text-gray-600">Đang tải...</p>
+              <p className="mt-2 text-gray-600">Loading...</p>
             </div>
           ) : movements.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              Chưa có lịch sử xuất nhập kho
+              No stock history
             </div>
           ) : (
             <>
@@ -318,22 +318,22 @@ export default function StockDetailPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ngày giờ
+                        Date/Time
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Trạng thái
+                        Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Kho hàng
+                        Warehouse
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Số lượng
+                        Quantity
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Lý do
+                        Reason
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Thao tác
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -349,7 +349,7 @@ export default function StockDetailPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {movement.warehouseId?.name || 'Chưa có kho'}
+                          {movement.warehouseId?.name || 'No warehouse'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`text-sm font-semibold ${movement.type === 'IN' ? 'text-green-600' : 'text-red-600'}`}>
@@ -363,12 +363,12 @@ export default function StockDetailPage() {
                           <button
                             onClick={() => handleDeleteClick(movement)}
                             className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-1 rounded-lg transition-all inline-flex items-center gap-1"
-                            title="Xóa bản ghi"
+                            title="Delete record"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
-                            <span>Xóa</span>
+                            <span>Delete</span>
                           </button>
                         </td>
                       </tr>
@@ -381,11 +381,11 @@ export default function StockDetailPage() {
               {pagination.pages > 1 && (
                 <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
                   <div className="text-sm text-gray-700">
-                    Hiển thị <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> đến{' '}
+                    Show <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
                     <span className="font-medium">
                       {Math.min(pagination.page * pagination.limit, pagination.total)}
                     </span>{' '}
-                    trong tổng số <span className="font-medium">{pagination.total}</span> giao dịch
+                    of <span className="font-medium">{pagination.total}</span> transactions
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -393,17 +393,17 @@ export default function StockDetailPage() {
                       disabled={pagination.page === 1}
                       className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Trước
+                      Previous
                     </button>
                     <span className="px-3 py-1 text-sm text-gray-700">
-                      Trang {pagination.page} / {pagination.pages}
+                      Page {pagination.page} / {pagination.pages}
                     </span>
                     <button
                       onClick={() => handlePageChange(pagination.page + 1)}
                       disabled={pagination.page === pagination.pages}
                       className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Sau
+                      Next
                     </button>
                   </div>
                 </div>
