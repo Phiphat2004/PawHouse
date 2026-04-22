@@ -38,10 +38,15 @@ const stockMovementSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      // RESERVE   : giữ hàng khi tạo đơn (pending)
-      // FULFILL   : trừ hẳn khi đơn chuyển sang đang giao (shipping)
-      // RELEASE   : trả lại phần đã giữ khi huỷ trước shipping
-      // RESTORE   : hoàn lại hàng nếu đơn đã bị trừ trước đó rồi mới huỷ
+      // RESERVE   : Giữ hàng khi tạo đơn web (pending)
+      // FULFILL   : Trừ hẳn khi chuyển sang shipping (web) hoặc khi tạo đơn in-store
+      // RELEASE   : Trả lại hàng đã giữ khi hủy trước shipping
+      // RESTORE   : Hoàn lại hàng khi hủy sau shipping
+      // RETURN    : Khách hàng trả hàng sau khi giao
+      // IN        : Nhập kho (nhà cung cấp)
+      // OUT       : Xuất kho (lỗi, hỏng)
+      // ADJUSTMENT: Điều chỉnh số lượng
+      // TRANSFER  : Chuyển giữa các kho
       enum: [
         "IN",
         "OUT",
@@ -66,17 +71,32 @@ const stockMovementSchema = new mongoose.Schema(
     referenceType: {
       type: String,
       enum: [
-        "PURCHASE",
-        "SALE",
-        "ADJUSTMENT",
-        "TRANSFER",
-        "RETURN",
-        "ORDER",
+        "PURCHASE",    // Nhập hàng từ nhà cung cấp
+        "SALE",        // Bán hàng (web hoặc in-store)
+        "ADJUSTMENT",  // Điều chỉnh kho
+        "TRANSFER",    // Chuyển kho
+        "RETURN",      // Khách hàng trả hàng
+        "ORDER",       // Liên quan đến đơn hàng (RESERVE/RELEASE)
+        "POS",         // Bán tại quầy (in-store)
         "OTHER",
       ],
     },
     referenceId: {
-      type: String, // orderId hoặc orderCode
+      type: String, // orderId hoặc returnId hoặc billId
+    },
+    // Thêm fields để lưu trạng thái đơn hàng (để audit trail)
+    sourceStatus: {
+      type: String, // from: pending, confirmed, packing, etc.
+    },
+    targetStatus: {
+      type: String, // to: confirmed, packing, shipping, etc.
+    },
+    // Lưu số lượng trước/sau để audit
+    quantityBefore: {
+      type: Number,
+    },
+    quantityAfter: {
+      type: Number,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -92,6 +112,7 @@ const stockMovementSchema = new mongoose.Schema(
 // Index để truy vấn nhanh
 stockMovementSchema.index({ productId: 1, warehouseId: 1, createdAt: -1 });
 stockMovementSchema.index({ type: 1, createdAt: -1 });
+stockMovementSchema.index({ referenceType: 1, referenceId: 1, createdAt: -1 });
 
 stockMovementSchema.pre("save", function (next) {
   if (!this.warehouseId) {

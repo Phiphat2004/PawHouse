@@ -49,7 +49,8 @@ export default function CommunityPage() {
     const matchSearch =
       !searchTerm ||
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase());
+      post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchSearch;
   });
@@ -138,8 +139,8 @@ export default function CommunityPage() {
             </h3>
             <p className="text-gray-500">
               {searchTerm
-                ? "Không tìm thấy bài viết phù hợp"
-                : "Hãy quay lại sau nhé!"}
+                ? "No matching articles found"
+                : "Come back later!"}
             </p>
           </div>
         ) : (
