@@ -80,22 +80,22 @@ const AccountManagement = () => {
     const handleAssignRole = async (accountId, newRole) => {
         try {
             await assignRole(accountId, newRole);
-            toast.success("Đã phân công vai trò thành công!");
+            toast.success("Role assigned successfully!");
             setAccountToAssignRole(null);
             fetchAccounts();
         } catch (error) {
-            toast.error(error.message || "Phân công vai trò thất bại");
+            toast.error(error.message || "Failed to assign role");
         }
     };
 
     const handleBanUnbanRequest = (account) => {
         if (account?.role === AccountRole.ADMIN) {
-            toast.warning('Không thể khoá tài khoản quản trị viên');
+            toast.warning('Cannot ban an administrator account');
             return;
         }
 
         if (account?.status === AccountStatus.INACTIVE || account?.is_deleted) {
-            toast.warning('Không thể khoá/mở khoá tài khoản đã bị xoá');
+            toast.warning('Cannot ban/unban a deleted account');
             return;
         }
         setAccountToBanUnban(account);
@@ -112,17 +112,17 @@ const AccountManagement = () => {
                 }
 
                 if (!newStatus) {
-                    toast.warning('Chỉ có thể khoá/mở khoá tài khoản đang hoạt động hoặc bị khoá');
+                    toast.warning('Can only ban/unban active or banned accounts');
                     setAccountToBanUnban(null);
                     return;
                 }
 
                 await banUnbanAccount(accountToBanUnban.id, newStatus);
-                toast.success(`Tài khoản đã được ${newStatus === AccountStatus.ACTIVE ? 'mở khoá' : 'khoá'} thành công!`);
+                toast.success(`Account ${newStatus === AccountStatus.ACTIVE ? 'unbanned' : 'banned'} successfully!`);
                 setAccountToBanUnban(null);
                 fetchAccounts();
             } catch (error) {
-                toast.error(error.message || "Cập nhật trạng thái thất bại");
+                toast.error(error.message || "Failed to update account status");
             }
         }
     };
@@ -130,10 +130,10 @@ const AccountManagement = () => {
     const handleRestoreRequest = async (account) => {
         try {
             await restoreAccount(account.id);
-            toast.success('Đã khôi phục tài khoản thành công!');
+            toast.success('Account restored successfully!');
             fetchAccounts();
         } catch (error) {
-            toast.error(error.message || 'Khôi phục tài khoản thất bại');
+            toast.error(error.message || 'Failed to restore account');
         }
     };
 
@@ -146,7 +146,7 @@ const AccountManagement = () => {
                 <div>
                     <h2 className="flex items-center gap-2 text-2xl font-bold text-[#2c2c2c] mb-6">
                         <TeamOutlined className="text-[#846551] text-[24px]" />
-                        Quản lý tài khoản
+                        Account Management
                     </h2>
                 </div>
 
@@ -157,7 +157,7 @@ const AccountManagement = () => {
                             <SearchOutlined className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <Input
                                 type="text"
-                                placeholder="Tìm kiếm theo tên hoặc email..."
+                                placeholder="Search by name or email..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10 bg-white border-gray-200"
@@ -166,37 +166,37 @@ const AccountManagement = () => {
                         <div className="flex gap-4">
                             <Select value={statusFilter} onValueChange={setStatusFilter} disabled={isLoading}>
                                 <SelectTrigger className="w-45 bg-white border-gray-200">
-                                    <SelectValue placeholder="Tất cả trạng thái" />
+                                    <SelectValue placeholder="All statuses" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                                    <SelectItem value={AccountStatus.ACTIVE}>Hoạt động</SelectItem>
-                                    <SelectItem value={AccountStatus.BANNED}>Bị khoá</SelectItem>
-                                    <SelectItem value={AccountStatus.INACTIVE}>Không hoạt động</SelectItem>
+                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value={AccountStatus.ACTIVE}>Active</SelectItem>
+                                    <SelectItem value={AccountStatus.BANNED}>Banned</SelectItem>
+                                    <SelectItem value={AccountStatus.INACTIVE}>Inactive</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Select value={roleFilter} onValueChange={setRoleFilter} disabled={isLoading}>
                                 <SelectTrigger className="w-45 bg-white border-gray-200">
-                                    <SelectValue placeholder="Tất cả vai trò" />
+                                    <SelectValue placeholder="All roles" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tất cả vai trò</SelectItem>
-                                    <SelectItem value={AccountRole.USER}>Người dùng</SelectItem>
-                                    <SelectItem value={AccountRole.STAFF}>Nhân viên</SelectItem>
-                                    <SelectItem value={AccountRole.ADMIN}>Quản trị viên</SelectItem>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    <SelectItem value={AccountRole.USER}>User</SelectItem>
+                                    <SelectItem value={AccountRole.STAFF}>Staff</SelectItem>
+                                    <SelectItem value={AccountRole.ADMIN}>Administrator</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
                     <p className="text-gray-500 text-sm">
-                        Hiển thị {accounts.length} trong tổng số {pagination.totalItems || 0} tài khoản
+                        Showing {accounts.length} of {pagination.totalItems || 0} accounts
                     </p>
                 </div>
 
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     {isLoading ? (
-                        <div className="p-8 text-center text-gray-500">Đang tải...</div>
+                        <div className="p-8 text-center text-gray-500">Loading...</div>
                     ) : (
                         <AccountTable
                             accounts={accounts}

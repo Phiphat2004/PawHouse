@@ -15,19 +15,19 @@ export default function UserPostCard({ post, onEdit, onDelete }) {
       draft: {
         bg: "bg-yellow-100",
         text: "text-yellow-800",
-        label: "⏳ Chờ duyệt",
+        label: "⏳ Pending approval",
         icon: "⏳",
       },
       published: {
         bg: "bg-green-100",
         text: "text-green-800",
-        label: "✅ Đã duyệt",
+        label: "✅ Approved",
         icon: "✅",
       },
       hidden: {
         bg: "bg-gray-100",
         text: "text-gray-800",
-        label: "🔒 Ẩn",
+        label: "🔒 Hidden",
         icon: "🔒",
       },
     };
@@ -46,10 +46,10 @@ export default function UserPostCard({ post, onEdit, onDelete }) {
   const getStatusMessage = (status) => {
     const messages = {
       draft:
-        "Bài viết của bạn đang chờ quản trị viên duyệt. Bạn sẽ nhận được thông báo khi bài viết được phê duyệt.",
+        "Your post is pending admin approval. You will be notified once it is approved.",
       published:
-        "Bài viết của bạn đã được duyệt và hiển thị công khai trên trang cộng đồng.",
-      hidden: "Bài viết của bạn đã bị ẩn bởi quản trị viên.",
+        "Your post has been approved and is now publicly visible in the community.",
+      hidden: "Your post has been hidden by an admin.",
     };
     return messages[status] || messages.draft;
   };
@@ -98,7 +98,7 @@ export default function UserPostCard({ post, onEdit, onDelete }) {
           <span>📅 {formatDate(post.createdAt)}</span>
           {post.publishedAt && post.status === "published" && (
             <span className="text-green-600 font-medium">
-              ✓ Duyệt: {formatDate(post.publishedAt)}
+              ✓ Approved: {formatDate(post.publishedAt)}
             </span>
           )}
         </div>
@@ -110,20 +110,20 @@ export default function UserPostCard({ post, onEdit, onDelete }) {
               target="_blank"
               className="flex-1 text-center bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition"
             >
-              👁️ Xem bài viết
+              👁️ View post
             </Link>
           )}
           <button
             onClick={() => onEdit(post)}
             className="flex-1 bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-600 transition"
           >
-            ✏️ Chỉnh sửa
+            ✏️ Edit
           </button>
           <button
             onClick={() => {
               if (
                 window.confirm(
-                  "Bạn có chắc chắn muốn xóa bài viết này? Hành động này không thể hoàn tác."
+                  "Are you sure you want to delete this post? This action cannot be undone."
                 )
               ) {
                 onDelete(post._id);
@@ -131,7 +131,7 @@ export default function UserPostCard({ post, onEdit, onDelete }) {
             }}
             className="px-4 py-2 border border-red-500 text-red-500 rounded-lg font-semibold hover:bg-red-50 transition"
           >
-            🗑️ Xóa
+            🗑️ Delete
           </button>
         </div>
       </div>

@@ -118,9 +118,9 @@ export default function AdminProductsPage() {
     try {
       await productApi.delete(productToDelete._id);
       setProducts(products.filter((p) => p._id !== productToDelete._id));
-      addToast("success", "Thành công!", "Đã xóa sản phẩm thành công");
+      addToast("success", "Success!", "Product deleted successfully");
     } catch (err) {
-      addToast("error", "Lỗi!", "Không thể xóa sản phẩm: " + err.message);
+      addToast("error", "Error!", "Failed to delete product: " + err.message);
     } finally {
       setShowDeleteModal(false);
       setProductToDelete(null);
@@ -142,18 +142,18 @@ export default function AdminProductsPage() {
             p._id === editingProduct._id ? updated.product || updated : p,
           ),
         );
-        addToast("success", "Thành công!", "Đã cập nhật sản phẩm thành công");
+        addToast("success", "Success!", "Product updated successfully");
       } else {
         console.log("Creating product:", formData);
         const created = await productApi.create(formData);
         setProducts([created.product || created, ...products]);
-        addToast("success", "Thành công!", "Đã thêm sản phẩm mới thành công");
+        addToast("success", "Success!", "New product added successfully");
       }
       setShowForm(false);
       setEditingProduct(null);
     } catch (err) {
       console.error("Form submit error:", err);
-      addToast("error", "Lỗi!", err.message || "Không thể lưu sản phẩm");
+      addToast("error", "Error!", err.message || "Failed to save product");
       throw err;
     }
   };
@@ -169,7 +169,7 @@ export default function AdminProductsPage() {
       // Find the product to get all its data
       const product = products.find((p) => p._id === productId);
       if (!product) {
-        alert("Không tìm thấy sản phẩm");
+        alert("Product not found");
         return;
       }
 
@@ -192,7 +192,7 @@ export default function AdminProductsPage() {
         ),
       );
     } catch (err) {
-      alert("Lỗi khi cập nhật trạng thái: " + err.message);
+      alert("Failed to update status: " + err.message);
     }
   };
 
@@ -222,13 +222,13 @@ export default function AdminProductsPage() {
     return matchSearch && matchCategory && matchStatus;
   });
 
-  // Tính toán phân trang
+  // Pagination calculation
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-  // Reset về trang 1 khi filter thay đổi
+  // Reset to page 1 when filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterCategory, filterStatus]);
@@ -239,7 +239,7 @@ export default function AdminProductsPage() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải...</p>
+            <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </div>
       </AdminLayout>
@@ -253,10 +253,10 @@ export default function AdminProductsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Quản lý sản phẩm
+              Product Management
             </h1>
             <p className="text-gray-600 mt-1">
-              Quản lý danh sách sản phẩm của cửa hàng
+              Manage the store's product catalog
             </p>
           </div>
           {canManage ? (
@@ -265,11 +265,11 @@ export default function AdminProductsPage() {
               className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all"
             >
               <span className="text-xl">+</span>
-              <span className="font-medium">Thêm sản phẩm</span>
+              <span className="font-medium">Add Product</span>
             </button>
           ) : (
             <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
-              Chế độ chỉ xem
+              View only
             </span>
           )}
         </div>
@@ -283,17 +283,17 @@ export default function AdminProductsPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Tổng sản phẩm</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Total Products</p>
             <p className="text-2xl font-bold text-gray-900">{products.length}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Đang hoạt động</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Active</p>
             <p className="text-2xl font-bold text-green-600">
               {products.filter((p) => p.isActive).length}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Tạm ngưng</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Pause</p>
             <p className="text-2xl font-bold text-gray-600">
               {products.filter((p) => !p.isActive).length}
             </p>
@@ -308,7 +308,7 @@ export default function AdminProductsPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tên sản phẩm, thương hiệu..."
+                placeholder="Product name, brand..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
@@ -321,8 +321,8 @@ export default function AdminProductsPage() {
                 >
                   <span className="truncate text-gray-700">
                     {filterCategory
-                      ? categories.find(c => c._id === filterCategory)?.name || "Đã chọn"
-                      : "Tất cả danh mục"}
+                      ? categories.find(c => c._id === filterCategory)?.name || "Selected"
+                      : "All Categories"}
                   </span>
                   <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
@@ -333,7 +333,7 @@ export default function AdminProductsPage() {
                       onClick={() => handleSelectCategory("")}
                       className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 ${!filterCategory ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
                     >
-                      Tất cả danh mục
+                      All Categories
                     </div>
 
                     {categories.filter(c => !c.parentCategory && c.isActive !== false).map(root => {
@@ -388,7 +388,7 @@ export default function AdminProductsPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-left flex justify-between items-center transition-all shadow-sm hover:border-orange-300"
                 >
                   <span className="truncate text-gray-700">
-                    {filterStatus === "active" ? "Đang hoạt động" : filterStatus === "inactive" ? "Tạm ngưng" : "Tất cả trạng thái"}
+                    {filterStatus === "active" ? "Active" : filterStatus === "inactive" ? "Pause" : "All Statuses"}
                   </span>
                   <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isStatusOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -400,19 +400,19 @@ export default function AdminProductsPage() {
                       onClick={() => { setFilterStatus(""); setIsStatusOpen(false); }}
                       className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 text-sm ${filterStatus === "" ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
                     >
-                      Tất cả trạng thái
+                      All Statuses
                     </div>
                     <div
                       onClick={() => { setFilterStatus("active"); setIsStatusOpen(false); }}
                       className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 text-sm ${filterStatus === "active" ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
                     >
-                      Đang hoạt động
+                      Active
                     </div>
                     <div
                       onClick={() => { setFilterStatus("inactive"); setIsStatusOpen(false); }}
                       className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors text-sm ${filterStatus === "inactive" ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
                     >
-                      Tạm ngưng
+                      Pause
                     </div>
                   </div>
                 )}
@@ -467,17 +467,17 @@ export default function AdminProductsPage() {
                   </svg>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                  Xác nhận xóa sản phẩm
+                  Confirm Delete Product
                 </h3>
                 <p className="text-gray-600 text-center mb-6">
-                  Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                  Are you sure you want to delete product{" "}
                   <strong className="text-gray-900">
                     {productToDelete.name}
                   </strong>
                   ?
                   <br />
                   <span className="text-sm text-red-600">
-                    Hành động này không thể hoàn tác.
+                    This action cannot be undone.
                   </span>
                 </p>
                 <div className="flex gap-3">
@@ -485,13 +485,13 @@ export default function AdminProductsPage() {
                     onClick={handleDeleteCancel}
                     className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
                   >
-                    Hủy
+                    Cancel
                   </button>
                   <button
                     onClick={handleDeleteConfirm}
                     className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
                   >
-                    Xóa
+                    Delete
                   </button>
                 </div>
               </div>

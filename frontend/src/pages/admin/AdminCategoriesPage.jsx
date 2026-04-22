@@ -83,11 +83,11 @@ export default function AdminCategoriesPage() {
       setCategories(categories.filter((c) => c._id !== categoryId));
       setShowDeleteModal(false);
       setCategoryToDelete(null);
-      addToast("success", "Thành công!", "Xóa danh mục thành công!");
+      addToast("success", "Success!", "Category deleted successfully!");
     } catch (err) {
       const errorMessage =
-        err.response?.data?.error || err.message || "Lỗi khi xóa danh mục";
-      addToast("error", "Lỗi!", errorMessage);
+        err.response?.data?.error || err.message || "Error deleting category";
+      addToast("error", "Error!", errorMessage);
       setShowDeleteModal(false);
       setCategoryToDelete(null);
     }
@@ -102,17 +102,17 @@ export default function AdminCategoriesPage() {
     try {
       if (editingCategory) {
         await categoryApi.update(editingCategory._id, formData);
-        addToast("success", "Thành công!", "Cập nhật danh mục thành công!");
+        addToast("success", "Success!", "Category updated successfully!");
       } else {
         await categoryApi.create(formData);
-        addToast("success", "Thành công!", "Thêm danh mục thành công!");
+        addToast("success", "Success!", "Category added successfully!");
       }
       setShowForm(false);
       setEditingCategory(null);
       await loadCategories(true); // Silent reload to keep scroll position & filters
     } catch (err) {
       console.error("Form submit error:", err);
-      addToast("error", "Lỗi!", err.message || "Lỗi khi lưu danh mục");
+      addToast("error", "Error!", err.message || "Error saving category");
       throw err;
     }
   };
@@ -151,7 +151,7 @@ export default function AdminCategoriesPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-4xl mb-4">⏳</div>
-            <div className="text-gray-600">Đang tải...</div>
+            <div className="text-gray-600">Loading...</div>
           </div>
         </div>
       </AdminLayout>
@@ -175,9 +175,9 @@ export default function AdminCategoriesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Quản lý danh mục
+              Category Management
             </h1>
-            <p className="text-gray-600 mt-1">Quản lý các danh mục sản phẩm</p>
+            <p className="text-gray-600 mt-1">Manage product categories</p>
           </div>
           {canManage ? (
             <button
@@ -185,11 +185,11 @@ export default function AdminCategoriesPage() {
               className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-amber-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
             >
               <span className="text-xl">+</span>
-              <span className="font-medium">Thêm danh mục</span>
+              <span className="font-medium">Add Category</span>
             </button>
           ) : (
             <span className="rounded-xl bg-gray-100 px-4 py-3 text-sm font-medium text-gray-500">
-              Chế độ chỉ xem
+              View Only
             </span>
           )}
         </div>
@@ -197,17 +197,17 @@ export default function AdminCategoriesPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Tổng cộng</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Total</p>
             <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Danh mục cha</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Parent Categories</p>
             <p className="text-2xl font-bold text-orange-600">
               {categories.filter((c) => !c.parentCategory).length}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Danh mục con</p>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Sub-categories</p>
             <p className="text-2xl font-bold text-blue-600">
               {categories.filter((c) => !!c.parentCategory).length}
             </p>
@@ -222,7 +222,7 @@ export default function AdminCategoriesPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm kiếm theo tên, slug hoặc mô tả..."
+                placeholder="Search by name, slug or description..."
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
               {searchTerm && (
@@ -242,8 +242,8 @@ export default function AdminCategoriesPage() {
               >
                 <span className="truncate text-gray-700">
                   {filterParent
-                    ? parentCategories.find(c => c._id === filterParent)?.name || "Danh mục đã chọn"
-                    : "Tất cả danh mục cha"}
+                    ? parentCategories.find(c => c._id === filterParent)?.name || "Selected Category"
+                    : "All Parent Categories"}
                 </span>
                 <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -255,7 +255,7 @@ export default function AdminCategoriesPage() {
                     onClick={() => { setFilterParent(""); setIsCategoryOpen(false); }}
                     className={`px-4 py-3 cursor-pointer hover:bg-orange-50 transition-colors border-b border-gray-100 text-sm ${!filterParent ? "font-bold text-orange-600 bg-orange-50" : "text-gray-700"}`}
                   >
-                    Tất cả danh mục cha
+                    All Parent Categories
                   </div>
                   {parentCategories.map(p => (
                     <div
@@ -278,19 +278,19 @@ export default function AdminCategoriesPage() {
           <div className="bg-white rounded-lg shadow-md p-12">
             <div className="text-center">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Không tìm thấy kết quả
+                No Results Found
               </h3>
               <p className="text-gray-600 mb-4">
                 {searchTerm
-                  ? "Không có danh mục nào phù hợp với điều kiện tìm kiếm"
-                  : "Chưa có danh mục nào"}
+                  ? "No categories match your search criteria"
+                  : "No categories yet"}
               </p>
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
                   className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
                 >
-                  Xóa bộ lọc
+                  Clear Filter
                 </button>
               )}
             </div>

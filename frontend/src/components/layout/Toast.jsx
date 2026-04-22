@@ -1,4 +1,4 @@
-// Lê Nhựt Hào
+// Author note
 import { useEffect } from "react";
 import {
   CheckCircleFilled,
@@ -43,7 +43,7 @@ const Toast = ({ type = "success", title, message, onClose, index = 0 }) => {
     <div
       className={`fixed right-5 z-[999] transition-all duration-300 ease-in-out animate-slide-in`}
       style={{
-        top: `${20 + index * 80}px`, // đẩy toast sau xuống
+        top: `${20 + index * 80}px`, // keep stacked toasts separated
       }}
     >
       <div

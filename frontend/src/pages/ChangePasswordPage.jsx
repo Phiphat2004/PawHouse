@@ -29,19 +29,19 @@ export default function ChangePasswordPage() {
     const newErrors = {};
 
     if (!formData.oldPassword) {
-      newErrors.oldPassword = 'Vui lòng nhập mật khẩu cũ';
+      newErrors.oldPassword = 'Please enter your current password';
     }
 
     if (!formData.newPassword) {
-      newErrors.newPassword = 'Vui lòng nhập mật khẩu mới';
+      newErrors.newPassword = 'Please enter a new password';
     } else if (formData.newPassword.length < 6) {
-      newErrors.newPassword = 'Mật khẩu mới phải ít nhất 6 ký tự';
+      newErrors.newPassword = 'New password must be at least 6 characters';
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu mới';
+      newErrors.confirmPassword = 'Please confirm your new password';
     } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+      newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
@@ -59,8 +59,8 @@ export default function ChangePasswordPage() {
 
       setToast({
         type: 'success',
-        title: 'Thành công!',
-        message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.',
+        title: 'Success!',
+        message: 'Password changed successfully. Please log in again.',
       });
 
       // Clear form
@@ -80,8 +80,8 @@ export default function ChangePasswordPage() {
     } catch (error) {
       setToast({
         type: 'error',
-        title: 'Lỗi',
-        message: error.message || 'Không thể đổi mật khẩu',
+        title: 'Error',
+        message: error.message || 'Unable to change password',
       });
     } finally {
       setLoading(false);
@@ -97,15 +97,15 @@ export default function ChangePasswordPage() {
             <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🔒</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Đổi mật khẩu</h1>
-            <p className="text-gray-600 mt-2">Nhập thông tin để đổi mật khẩu của bạn</p>
+            <h1 className="text-3xl font-bold text-gray-900">Change Password</h1>
+            <p className="text-gray-600 mt-2">Enter the required information to change your password</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Old Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu cũ <span className="text-red-500">*</span>
+                Current Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -116,7 +116,7 @@ export default function ChangePasswordPage() {
                   className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                     errors.oldPassword ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Nhập mật khẩu cũ"
+                  placeholder="Enter current password"
                 />
                 <button
                   type="button"
@@ -134,7 +134,7 @@ export default function ChangePasswordPage() {
             {/* New Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu mới <span className="text-red-500">*</span>
+                New Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -145,7 +145,7 @@ export default function ChangePasswordPage() {
                   className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                     errors.newPassword ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                  placeholder="Enter new password (minimum 6 characters)"
                 />
                 <button
                   type="button"
@@ -163,7 +163,7 @@ export default function ChangePasswordPage() {
             {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Xác nhận mật khẩu mới <span className="text-red-500">*</span>
+                Confirm New Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -174,7 +174,7 @@ export default function ChangePasswordPage() {
                   className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                     errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="Nhập lại mật khẩu mới"
+                  placeholder="Re-enter new password"
                 />
                 <button
                   type="button"
@@ -191,19 +191,19 @@ export default function ChangePasswordPage() {
 
             {/* Password Requirements */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-blue-900 mb-2">📋 Yêu cầu mật khẩu:</p>
+              <p className="text-sm font-medium text-blue-900 mb-2">📋 Password requirements:</p>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li className="flex items-center gap-2">
                   <span className={formData.newPassword.length >= 6 ? "text-green-600" : "text-gray-400"}>
                     {formData.newPassword.length >= 6 ? "✓" : "○"}
                   </span>
-                  Ít nhất 6 ký tự
+                  At least 6 characters
                 </li>
                 <li className="flex items-center gap-2">
                   <span className={formData.newPassword && formData.newPassword === formData.confirmPassword ? "text-green-600" : "text-gray-400"}>
                     {formData.newPassword && formData.newPassword === formData.confirmPassword ? "✓" : "○"}
                   </span>
-                  Mật khẩu xác nhận khớp
+                  Passwords match
                 </li>
               </ul>
             </div>
@@ -217,12 +217,12 @@ export default function ChangePasswordPage() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  <span>Đang xử lý...</span>
+                  <span>Processing...</span>
                 </>
               ) : (
                 <>
                   <span>🔐</span>
-                  <span>Đổi mật khẩu</span>
+                  <span>Change Password</span>
                 </>
               )}
             </button>
@@ -234,7 +234,7 @@ export default function ChangePasswordPage() {
               onClick={() => navigate(-1)}
               className="text-orange-600 hover:text-orange-800 transition-colors font-medium"
             >
-              ← Quay lại
+              ← Go Back
             </button>
           </div>
         </div>

@@ -14,21 +14,21 @@ export default function QuickActions() {
   }, [])
 
   const actions = [
-    { icon: '📦', label: 'Quản lý sản phẩm', color: 'from-orange-500 to-amber-500', path: '/quan-tri/san-pham' },
-    { icon: '🛍️', label: 'Quản lý đơn hàng', color: 'from-blue-500 to-cyan-500', path: '/quan-tri/don-hang' },
-    { icon: '📊', label: 'Quản lý tồn kho', color: 'from-purple-500 to-pink-500', path: '/quan-tri/ton-kho' }
+    { icon: '📦', label: 'Manage products', color: 'from-orange-500 to-amber-500', path: '/quan-tri/san-pham' },
+    { icon: '🛍️', label: 'Manage orders', color: 'from-blue-500 to-cyan-500', path: '/quan-tri/don-hang' },
+    { icon: '📊', label: 'Manage inventory', color: 'from-purple-500 to-pink-500', path: '/quan-tri/ton-kho' }
   ]
 
   const visibleActions = isAdmin
     ? [
         ...actions,
-        { icon: '👥', label: 'Quản lý tài khoản', color: 'from-green-500 to-emerald-500', path: '/quan-tri/khach-hang' },
+        { icon: '👥', label: 'Manage accounts', color: 'from-green-500 to-emerald-500', path: '/quan-tri/khach-hang' },
       ]
     : actions
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Thao tác nhanh</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Quick actions</h2>
       <div className="grid grid-cols-2 gap-3">
         {visibleActions.map((action, index) => (
           <button

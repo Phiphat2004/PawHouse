@@ -55,7 +55,7 @@ export default function AdminEditProfilePage() {
 
         setAvatarPreview(user.profile?.avatarUrl || "");
       } catch (err) {
-        setError(err.message || "Không thể tải thông tin hồ sơ");
+        setError(err.message || "Unable to load profile information");
       } finally {
         setLoading(false);
       }
@@ -77,12 +77,12 @@ export default function AdminEditProfilePage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setError("Chỉ chấp nhận file ảnh");
+      setError("Only image files are accepted");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("File ảnh không được vượt quá 5MB");
+      setError("Image file must not exceed 5MB");
       return;
     }
 
@@ -165,12 +165,12 @@ export default function AdminEditProfilePage() {
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(cachedUser));
       }
 
-      setSuccess("Cập nhật thông tin thành công");
+      setSuccess("Profile updated successfully");
       setTimeout(() => {
         navigate(ROUTES.ADMIN_PROFILE);
       }, 900);
     } catch (err) {
-      setError(err.message || "Không thể cập nhật thông tin");
+      setError(err.message || "Unable to update profile");
     } finally {
       setSaving(false);
     }
@@ -181,14 +181,14 @@ export default function AdminEditProfilePage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Chỉnh sửa hồ sơ quản trị</h1>
-            <p className="mt-1 text-sm text-gray-500">Trang chỉnh sửa riêng cho admin/staff.</p>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Admin Profile</h1>
+            <p className="mt-1 text-sm text-gray-500">Profile editing page for admin/staff.</p>
           </div>
           <Link
             to={ROUTES.ADMIN_PROFILE}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Quay lại
+            Back
           </Link>
         </div>
 
@@ -201,12 +201,12 @@ export default function AdminEditProfilePage() {
 
         {loading ? (
           <div className="flex h-56 items-center justify-center rounded-2xl bg-white shadow-sm">
-            <div className="text-sm text-gray-500">Đang tải dữ liệu...</div>
+            <div className="text-sm text-gray-500">Loading data...</div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-900">Ảnh đại diện</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Profile Picture</h2>
               <div className="flex flex-col items-center gap-4 sm:flex-row">
                 <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow">
                   {avatarPreview ? (
@@ -228,7 +228,7 @@ export default function AdminEditProfilePage() {
                     value={form.avatarUrl}
                     onChange={handleAvatarUrlChange}
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                    placeholder="Hoặc dán link ảnh"
+                    placeholder="Or paste an image URL"
                   />
                   {avatarPreview && (
                     <button
@@ -236,7 +236,7 @@ export default function AdminEditProfilePage() {
                       onClick={handleRemoveAvatar}
                       className="text-sm font-medium text-red-600 hover:text-red-700"
                     >
-                      Xóa ảnh
+                      Remove Photo
                     </button>
                   )}
                 </div>
@@ -248,14 +248,14 @@ export default function AdminEditProfilePage() {
                 name="fullName"
                 value={form.fullName}
                 onChange={handleChange}
-                placeholder="Họ và tên"
+                placeholder="Full Name"
                 className="rounded-lg border border-gray-200 px-3 py-2"
               />
               <input
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                placeholder="Số điện thoại"
+                placeholder="Phone Number"
                 className="rounded-lg border border-gray-200 px-3 py-2"
               />
               <select
@@ -264,10 +264,10 @@ export default function AdminEditProfilePage() {
                 onChange={handleChange}
                 className="rounded-lg border border-gray-200 px-3 py-2"
               >
-                <option value="">Giới tính</option>
-                <option value="male">Nam</option>
-                <option value="female">Nữ</option>
-                <option value="other">Khác</option>
+                <option value="">Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
               </select>
               <input
                 type="date"
@@ -280,28 +280,28 @@ export default function AdminEditProfilePage() {
                 name="addressLine"
                 value={form.addressLine}
                 onChange={handleChange}
-                placeholder="Địa chỉ"
+                placeholder="Address"
                 className="rounded-lg border border-gray-200 px-3 py-2"
               />
               <input
                 name="ward"
                 value={form.ward}
                 onChange={handleChange}
-                placeholder="Phường/Xã"
+                placeholder="Ward / Commune"
                 className="rounded-lg border border-gray-200 px-3 py-2"
               />
               <input
                 name="district"
                 value={form.district}
                 onChange={handleChange}
-                placeholder="Quận/Huyện"
+                placeholder="District"
                 className="rounded-lg border border-gray-200 px-3 py-2"
               />
               <input
                 name="city"
                 value={form.city}
                 onChange={handleChange}
-                placeholder="Tỉnh/Thành phố"
+                placeholder="Province / City"
                 className="rounded-lg border border-gray-200 px-3 py-2"
               />
             </div>
@@ -314,7 +314,7 @@ export default function AdminEditProfilePage() {
                   checked={form.marketingEmail}
                   onChange={handleChange}
                 />
-                Nhận email marketing
+                Receive Marketing Emails
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -323,7 +323,7 @@ export default function AdminEditProfilePage() {
                   checked={form.pushNotification}
                   onChange={handleChange}
                 />
-                Nhận thông báo
+                Receive Push Notifications
               </label>
             </div>
 
@@ -332,7 +332,7 @@ export default function AdminEditProfilePage() {
               disabled={saving}
               className="w-full rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </form>
         )}

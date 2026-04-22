@@ -58,12 +58,12 @@ export default function AdminProductDetailPage() {
     if (!canManage) return;
     try {
       await productApi.delete(id);
-      addToast("success", "Thành công!", "Xóa sản phẩm thành công");
+      addToast("success", "Success!", "Product deleted successfully");
       setTimeout(() => {
         navigate("/quan-tri/san-pham");
       }, 1500);
     } catch (err) {
-      addToast("error", "Lỗi!", "Không thể xóa sản phẩm: " + err.message);
+      addToast("error", "Error!", "Failed to delete product: " + err.message);
     } finally {
       setShowDeleteModal(false);
     }
@@ -84,9 +84,9 @@ export default function AdminProductDetailPage() {
       const updated = await productApi.update(id, formData);
       setProduct(updated.product || updated);
       setShowEditForm(false);
-      addToast("success", "Thành công!", "Đã cập nhật sản phẩm thành công");
+      addToast("success", "Success!", "Product updated successfully");
     } catch (err) {
-      addToast("error", "Lỗi!", "Không thể cập nhật sản phẩm: " + err.message);
+      addToast("error", "Error!", "Failed to update product: " + err.message);
       throw err;
     }
   };
@@ -115,14 +115,14 @@ export default function AdminProductDetailPage() {
       setProduct({ ...product, isActive: !product.isActive });
       addToast(
         "success",
-        "Thành công!",
-        `Đã ${product.isActive ? "tạm ngưng" : "kích hoạt"} sản phẩm`,
+        "Success!",
+        `Product ${product.isActive ? "paused" : "activated"}`,
       );
     } catch (err) {
       addToast(
         "error",
-        "Lỗi!",
-        "Không thể cập nhật trạng thái: " + err.message,
+        "Error!",
+        "Failed to update status: " + err.message,
       );
     }
   };
@@ -133,7 +133,7 @@ export default function AdminProductDetailPage() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải...</p>
+            <p className="mt-4 text-gray-600">Loading...</p>
           </div>
         </div>
       </AdminLayout>
@@ -144,7 +144,7 @@ export default function AdminProductDetailPage() {
     return (
       <AdminLayout>
         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
-          {error || "Không tìm thấy sản phẩm"}
+          {error || "Product not found"}
         </div>
       </AdminLayout>
     );
@@ -160,13 +160,13 @@ export default function AdminProductDetailPage() {
               to="/quan-tri/san-pham"
               className="text-gray-600 hover:text-gray-900"
             >
-              ← Quay lại
+              ← Back
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {product.name}
               </h1>
-              <p className="text-gray-600 mt-1">Chi tiết sản phẩm</p>
+              <p className="text-gray-600 mt-1">Product Details</p>
             </div>
           </div>
           {canManage ? (
@@ -178,24 +178,24 @@ export default function AdminProductDetailPage() {
                   : "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                   }`}
               >
-                {product.isActive ? <><PauseCircleOutlined /> Tạm ngưng</> : <><PlayCircleOutlined /> Kích hoạt</>}
+                {product.isActive ? <><PauseCircleOutlined /> Pause</> : <><PlayCircleOutlined /> Activate</>}
               </button>
               <button
                 onClick={handleEditClick}
                 className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                <EditOutlined /> Chỉnh sửa
+                <EditOutlined /> Edit
               </button>
               <button
                 onClick={handleDeleteClick}
                 className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                <DeleteOutlined /> Xóa
+                <DeleteOutlined /> Delete
               </button>
             </div>
           ) : (
             <span className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500">
-              Chế độ chỉ xem
+              View only
             </span>
           )}
         </div>
@@ -207,7 +207,7 @@ export default function AdminProductDetailPage() {
             {/* Images */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Hình ảnh sản phẩm
+                Product Images
               </h2>
               {product.images && product.images.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -233,21 +233,21 @@ export default function AdminProductDetailPage() {
 
             {/* Description */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Mô tả</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Description</h2>
               <div className="prose max-w-none">
                 {product.description ? (
                   <p className="text-gray-700 whitespace-pre-wrap">
                     {product.description}
                   </p>
                 ) : (
-                  <p className="text-gray-400 italic">Chưa có mô tả</p>
+                  <p className="text-gray-400 italic">No description</p>
                 )}
               </div>
             </div>
 
             {/* Categories */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Danh mục</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Categories</h2>
               {product.categoryIds && product.categoryIds.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {product.categoryIds.map((cat) => (
@@ -261,7 +261,7 @@ export default function AdminProductDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 italic">Chưa có danh mục</p>
+                <p className="text-gray-400 italic">No categories</p>
               )}
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function AdminProductDetailPage() {
             {/* Price & Stock Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Giá & Kho hàng
+                Price & Stock
               </h2>
               <div className="space-y-4">
                 <div>
@@ -281,7 +281,7 @@ export default function AdminProductDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Giá bán</span>
+                  <span className="text-sm text-gray-600">Sale Price</span>
                   <p className="mt-1 text-2xl font-bold text-orange-600">
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
@@ -292,19 +292,19 @@ export default function AdminProductDetailPage() {
                     product.compareAtPrice > product.price && (
                       <div className="mt-1 flex items-center gap-2">
                         <span className="text-sm text-gray-500 line-through">
-                          Giá gốc: {new Intl.NumberFormat("vi-VN", {
+                          Original Price: {new Intl.NumberFormat("vi-VN", {
                             style: "currency",
                             currency: "VND",
                           }).format(product.compareAtPrice)}
                         </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 leading-none">
-                          -Giảm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                          -{Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
                         </span>
                       </div>
                     )}
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Tồn kho</span>
+                  <span className="text-sm text-gray-600">Stock</span>
                   <div className="mt-1 flex items-center gap-2">
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-lg font-bold ${product.stock === 0
@@ -318,10 +318,10 @@ export default function AdminProductDetailPage() {
                     </span>
                     <span className="text-sm text-gray-500">
                       {product.stock === 0
-                        ? "Hết hàng"
+                        ? "Out of stock"
                         : product.stock < 10
-                          ? "Sắp hết"
-                          : "Còn hàng"}
+                          ? "Low stock"
+                          : "In stock"}
                     </span>
                   </div>
                 </div>
@@ -331,21 +331,21 @@ export default function AdminProductDetailPage() {
             {/* Status Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Trạng thái
+                Status
               </h2>
               <div className="space-y-4">
                 <div>
                   <span className="text-sm text-gray-600">
-                    Trạng thái hiện tại
+                    Current Status
                   </span>
                   <div className="mt-1">
                     {product.isActive ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        ✓ Đang hoạt động
+                        ✓ Active
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                        ⊗ Tạm ngưng
+                        ⊗ Paused
                       </span>
                     )}
                   </div>
@@ -362,7 +362,7 @@ export default function AdminProductDetailPage() {
             {/* Basic Info Card */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Thông tin cơ bản
+                Basic Info
               </h2>
               <div className="space-y-4">
                 <div>
@@ -373,21 +373,21 @@ export default function AdminProductDetailPage() {
                 </div>
                 {product.brand && (
                   <div>
-                    <span className="text-sm text-gray-600">Thương hiệu</span>
+                    <span className="text-sm text-gray-600">Brand</span>
                     <p className="mt-1 text-gray-900 font-medium">
                       {product.brand}
                     </p>
                   </div>
                 )}
                 <div>
-                  <span className="text-sm text-gray-600">Ngày tạo</span>
+                  <span className="text-sm text-gray-600">Created At</span>
                   <p className="mt-1 text-gray-900">
                     {new Date(product.createdAt).toLocaleString("vi-VN")}
                   </p>
                 </div>
                 <div>
                   <span className="text-sm text-gray-600">
-                    Cập nhật lần cuối
+                    Last Updated
                   </span>
                   <p className="mt-1 text-gray-900">
                     {new Date(product.updatedAt).toLocaleString("vi-VN")}
@@ -395,7 +395,7 @@ export default function AdminProductDetailPage() {
                 </div>
                 {product.createdBy && (
                   <div>
-                    <span className="text-sm text-gray-600">Người tạo</span>
+                    <span className="text-sm text-gray-600">Created By</span>
                     <p className="mt-1 text-gray-900">
                       {product.createdBy.firstName} {product.createdBy.lastName}
                       <br />
@@ -433,10 +433,10 @@ export default function AdminProductDetailPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
-                Xác nhận xóa sản phẩm
+                Confirm Delete Product
               </h3>
               <p className="text-gray-600 text-center mb-6">
-                Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                Are you sure you want to delete product{" "}
                 <strong>{product.name}</strong>? Hành động này không thể hoàn
                 tác.
               </p>
@@ -445,13 +445,13 @@ export default function AdminProductDetailPage() {
                   onClick={handleDeleteCancel}
                   className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition-colors"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
                 >
-                  Xóa
+                  Delete
                 </button>
               </div>
             </div>

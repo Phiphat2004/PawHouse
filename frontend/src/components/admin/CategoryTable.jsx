@@ -25,9 +25,9 @@ export default function CategoryTable({
           <FolderOpenOutlined />
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Chưa có danh mục nào
+          No categories yet
         </h3>
-        <p className="text-gray-600">Thêm danh mục đầu tiên để bắt đầu</p>
+        <p className="text-gray-600">Add your first category to get started</p>
       </div>
     );
   }
@@ -39,19 +39,19 @@ export default function CategoryTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tên danh mục
+                Category name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Danh mục cha
+                Parent category
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Số lượng sản phẩm
+                Product count
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ngày tạo
+                Created date
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Thao tác
+                Actions
               </th>
             </tr>
           </thead>
@@ -80,7 +80,7 @@ export default function CategoryTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-semibold text-gray-900 bg-gray-100 inline-block px-3 py-1 rounded-full">
-                    {category.productCount || 0} sản phẩm
+                    {category.productCount || 0} products
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -91,7 +91,7 @@ export default function CategoryTable({
                       <Link
                         to={`/quan-tri/danh-muc/${category._id}`}
                         className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-full transition-all"
-                        title="Xem chi tiết"
+                        title="View details"
                       >
                         <EyeOutlined className="text-lg" />
                       </Link>
@@ -100,14 +100,14 @@ export default function CategoryTable({
                           <button
                             onClick={() => onEdit(category)}
                             className="p-2 text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full transition-all"
-                            title="Chỉnh sửa"
+                            title="Edit"
                           >
                             <EditOutlined className="text-lg" />
                           </button>
                           <button
                             onClick={() => onDelete(category)}
                             className="p-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-full transition-all"
-                            title="Xóa"
+                            title="Delete"
                           >
                             <DeleteOutlined className="text-lg" />
                           </button>

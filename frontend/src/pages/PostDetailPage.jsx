@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
 import { postApi } from "../services/api";
@@ -49,7 +49,7 @@ export default function PostDetailPage() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
-    alert('Đã sao chép link bài viết!');
+    alert('Post link copied!');
     setShowShareMenu(false);
   };
 
@@ -107,7 +107,7 @@ export default function PostDetailPage() {
         loadAuthorPostCount(data.post.authorId._id);
       }
     } catch (err) {
-      setError(err.message || "Không thể tải bài viết");
+      setError(err.message || "Unable to load post");
       console.error("Error loading post:", err);
     } finally {
       setLoading(false);
@@ -142,7 +142,7 @@ export default function PostDetailPage() {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", {
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -158,7 +158,7 @@ export default function PostDetailPage() {
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600">Đang tải bài viết...</p>
+            <p className="mt-4 text-gray-600">Loading post...</p>
           </div>
         </div>
       </div>
@@ -173,14 +173,14 @@ export default function PostDetailPage() {
           <div className="text-center">
             <div className="text-6xl mb-4">😞</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Không tìm thấy bài viết
+              Post Not Found
             </h3>
             <p className="text-gray-500 mb-6">{error}</p>
             <Link
               to="/cong-dong"
               className="inline-block px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full font-medium hover:from-orange-600 hover:to-amber-600 transition-all"
             >
-              ← Quay lại cộng đồng
+              ← Back to Community
             </Link>
           </div>
         </div>
@@ -206,11 +206,11 @@ export default function PostDetailPage() {
           <nav className="flex items-center gap-2 text-sm text-gray-600">
             <Link to="/" className="hover:text-orange-500 transition-colors flex items-center gap-1">
               <span>🏠</span>
-              <span>Trang chủ</span>
+              <span>Home</span>
             </Link>
             <span className="text-gray-400">›</span>
             <Link to="/cong-dong" className="hover:text-orange-500 transition-colors">
-              Cộng đồng
+              Community
             </Link>
             <span className="text-gray-400">›</span>
             <span className="text-gray-900 font-medium truncate max-w-xs md:max-w-md">
@@ -241,7 +241,7 @@ export default function PostDetailPage() {
                   <div className="absolute bottom-0 left-0 right-0 z-20 p-6 sm:p-8 lg:p-10">
                     <div className="mb-4 flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-orange-500/90 backdrop-blur-sm text-white text-xs font-bold rounded-full">
-                        📖 Bài viết
+                        📖 Article
                       </span>
                       {post.tagIds && post.tagIds[0] && (
                         <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold rounded-full border border-white/30">
@@ -263,7 +263,7 @@ export default function PostDetailPage() {
                   <div className="mb-8">
                     <div className="mb-4 flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
-                        📖 Bài viết
+                        📖 Article
                       </span>
                       {post.tagIds && post.tagIds[0] && (
                         <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">
@@ -281,7 +281,7 @@ export default function PostDetailPage() {
                 <div className="mb-8 pb-8 border-b border-gray-100">
                   {post.status !== "published" && canViewUnpublished && (
                     <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-                      Bài viết này đang ở trạng thái <strong>{post.status}</strong> và chưa hiển thị công khai cho khách hàng.
+                      This post is currently <strong>{post.status}</strong> and is not publicly visible to customers.
                     </div>
                   )}
 
@@ -305,7 +305,7 @@ export default function PostDetailPage() {
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <span>⏱️</span>
-                            <span>5 phút đọc</span>
+                            <span>5 min read</span>
                           </span>
                         </div>
                       </div>
@@ -317,7 +317,7 @@ export default function PostDetailPage() {
                         className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-semibold transition-all duration-200"
                       >
                         <span>🔗</span>
-                        <span>Chia sẻ</span>
+                        <span>Share</span>
                       </button>
                       {showShareMenu && (
                         <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-200 p-2 z-50 animate-fade-in">
@@ -326,21 +326,14 @@ export default function PostDetailPage() {
                             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-xl transition-colors text-left"
                           >
                             <span className="text-xl">📘</span>
-                            <span className="font-medium text-gray-700">Chia sẻ lên Facebook</span>
-                          </button>
-                          <button
-                            onClick={shareToTwitter}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-sky-50 rounded-xl transition-colors text-left"
-                          >
-                            <span className="text-xl">🐦</span>
-                            <span className="font-medium text-gray-700">Chia sẻ lên Twitter</span>
+                            <span className="font-medium text-gray-700">Share lên Facebook</span>
                           </button>
                           <button
                             onClick={copyToClipboard}
                             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-xl transition-colors text-left"
                           >
                             <span className="text-xl">📋</span>
-                            <span className="font-medium text-gray-700">Sao chép link</span>
+                            <span className="font-medium text-gray-700">Copy Link</span>
                           </button>
                         </div>
                       )}
@@ -355,7 +348,7 @@ export default function PostDetailPage() {
                       <div className="flex items-start gap-4">
                         <span className="text-3xl flex-shrink-0">💡</span>
                         <div>
-                          <p className="text-sm font-bold text-orange-700 uppercase tracking-wide mb-2">Tóm tắt</p>
+                          <p className="text-sm font-bold text-orange-700 uppercase tracking-wide mb-2">Summary</p>
                           <p className="text-lg text-gray-800 leading-relaxed font-medium">
                             {post.excerpt}
                           </p>
@@ -378,7 +371,7 @@ export default function PostDetailPage() {
                     <div className="flex items-center gap-2 mb-4">
                       <span className="text-xl">🏷️</span>
                       <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
-                        Từ khóa
+                        Tags
                       </h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -402,7 +395,7 @@ export default function PostDetailPage() {
                 <div className="flex items-center gap-3 mb-6">
                   <span className="text-3xl">📚</span>
                   <h2 className="text-3xl font-bold text-gray-900">
-                    Bài viết liên quan
+                    Related Posts
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -474,7 +467,7 @@ export default function PostDetailPage() {
                 <div className="flex items-center justify-center gap-4 text-sm text-gray-600 pb-6 border-b border-gray-100">
                   <div className="text-center">
                     <div className="font-bold text-gray-900 text-lg">{authorPostCount}</div>
-                    <div className="text-xs text-gray-600">Bài viết</div>
+                    <div className="text-xs text-gray-600">Posts</div>
                   </div>
                 </div>
 
@@ -493,7 +486,7 @@ export default function PostDetailPage() {
               className="group flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-2xl font-bold transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <span className="group-hover:-translate-x-1 transition-transform text-xl">←</span>
-              <span>Quay lại cộng đồng</span>
+              <span>Back to Community</span>
             </Link>
           </aside>
         </div>

@@ -1,4 +1,4 @@
-// Lê Nhựt Hào
+﻿// Lê Nhựt Hào
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
@@ -30,7 +30,7 @@ export default function OrderPage() {
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!token) {
-      alert("Vui lòng đăng nhập để xem đơn hàng");
+      alert("Please log in to view your orders");
       navigate("/login");
       return;
     }
@@ -68,7 +68,7 @@ export default function OrderPage() {
       }));
     } catch (err) {
       console.error("Failed to fetch orders:", err);
-      setError("Không thể tải danh sách đơn hàng. Vui lòng thử lại.");
+      setError("Unable to load orders. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -76,13 +76,13 @@ export default function OrderPage() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
-      confirmed: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800 border border-blue-200" },
-      packing: { text: "Đang đóng gói", color: "bg-purple-100 text-purple-800 border border-purple-200" },
-      shipping: { text: "Đang giao hàng", color: "bg-indigo-100 text-indigo-800 border border-indigo-200" },
-      completed: { text: "Hoàn thành", color: "bg-green-100 text-green-800 border border-green-200" },
-      cancelled: { text: "Đã hủy", color: "bg-red-100 text-red-800 border border-red-200" },
-      refunded: { text: "Đã hoàn tiền", color: "bg-gray-100 text-gray-800 border border-gray-200" },
+      pending: { text: "Pending", color: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
+      confirmed: { text: "Confirmed", color: "bg-blue-100 text-blue-800 border border-blue-200" },
+      packing: { text: "Packing", color: "bg-purple-100 text-purple-800 border border-purple-200" },
+      shipping: { text: "Shipping", color: "bg-indigo-100 text-indigo-800 border border-indigo-200" },
+      completed: { text: "Completed", color: "bg-green-100 text-green-800 border border-green-200" },
+      cancelled: { text: "Cancelled", color: "bg-red-100 text-red-800 border border-red-200" },
+      refunded: { text: "Refunded", color: "bg-gray-100 text-gray-800 border border-gray-200" },
     };
     const statusInfo = statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800 border border-gray-200" };
     return (
@@ -116,7 +116,7 @@ export default function OrderPage() {
     if (!reason) {
       setCancelPopup((prev) => ({
         ...prev,
-        error: "Vui lòng nhập lý do hủy đơn",
+        error: "Please enter a reason for cancellation",
       }));
       return;
     }
@@ -124,12 +124,12 @@ export default function OrderPage() {
     try {
       setCancelLoadingId(cancelPopup.orderId);
       await orderApi.cancelOrder(cancelPopup.orderId, reason);
-      alert("Đơn hàng đã được hủy");
+      alert("Order has been cancelled");
       closeCancelPopup();
       fetchOrders();
     } catch (err) {
       console.error("Failed to cancel order:", err);
-      alert(err.data?.message || "Không thể hủy đơn hàng");
+      alert(err.data?.message || "Unable to cancel order");
     } finally {
       setCancelLoadingId(null);
     }
@@ -141,7 +141,7 @@ export default function OrderPage() {
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
           <div className="text-center">
-            <p className="text-gray-600">Đang tải đơn hàng...</p>
+            <p className="text-gray-600">Loading orders...</p>
           </div>
         </main>
         <Footer />
@@ -154,11 +154,11 @@ export default function OrderPage() {
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Đơn hàng của tôi</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
           <p className="text-gray-600">
             {pagination.total > 0
-              ? `${pagination.total} đơn hàng`
-              : "Bạn chưa có đơn hàng nào"}
+              ? `${pagination.total} order(s)`
+              : "You have no orders yet"}
           </p>
         </div>
 
@@ -169,7 +169,7 @@ export default function OrderPage() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Tìm theo mã đơn hoặc tên sản phẩm..."
+              placeholder="Search by order code or product name..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-sm"
             />
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +185,7 @@ export default function OrderPage() {
             type="submit"
             className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm font-medium"
           >
-            Tìm kiếm
+            Search
           </button>
         </form>
 
@@ -206,16 +206,16 @@ export default function OrderPage() {
                 }`}
               >
                 {status === "all"
-                  ? "Tất cả"
+                  ? "All"
                   : status === "pending"
-                  ? "Chờ xử lý"
+                  ? "Pending"
                   : status === "confirmed"
-                  ? "Đã xác nhận"
+                  ? "Confirmed"
                   : status === "shipping"
-                  ? "Đang giao"
+                  ? "Shipping"
                   : status === "completed"
-                  ? "Hoàn thành"
-                  : "Đã hủy"}
+                  ? "Completed"
+                  : "Cancelled"}
               </button>
             )
           )}
@@ -231,16 +231,16 @@ export default function OrderPage() {
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">📦</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Chưa có đơn hàng
+              No Orders Yet
             </h2>
             <p className="text-gray-600 mb-6">
-              Bạn chưa có đơn hàng nào trong danh sách này
+              Bạn No Orders Yet nào trong danh sách này
             </p>
             <Link
               to="/"
               className="inline-block bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
             >
-              Tiếp tục mua sắm
+              Continue Shopping
             </Link>
           </div>
         ) : (
@@ -254,22 +254,22 @@ export default function OrderPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">
-                        Mã đơn: {order.orderCode || order._id}
+                        Order #: {order.orderCode || order._id}
                       </h3>
                       {getStatusBadge(order.status)}
                     </div>
                     <p className="text-sm text-gray-500 mb-2">
-                      Ngày đặt:{" "}
+                      Date Placed:{" "}
                       {new Date(order.createdAt || order.created_at).toLocaleString(
-                        "vi-VN"
+                        "en-US"
                       )}
                     </p>
                     <p className="text-sm text-gray-700">
-                      {order.items?.length || 0} sản phẩm
+                      {order.items?.length || 0} item(s)
                     </p>
                     {order.addressSnapshot && (
                       <p className="text-sm text-gray-600 mt-2">
-                        Giao đến: {order.addressSnapshot.fullName} -{" "}
+                        Deliver to: {order.addressSnapshot.fullName} -{" "}
                         {order.addressSnapshot.phone}
                       </p>
                     )}
@@ -278,7 +278,7 @@ export default function OrderPage() {
                   <div className="flex flex-col items-end gap-2">
                     <p className="text-xl font-bold text-orange-600">
                       {(order.total || order.final_price || 0).toLocaleString(
-                        "vi-VN"
+                        "en-US"
                       )}
                       ₫
                     </p>
@@ -287,14 +287,14 @@ export default function OrderPage() {
                         to={`/don-hang/${order._id}`}
                         className="px-4 py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition text-sm font-medium"
                       >
-                        Xem chi tiết
+                        View Details
                       </Link>
                       {order.status === "pending" && (
                         <button
                           onClick={() => handleCancelOrder(order._id)}
                           className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm font-medium"
                         >
-                          Hủy đơn
+                          Cancel Order
                         </button>
                       )}
                     </div>
@@ -313,10 +313,10 @@ export default function OrderPage() {
                   disabled={pagination.page === 1}
                   className="px-4 py-2 border border-orange-200 text-orange-700 rounded-lg bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Trước
+                  Previous
                 </button>
                 <span className="text-gray-600">
-                  Trang {pagination.page} / {pagination.totalPages}
+                  Page {pagination.page} / {pagination.totalPages}
                 </span>
                 <button
                   onClick={() =>
@@ -325,7 +325,7 @@ export default function OrderPage() {
                   disabled={pagination.page >= pagination.totalPages}
                   className="px-4 py-2 border border-orange-200 text-orange-700 rounded-lg bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Sau
+                  Next
                 </button>
               </div>
             )}
@@ -337,8 +337,8 @@ export default function OrderPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
             <div className="border-b border-gray-100 px-5 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">Hủy đơn hàng</h3>
-              <p className="mt-1 text-sm text-gray-600">Vui lòng nhập lý do hủy đơn để cửa hàng hỗ trợ bạn tốt hơn.</p>
+              <h3 className="text-lg font-semibold text-gray-900">Cancel Order</h3>
+              <p className="mt-1 text-sm text-gray-600">Please enter a reason for cancellation so we can better assist you.</p>
             </div>
             <div className="px-5 py-4">
               <textarea
@@ -347,7 +347,7 @@ export default function OrderPage() {
                 onChange={(e) =>
                   setCancelPopup((prev) => ({ ...prev, reason: e.target.value, error: "" }))
                 }
-                placeholder="Nhập lý do hủy..."
+                placeholder="Enter cancellation reason..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
               />
               {cancelPopup.error && (
@@ -360,14 +360,14 @@ export default function OrderPage() {
                 disabled={!!cancelLoadingId}
                 className="px-4 py-2 rounded-lg border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-60"
               >
-                Đóng
+                Close
               </button>
               <button
                 onClick={submitCancelOrder}
                 disabled={!!cancelLoadingId}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
               >
-                {cancelLoadingId ? "Đang hủy..." : "Xác nhận hủy"}
+                {cancelLoadingId ? "Cancelling..." : "Confirm Cancellation"}
               </button>
             </div>
           </div>

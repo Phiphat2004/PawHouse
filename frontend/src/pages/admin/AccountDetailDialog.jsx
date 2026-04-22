@@ -45,12 +45,12 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
     const getRoleLabel = (role) => {
         switch (role) {
             case 'admin':
-                return 'Quản trị viên';
+                return 'Administrator';
             case 'staff':
-                return 'Nhân viên';
+                return 'Staff';
             case 'user':
             default:
-                return 'Người dùng';
+                return 'User';
         }
     };
 
@@ -71,11 +71,11 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
     const getStatusLabel = (status) => {
         switch (status) {
             case AccountStatus.ACTIVE:
-                return 'Hoạt động';
+                return 'Active';
             case AccountStatus.BANNED:
-                return 'Bị khóa';
+                return 'Banned';
             case AccountStatus.INACTIVE:
-                return 'Không hoạt động';
+                return 'Inactive';
             default:
                 return status;
         }
@@ -85,14 +85,14 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
         <Dialog open={!!account} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Chi tiết tài khoản</DialogTitle>
+                    <DialogTitle>Account Details</DialogTitle>
                     <DialogDescription>
-                        {account.is_deleted && (  // NEW: Warning for deleted accounts
+                        {account.is_deleted && (
                             <div className="mb-2 p-2 bg-gray-100 rounded text-sm text-gray-700">
-                                ⚠️ Tài khoản này đã bị xoá (không hoạt động).
+                                ⚠️ This account has been deleted (inactive).
                             </div>
                         )}
-                        Xem thông tin chi tiết của tài khoản này
+                        View detailed information for this account
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-6 py-4">
@@ -102,7 +102,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                             <UserOutlined className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Họ tên</p>
+                            <p className="text-sm text-gray-500 mb-1">Full Name</p>
                             <p className="text-gray-900">{account.name}</p>
                         </div>
                     </div>
@@ -124,7 +124,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                             <SafetyOutlined className="w-5 h-5 text-purple-600" />
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Vai trò</p>
+                            <p className="text-sm text-gray-500 mb-1">Role</p>
                             <Badge className={getRoleBadgeColor(account.role)}>
                                 {getRoleLabel(account.role)}
                             </Badge>
@@ -145,7 +145,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                             />
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Trạng thái</p>
+                            <p className="text-sm text-gray-500 mb-1">Status</p>
                             <Badge className={getStatusBadgeClass(account.status)}>
                                 {getStatusLabel(account.status)}
                             </Badge>
@@ -158,7 +158,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                             <CalendarOutlined className="w-5 h-5 text-orange-600" />
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Ngày tạo</p>
+                            <p className="text-sm text-gray-500 mb-1">Created At</p>
                             <p className="text-gray-900">{formatDate(account.createdAt)}</p>
                         </div>
                     </div>
@@ -167,7 +167,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                 {/* Dialog Footer with Actions */}
                 <div className="border-t pt-4 flex gap-2 justify-end">
                     <Button variant="outline" onClick={onClose}>
-                        Đóng
+                        Close
                     </Button>
                     {account.is_deleted && (
                         <Button
@@ -175,7 +175,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                             className="bg-sky-600 hover:bg-sky-700"
                         >
                             <UndoOutlined className="w-4 h-4 mr-2" />
-                            Khôi phục tài khoản
+                            Restore Account
                         </Button>
                     )}
                     {!account.is_deleted && account.role !== AccountRole.ADMIN && (
@@ -187,7 +187,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                                     : 'bg-green-600 hover:bg-green-700'
                             }
                         >
-                            {account.status === AccountStatus.ACTIVE ? 'Khoá tài khoản' : 'Mở khoá tài khoản'}
+                            {account.status === AccountStatus.ACTIVE ? 'Ban Account' : 'Unban Account'}
                         </Button>
                     )}
                 </div>

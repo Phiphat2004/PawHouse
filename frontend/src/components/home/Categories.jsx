@@ -15,7 +15,7 @@ export default function Categories() {
     categoryApi.getAll()
       .then((res) => {
         const list = res.categories || res || []
-        // Chỉ lấy các danh mục gốc (không có parentCategory)
+        // Only keep root categories (without parentCategory)
         const rootCategories = list.filter(c => !c.parentCategory)
         setCategories(rootCategories.slice(0, 6))
       })
@@ -27,7 +27,7 @@ export default function Categories() {
     return (
       <section className="py-20 bg-gradient-to-b from-white to-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="text-gray-400">Đang tải danh mục...</div>
+            <div className="text-gray-400">Loading categories...</div>
         </div>
       </section>
     )
@@ -39,9 +39,9 @@ export default function Categories() {
     <section className="py-20 bg-gradient-to-b from-white to-orange-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Danh Mục Sản Phẩm</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Product Categories</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Khám phá đa dạng sản phẩm chất lượng cao dành cho thú cưng của bạn
+            Explore a wide range of high-quality products for your pets
           </p>
         </div>
 

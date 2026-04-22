@@ -36,27 +36,27 @@ const BanConfirmationDialog = ({ account, onClose, onConfirm }) => {
                             </div>
                         )}
                         <AlertDialogTitle>
-                            {isBanning ? 'Khoá tài khoản' : 'Mở khoá tài khoản'}
+                            {isBanning ? 'Ban Account' : 'Unban Account'}
                         </AlertDialogTitle>
                     </div>
                     <AlertDialogDescription>
                         {isBanning ? (
                             <>
-                                Bạn có chắc chắn muốn khoá tài khoản của{' '}
+                                Are you sure you want to ban the account of{' '}
                                 <span className="font-medium text-gray-900">{account.name}</span> (
-                                {account.email})? Người dùng này sẽ không còn có thể truy cập hệ thống.
+                                {account.email})? This user will no longer be able to access the system.
                             </>
                         ) : (
                             <>
-                                Bạn có chắc chắn muốn mở khoá{' '}
+                                Are you sure you want to unban{' '}
                                 <span className="font-medium text-gray-900">{account.name}</span> (
-                                {account.email})? Người dùng này sẽ được cấp lại quyền truy cập hệ thống.
+                                {account.email})? This user will be granted access to the system again.
                             </>
                         )}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onClose}>Hủy</AlertDialogCancel>
+                    <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={onConfirm}
                         className={
@@ -65,7 +65,7 @@ const BanConfirmationDialog = ({ account, onClose, onConfirm }) => {
                                 : 'bg-green-600 hover:bg-green-700'
                         }
                     >
-                        {isBanning ? 'Khoá tài khoản' : 'Mở khoá tài khoản'}
+                        {isBanning ? 'Ban Account' : 'Unban Account'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

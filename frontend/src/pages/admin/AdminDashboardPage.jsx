@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             icon="💰"
-            label="Doanh thu tháng này"
+            label="Revenue This Month"
             value={loading ? '...' : `${formatCurrency(stats?.monthRevenue || 0)}`}
             // trend={revenueTrend?.trend}
             // trendValue={revenueTrend?.trendValue}
@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
           />
           <StatCard
             icon="🛍️"
-            label="Đơn hàng tháng này"
+            label="Orders This Month"
             value={loading ? '...' : `${stats?.monthOrderCount || 0}`}
             // trend={orderTrend?.trend}
             // trendValue={orderTrend?.trendValue}
@@ -87,13 +87,13 @@ export default function AdminDashboardPage() {
           />
           <StatCard
             icon="⏳"
-            label="Đơn chờ xử lý"
+            label="Pending Orders"
             value={loading ? '...' : `${pendingOrders}`}
             color="red"
           />
           <StatCard
             icon="📦"
-            label="Tổng sản phẩm"
+            label="Total Products"
             value={loading ? '...' : `${productStats?.total || 0}`}
             color="purple"
           />

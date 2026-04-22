@@ -14,9 +14,9 @@ import { authApi } from '@/utils/services/api'
 import { ROUTES, STORAGE_KEYS } from '@/utils/constants'
 
 function formatDate(value) {
-  if (!value) return 'Chưa cập nhật'
+  if (!value) return 'Not set'
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Chưa cập nhật'
+  if (Number.isNaN(date.getTime())) return 'Not set'
   return date.toLocaleDateString('vi-VN')
 }
 
@@ -32,7 +32,7 @@ export default function AdminProfilePage() {
 
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
       if (!token) {
-        setError('Phiên đăng nhập không tồn tại')
+        setError('Login session not found')
         setLoading(false)
         return
       }
@@ -63,7 +63,7 @@ export default function AdminProfilePage() {
           }
         }
       } catch (err) {
-        setError(err.message || 'Không thể tải thông tin tài khoản')
+        setError(err.message || 'Failed to load account information')
       } finally {
         setLoading(false)
       }
@@ -75,20 +75,20 @@ export default function AdminProfilePage() {
   const roles = user?.roles || []
   const isAdmin = roles.includes('admin')
   const isStaff = roles.includes('staff')
-  const profileLabel = isAdmin ? 'quản trị viên' : 'nhân viên'
-  const profileTitle = isAdmin ? 'Hồ sơ quản trị viên' : 'Hồ sơ nhân viên'
-  const accountTag = isAdmin ? 'Quản trị viên' : 'Nhân viên'
-  const accountSectionTitle = isAdmin ? 'Thông tin quản trị' : 'Thông tin nhân viên'
+  const profileLabel = isAdmin ? 'administrator' : 'staff'
+  const profileTitle = isAdmin ? 'Administrator Profile' : 'Staff Profile'
+  const accountTag = isAdmin ? 'Administrator' : 'Staff'
+  const accountSectionTitle = isAdmin ? 'Admin Information' : 'Staff Information'
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-orange-600">Tài khoản {profileLabel}</p>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-orange-600">Account — {profileLabel}</p>
             <h1 className="mt-2 text-3xl font-bold text-gray-900">{profileTitle}</h1>
             <p className="mt-2 text-sm text-gray-500">
-              Xem thông tin tài khoản, vai trò và trạng thái đăng nhập hiện tại.
+              View account details, roles, and current login status.
             </p>
           </div>
 
@@ -97,7 +97,7 @@ export default function AdminProfilePage() {
             className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-2.5 font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:shadow-orange-500/30"
           >
             <SettingOutlined className="text-[18px]" />
-            Chỉnh sửa thông tin
+            Edit Profile
           </Link>
         </div>
 
@@ -125,7 +125,7 @@ export default function AdminProfilePage() {
               </div>
 
               <h2 className="mt-4 text-2xl font-bold text-gray-900">
-                {loading ? 'Đang tải...' : user?.profile?.fullName || accountTag}
+                {loading ? 'Loading...' : user?.profile?.fullName || accountTag}
               </h2>
               <p className="mt-1 text-sm text-gray-500">{user?.email}</p>
 
@@ -137,15 +137,15 @@ export default function AdminProfilePage() {
 
             <div className="mt-6 space-y-3 rounded-2xl bg-gray-50 p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Trạng thái</span>
-                <span className="font-semibold text-emerald-600">Đang hoạt động</span>
+                <span className="text-gray-500">Status</span>
+                <span className="font-semibold text-emerald-600">Active</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Vai trò</span>
+                <span className="text-gray-500">Role</span>
                 <span className="font-semibold text-gray-900">{roles.join(', ') || 'admin'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">Đăng nhập bằng</span>
+                <span className="text-gray-500">Login via</span>
                 <span className="font-semibold text-gray-900">Email</span>
               </div>
             </div>
@@ -157,8 +157,8 @@ export default function AdminProfilePage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
                   <UserOutlined className="text-[20px]" />
                 </div>
-                <p className="mt-4 text-sm text-gray-500">Họ và tên</p>
-                <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.profile?.fullName || 'Chưa cập nhật'}</p>
+                <p className="mt-4 text-sm text-gray-500">Full Name</p>
+                <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.profile?.fullName || 'Not set'}</p>
               </div>
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -166,14 +166,14 @@ export default function AdminProfilePage() {
                   <MailOutlined className="text-[20px]" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">Email</p>
-                <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.email || 'Chưa cập nhật'}</p>
+                <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.email || 'Not set'}</p>
               </div>
 
               <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
                   <SafetyOutlined className="text-[20px]" />
                 </div>
-                <p className="mt-4 text-sm text-gray-500">Vai trò</p>
+                <p className="mt-4 text-sm text-gray-500">Role</p>
                 <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : roles.join(', ') || 'admin'}</p>
               </div>
 
@@ -181,7 +181,7 @@ export default function AdminProfilePage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
                   <CalendarOutlined className="text-[20px]" />
                 </div>
-                <p className="mt-4 text-sm text-gray-500">Ngày tạo</p>
+                <p className="mt-4 text-sm text-gray-500">Created At</p>
                 <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : formatDate(user?.createdAt)}</p>
               </div>
             </div>
@@ -194,19 +194,19 @@ export default function AdminProfilePage() {
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-sm text-gray-500">Số điện thoại</p>
-                  <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.phone || 'Chưa cập nhật'}</p>
+                  <p className="text-sm text-gray-500">Phone Number</p>
+                  <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.phone || 'Not set'}</p>
                 </div>
                 <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-sm text-gray-500">Giới tính</p>
-                  <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.profile?.gender || 'Chưa cập nhật'}</p>
+                  <p className="text-sm text-gray-500">Gender</p>
+                  <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : user?.profile?.gender || 'Not set'}</p>
                 </div>
                 <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-sm text-gray-500">Ngày sinh</p>
+                  <p className="text-sm text-gray-500">Date of Birth</p>
                   <p className="mt-1 font-semibold text-gray-900">{loading ? '...' : formatDate(user?.profile?.dob)}</p>
                 </div>
                 <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-sm text-gray-500">Địa chỉ</p>
+                  <p className="text-sm text-gray-500">Address</p>
                   <p className="mt-1 font-semibold text-gray-900">
                     {loading
                       ? '...'
@@ -217,7 +217,7 @@ export default function AdminProfilePage() {
                           user?.profile?.address?.city,
                         ]
                           .filter(Boolean)
-                          .join(', ') || 'Chưa cập nhật'}
+                          .join(', ') || 'Not set'}
                   </p>
                 </div>
               </div>

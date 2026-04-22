@@ -38,19 +38,14 @@ export default function ProductTable({
     }).format(price);
   };
 
-  const formatDate = (date) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString("vi-VN");
-  };
-
   if (products.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-12 text-center">
         <div className="text-6xl mb-4">📦</div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Chưa có sản phẩm nào
+          No products yet
         </h3>
-        <p className="text-gray-600">Thêm sản phẩm đầu tiên để bắt đầu</p>
+        <p className="text-gray-600">Add your first product to get started</p>
       </div>
     );
   }
@@ -62,24 +57,24 @@ export default function ProductTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sản phẩm
+                Product
               </th>
 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Danh mục
+                Categories
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Giá
+                Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Mã SKU
+                SKU
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trạng thái
+                Status
               </th>
 
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Thao tác
+                Actions
               </th>
             </tr>
           </thead>
@@ -176,7 +171,7 @@ export default function ProductTable({
                           : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                           }`}
                       >
-                        {product.isActive ? "Hoạt động" : "Tạm ngưng"}
+                        {product.isActive ? "Active" : "Paused"}
                       </button>
                     ) : (
                       <span
@@ -185,7 +180,7 @@ export default function ProductTable({
                           : "bg-gray-100 text-gray-800"
                           }`}
                       >
-                        {product.isActive ? "Hoạt động" : "Tạm ngưng"}
+                        {product.isActive ? "Active" : "Paused"}
                       </span>
                     )}
                   </td>
@@ -195,7 +190,7 @@ export default function ProductTable({
                       <Link
                         to={`/quan-tri/san-pham/${product._id}`}
                         className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-full transition-all"
-                        title="Xem chi tiết"
+                        title="View details"
                       >
                         <EyeOutlined className="text-lg" />
                       </Link>
@@ -204,14 +199,14 @@ export default function ProductTable({
                           <button
                             onClick={() => onEdit(product)}
                             className="p-2 text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-full transition-all"
-                            title="Chỉnh sửa"
+                            title="Edit"
                           >
                             <EditOutlined className="text-lg" />
                           </button>
                           <button
                             onClick={() => onDelete(product)}
                             className="p-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-full transition-all"
-                            title="Xóa"
+                            title="Delete"
                           >
                             <DeleteOutlined className="text-lg" />
                           </button>
@@ -229,21 +224,20 @@ export default function ProductTable({
       <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
         <div className="flex-1 flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Hiển thị{" "}
+            Showing{" "}
             <span className="font-medium">
               {products.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}
             </span>{" "}
-            đến{" "}
+            to{" "}
             <span className="font-medium">
               {Math.min(currentPage * itemsPerPage, totalItems)}
             </span>{" "}
-            trong tổng số <span className="font-medium">{totalItems}</span> sản
-            phẩm
+            out of <span className="font-medium">{totalItems}</span> items
           </div>
 
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
-              {/* Nút Previous */}
+              {/* Previous button */}
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -252,21 +246,21 @@ export default function ProductTable({
                   : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                   }`}
               >
-                ← Trước
+                {'<'} Previous
               </button>
 
-              {/* Các số trang */}
+              {/* Page numbers */}
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                   (pageNum) => {
-                    // Hiển thị trang đầu, trang cuối, trang hiện tại và 2 trang xung quanh
+                    // Show first, last, current, and surrounding pages
                     const showPage =
                       pageNum === 1 ||
                       pageNum === totalPages ||
                       (pageNum >= currentPage - 1 &&
                         pageNum <= currentPage + 1);
 
-                    // Hiển thị dấu ... khi cần
+                    // Show ellipsis when needed
                     const showEllipsisBefore =
                       pageNum === currentPage - 2 && currentPage > 3;
                     const showEllipsisAfter =
@@ -308,7 +302,7 @@ export default function ProductTable({
                 )}
               </div>
 
-              {/* Nút Next */}
+              {/* Next button */}
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -317,7 +311,7 @@ export default function ProductTable({
                   : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                   }`}
               >
-                Sau →
+                Next {'>'}
               </button>
             </div>
           )}

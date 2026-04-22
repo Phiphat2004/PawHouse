@@ -10,9 +10,9 @@ const statusStyles = {
 };
 
 const statusLabels = {
-  draft: "Chờ duyệt",
-  published: "Đã xuất bản",
-  hidden: "Ẩn",
+  draft: "Pending Review",
+  published: "Published",
+  hidden: "Hidden",
 };
 
 export default function AdminPostDetailPage() {
@@ -29,7 +29,7 @@ export default function AdminPostDetailPage() {
         const data = await postApi.getBySlug(slug);
         setPost(data?.post || null);
       } catch (err) {
-        setError(err.message || "Không thể tải chi tiết bài viết");
+        setError(err.message || "Cannot load post details");
       } finally {
         setLoading(false);
       }
@@ -44,7 +44,7 @@ export default function AdminPostDetailPage() {
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-            <p className="mt-3 text-sm text-gray-600">Đang tải bài viết...</p>
+            <p className="mt-3 text-sm text-gray-600">Loading post...</p>
           </div>
         </div>
       </AdminLayout>
@@ -55,7 +55,7 @@ export default function AdminPostDetailPage() {
     return (
       <AdminLayout>
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-          {error || "Không tìm thấy bài viết"}
+          {error || "Post not found"}
         </div>
       </AdminLayout>
     );
@@ -70,16 +70,16 @@ export default function AdminPostDetailPage() {
               to="/quan-tri/cong-dong"
               className="text-sm text-gray-600 hover:text-orange-600"
             >
-              ← Quay lại quản lý cộng đồng
+              ← Back to community management
             </Link>
             <h1 className="mt-2 text-3xl font-bold text-gray-900">{post.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-500">
               <span>
-                Tác giả: {post.authorId?.profile?.fullName || post.authorId?.email || "N/A"}
+                Author: {post.authorId?.profile?.fullName || post.authorId?.email || "N/A"}
               </span>
               <span>•</span>
               <span>
-                Tạo lúc: {new Date(post.createdAt).toLocaleString("vi-VN")}
+                Created at: {new Date(post.createdAt).toLocaleString("vi-VN")}
               </span>
               <span>
                 <span
@@ -98,7 +98,7 @@ export default function AdminPostDetailPage() {
               onClick={() => navigate("/quan-tri/cong-dong")}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Đóng
+              Close
             </button>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function AdminPostDetailPage() {
         )}
 
         <div className="rounded-xl border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Nội dung bài viết</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Post content</h2>
           <div className="prose max-w-none whitespace-pre-wrap text-gray-800">
             {post.content}
           </div>

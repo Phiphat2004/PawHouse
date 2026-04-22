@@ -27,7 +27,7 @@ export default function StatCard({ icon, label, value, trend, trendValue, color 
             }`}>
               <span>{trend === 'up' ? '↗' : '↘'}</span>
               <span className="font-medium">{trendValue}</span>
-              <span className="text-gray-500">so với tháng trước</span>
+              <span className="text-gray-500">compared to last month</span>
             </div>
           )}
         </div>

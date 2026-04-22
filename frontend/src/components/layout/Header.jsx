@@ -115,39 +115,39 @@ export default function Header() {
               to="/"
               className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
             >
-              Trang chủ
+              Home
             </Link>
             <Link
               to="/san-pham"
               className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
             >
-              Sản phẩm
+              Products
             </Link>
             {user && (
               <Link
                 to="/lich-cham-soc"
                 className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
               >
-                Lịch chăm sóc
+                Care appointments
               </Link>
             )}
             <Link
               to="/cong-dong"
               className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
             >
-              Cộng đồng
+              Community
             </Link>
             <Link
               to="/ve-chung-toi"
               className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
             >
-              Về chúng tôi
+              About us
             </Link>
             <Link
               to="/lien-he"
               className="font-medium text-gray-700 hover:text-orange-500 transition-colors"
             >
-              Liên hệ
+              Contact
             </Link>
           </nav>
 
@@ -157,7 +157,7 @@ export default function Header() {
                 <Link
                   to="/gio-hang"
                   className="relative p-2 rounded-full hover:bg-orange-50 transition"
-                  title="Giỏ hàng"
+                  title="Cart"
                 >
                   <ShoppingCartOutlined className="text-2xl text-gray-700" />
                   {cartCount > 0 && (
@@ -208,7 +208,7 @@ export default function Header() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                       >
-                        <UserOutlined /> Tài khoản
+                        <UserOutlined /> Account
                       </Link>
 
                       <Link
@@ -216,7 +216,7 @@ export default function Header() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                       >
-                        <InboxOutlined /> Đơn hàng của tôi
+                        <InboxOutlined /> My orders
                       </Link>
 
                       <Link
@@ -224,7 +224,7 @@ export default function Header() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                       >
-                        <CalendarOutlined /> Lịch chăm sóc
+                        <CalendarOutlined /> Care appointments
                       </Link>
 
                       {(user.isAdmin || user.isStaff) && (
@@ -233,7 +233,7 @@ export default function Header() {
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                         >
-                          <FileTextOutlined /> Bài viết của tôi
+                          <FileTextOutlined /> My posts
                         </Link>
                       )}
 
@@ -243,7 +243,7 @@ export default function Header() {
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2 hover:bg-orange-50"
                         >
-                          <SettingOutlined /> Quản trị
+                          <SettingOutlined /> Admin
                         </Link>
                       )}
 
@@ -252,7 +252,7 @@ export default function Header() {
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2"
                       >
-                        <LogoutOutlined /> Đăng xuất
+                        <LogoutOutlined /> Log out
                       </button>
                     </div>
                   )}
@@ -263,13 +263,13 @@ export default function Header() {
                     to="/login"
                     className="px-4 py-2 rounded-full font-semibold text-gray-700 hover:bg-orange-50"
                   >
-                    Đăng nhập
+                    Log in
                   </Link>
                   <Link
                     to="/register"
                     className="px-5 py-2 rounded-full font-semibold text-white bg-linear-to-r from-orange-500 to-amber-500"
                   >
-                    Đăng ký
+                    Sign up
                   </Link>
                 </>
               )}

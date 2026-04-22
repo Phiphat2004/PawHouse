@@ -1,4 +1,4 @@
-// Lê Nhựt Hào
+﻿// Lê Nhựt Hào
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
@@ -50,11 +50,11 @@ export default function OrderDetailPage() {
           setProductImages(imgMap);
         }
       } else {
-        setError("Không tìm thấy đơn hàng");
+        setError("Order not found");
       }
     } catch (err) {
       console.error("Failed to fetch order detail:", err);
-      setError("Không thể tải chi tiết đơn hàng. Vui lòng thử lại.");
+      setError("Unable to load order details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function OrderDetailPage() {
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!token) {
-      alert("Vui lòng đăng nhập để xem chi tiết đơn hàng");
+      alert("Please log in to view order details");
       navigate("/login");
       return;
     }
@@ -79,19 +79,19 @@ export default function OrderDetailPage() {
   const submitCancelOrder = async () => {
     const reason = cancelReason.trim();
     if (!reason) {
-      setCancelReasonError("Vui lòng nhập lý do hủy đơn");
+      setCancelReasonError("Please enter a reason for cancellation");
       return;
     }
 
     try {
       setCancelLoading(true);
       await orderApi.cancelOrder(id, reason);
-      alert("Đơn hàng đã được hủy");
+      alert("Order has been cancelled");
       setCancelPopupOpen(false);
       fetchOrderDetail();
     } catch (err) {
       console.error("Failed to cancel order:", err);
-      alert(err.data?.message || "Không thể hủy đơn hàng");
+      alert(err.data?.message || "Unable to cancel order");
     } finally {
       setCancelLoading(false);
     }
@@ -99,13 +99,13 @@ export default function OrderDetailPage() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { text: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
-      confirmed: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-800 border border-blue-200" },
-      packing: { text: "Đang đóng gói", color: "bg-purple-100 text-purple-800 border border-purple-200" },
-      shipping: { text: "Đang giao hàng", color: "bg-indigo-100 text-indigo-800 border border-indigo-200" },
-      completed: { text: "Hoàn thành", color: "bg-green-100 text-green-800 border border-green-200" },
-      cancelled: { text: "Đã hủy", color: "bg-red-100 text-red-800 border border-red-200" },
-      refunded: { text: "Đã hoàn tiền", color: "bg-gray-100 text-gray-800 border border-gray-200" },
+      pending: { text: "Pending", color: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
+      confirmed: { text: "Confirmed", color: "bg-blue-100 text-blue-800 border border-blue-200" },
+      packing: { text: "Packing", color: "bg-purple-100 text-purple-800 border border-purple-200" },
+      shipping: { text: "Shipping", color: "bg-indigo-100 text-indigo-800 border border-indigo-200" },
+      completed: { text: "Completed", color: "bg-green-100 text-green-800 border border-green-200" },
+      cancelled: { text: "Cancelled", color: "bg-red-100 text-red-800 border border-red-200" },
+      refunded: { text: "Refunded", color: "bg-gray-100 text-gray-800 border border-gray-200" },
     };
     const statusInfo = statusMap[status] || { text: status, color: "bg-gray-100 text-gray-800 border border-gray-200" };
     return (
@@ -121,7 +121,7 @@ export default function OrderDetailPage() {
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
           <div className="text-center">
-            <p className="text-gray-600">Đang tải chi tiết đơn hàng...</p>
+            <p className="text-gray-600">Loading order details...</p>
           </div>
         </main>
         <Footer />
@@ -137,13 +137,13 @@ export default function OrderDetailPage() {
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">❌</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {error || "Không tìm thấy đơn hàng"}
+              {error || "Order not found"}
             </h2>
             <Link
               to="/don-hang"
               className="inline-block mt-4 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
             >
-              Quay lại danh sách đơn hàng
+              Back to Order List
             </Link>
           </div>
         </main>
@@ -161,7 +161,7 @@ export default function OrderDetailPage() {
             to="/don-hang"
             className="text-orange-600 hover:text-orange-700 font-medium"
           >
-            ← Quay lại danh sách đơn hàng
+            ← Back to Order List
           </Link>
         </div>
 
@@ -169,12 +169,12 @@ export default function OrderDetailPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Mã đơn hàng: {order.orderCode || order._id}
+                Order #: {order.orderCode || order._id}
               </h1>
               <p className="text-gray-600">
-                Ngày đặt:{" "}
+                Date Placed:{" "}
                 {new Date(order.createdAt || order.created_at).toLocaleString(
-                  "vi-VN"
+                  "en-US"
                 )}
               </p>
             </div>
@@ -185,7 +185,7 @@ export default function OrderDetailPage() {
                   onClick={handleCancelOrder}
                   className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm font-medium"
                 >
-                  Hủy đơn
+                  Cancel Order
                 </button>
               )}
             </div>
@@ -196,7 +196,7 @@ export default function OrderDetailPage() {
           {/* Order Items */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Sản phẩm đã đặt
+              Ordered Items
             </h2>
 
             <div className="space-y-4">
@@ -214,20 +214,20 @@ export default function OrderDetailPage() {
                           productImages[(item.productId || item.variationId)?.toString()] ||
                           "/placeholder.png"
                         }
-                        alt={item.productName || "Sản phẩm"}
+                        alt={item.productName || "Product"}
                         className="w-20 h-20 object-cover rounded-md border"
                       />
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">
-                          {item.productName || variation?.name || "Sản phẩm"}
+                          {item.productName || variation?.name || "Product"}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Số lượng: {item.quantity}
+                          Qty: {item.quantity}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Đơn giá:{" "}
+                          Unit Price:{" "}
                           {(item.unitPrice || item.price || 0).toLocaleString(
-                            "vi-VN"
+                            "en-US"
                           )}
                           ₫
                         </p>
@@ -236,7 +236,7 @@ export default function OrderDetailPage() {
                         <p className="font-semibold text-gray-900">
                           {(item.lineTotal ||
                             (item.unitPrice || item.price || 0) *
-                              item.quantity).toLocaleString("vi-VN")}
+                              item.quantity).toLocaleString("en-US")}
                           ₫
                         </p>
                       </div>
@@ -244,7 +244,7 @@ export default function OrderDetailPage() {
                   );
                 })
               ) : (
-                <p className="text-gray-500">Không có sản phẩm</p>
+                <p className="text-gray-500">No products</p>
               )}
             </div>
           </div>
@@ -253,14 +253,14 @@ export default function OrderDetailPage() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-32">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Thông tin đơn hàng
+                Order Information
               </h2>
 
               {/* Shipping Address */}
               {order.addressSnapshot && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-gray-900 mb-2">
-                    Địa chỉ giao hàng
+                    Shipping Address
                   </h3>
                   <p className="text-sm text-gray-600">
                     {order.addressSnapshot.fullName}
@@ -280,13 +280,13 @@ export default function OrderDetailPage() {
               {/* Payment Info */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">
-                  Phương thức thanh toán
+                  Payment Method
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Thanh toán khi nhận hàng (COD)
+                  Cash on Delivery (COD)
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Trạng thái thanh toán:{' '}
+                  Payment Status:{' '}
                   <span
                     className={
                       order.payment?.status === 'paid'
@@ -297,15 +297,15 @@ export default function OrderDetailPage() {
                     }
                   >
                     {order.payment?.status === 'paid'
-                      ? 'Đã thanh toán'
+                      ? 'Paid'
                       : order.payment?.status === 'failed'
-                      ? 'Thất bại'
-                      : 'Chưa thanh toán'}
+                      ? 'Failed'
+                      : 'Unpaid'}
                   </span>
                 </p>
                 {order.payment?.paidAt && (
                   <p className="text-xs text-gray-400 mt-1">
-                    Thanh toán lúc: {new Date(order.payment.paidAt).toLocaleString('vi-VN')}
+                    Paid at: {new Date(order.payment.paidAt).toLocaleString('en-US')}
                   </p>
                 )}
               </div>
@@ -313,7 +313,7 @@ export default function OrderDetailPage() {
               {/* Order Note */}
               {order.note && (
                 <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Ghi chú</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">Note</h3>
                   <p className="text-sm text-gray-600">{order.note}</p>
                 </div>
               )}
@@ -321,20 +321,20 @@ export default function OrderDetailPage() {
               {/* Price Summary */}
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-gray-600">
-                  <span>Tạm tính:</span>
-                  <span>{(order.subtotal || 0).toLocaleString("vi-VN")}₫</span>
+                  <span>Subtotal:</span>
+                  <span>{(order.subtotal || 0).toLocaleString("en-US")}₫</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Phí vận chuyển:</span>
+                  <span>Shipping Fee:</span>
                   <span>
-                    {(order.shippingFee || 0).toLocaleString("vi-VN")}₫
+                    {(order.shippingFee || 0).toLocaleString("en-US")}₫
                   </span>
                 </div>
                 <div className="flex justify-between text-gray-900 font-bold text-lg pt-2 border-t">
-                  <span>Tổng cộng:</span>
+                  <span>Total:</span>
                   <span className="text-orange-600">
                     {(order.total || order.final_price || 0).toLocaleString(
-                      "vi-VN"
+                      "en-US"
                     )}
                     ₫
                   </span>
@@ -349,8 +349,8 @@ export default function OrderDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
             <div className="border-b border-gray-100 px-5 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">Hủy đơn hàng</h3>
-              <p className="mt-1 text-sm text-gray-600">Vui lòng nhập lý do hủy đơn để cửa hàng hỗ trợ bạn tốt hơn.</p>
+              <h3 className="text-lg font-semibold text-gray-900">Cancel Order</h3>
+              <p className="mt-1 text-sm text-gray-600">Please enter a reason for cancellation so we can assist you better.</p>
             </div>
             <div className="px-5 py-4">
               <textarea
@@ -360,7 +360,7 @@ export default function OrderDetailPage() {
                   setCancelReason(e.target.value);
                   setCancelReasonError("");
                 }}
-                placeholder="Nhập lý do hủy..."
+                placeholder="Enter cancellation reason..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
               />
               {cancelReasonError && (
@@ -376,14 +376,14 @@ export default function OrderDetailPage() {
                 disabled={cancelLoading}
                 className="px-4 py-2 rounded-lg border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-60"
               >
-                Đóng
+                Close
               </button>
               <button
                 onClick={submitCancelOrder}
                 disabled={cancelLoading}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
               >
-                {cancelLoading ? "Đang hủy..." : "Xác nhận hủy"}
+                {cancelLoading ? "Cancelling..." : "Confirm Cancellation"}
               </button>
             </div>
           </div>

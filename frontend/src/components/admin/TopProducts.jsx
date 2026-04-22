@@ -8,9 +8,9 @@ export default function TopProducts({ products = [], loading = false }) {
     return (
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Sản phẩm bán chạy</h2>
+          <h2 className="text-xl font-bold text-gray-900">Top-selling products</h2>
         </div>
-        <div className="p-12 text-center text-gray-400">Đang tải...</div>
+        <div className="p-12 text-center text-gray-400">Loading...</div>
       </div>
     )
   }
@@ -18,11 +18,11 @@ export default function TopProducts({ products = [], loading = false }) {
   return (
     <div className="bg-white rounded-xl shadow-sm">
       <div className="p-6 border-b">
-        <h2 className="text-xl font-bold text-gray-900">Sản phẩm bán chạy</h2>
+        <h2 className="text-xl font-bold text-gray-900">Top-selling products</h2>
       </div>
 
       {products.length === 0 ? (
-        <div className="p-12 text-center text-gray-400">Chưa có dữ liệu bán hàng</div>
+        <div className="p-12 text-center text-gray-400">No sales data available</div>
       ) : (
         <div className="p-6 space-y-4">
           {products.map((product, index) => (
@@ -43,8 +43,8 @@ export default function TopProducts({ products = [], loading = false }) {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">{product.name || 'Tên sản phẩm'}</h3>
-                <p className="text-sm text-gray-500">{product.soldAmount || 0} đã bán</p>
+                <h3 className="font-semibold text-gray-900 truncate">{product.name || 'Product name'}</h3>
+                <p className="text-sm text-gray-500">{product.soldAmount || 0} sold</p>
               </div>
               <div className="text-right shrink-0">
                 <div className="font-semibold text-gray-900">{formatCurrency(product.revenue || 0)}</div>

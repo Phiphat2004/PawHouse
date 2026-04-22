@@ -97,7 +97,7 @@ export default function StockMovementHistoryPage() {
       setError('');
     } catch (error) {
       console.error('Error fetching movements:', error);
-      setError('Không thể tải lịch sử xuất nhập kho');
+      setError('Failed to load stock movement history');
     }
   };
 
@@ -152,7 +152,7 @@ export default function StockMovementHistoryPage() {
   };
 
   const handleDeleteMovement = async (movementId) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa bản ghi này? Lưu ý: Chỉ xóa lịch sử tồn kho, không ảnh hưởng đến tồn kho hiện tại.')) {
+    if (!confirm('Are you sure you want to delete this record? Note: Only deletes history, does not affect current inventory.')) {
       return;
     }
 
@@ -161,28 +161,28 @@ export default function StockMovementHistoryPage() {
       fetchMovements();
     } catch (error) {
       console.error('Error deleting movement:', error);
-      alert('Không thể xóa bản ghi: ' + (error.message || 'Lỗi không xác định'));
+      alert('Failed to delete record: ' + (error.message || 'Unknown error'));
     }
   };
 
   const getMovementTypeStyle = (type) => {
     switch (type) {
       case 'IN':
-        return { bg: 'bg-green-100', text: 'text-green-800', icon: '⬆️', label: 'Nhập kho' };
+        return { bg: 'bg-green-100', text: 'text-green-800', icon: '⬆️', label: 'Import' };
       case 'OUT':
-        return { bg: 'bg-red-100', text: 'text-red-800', icon: '⬇️', label: 'Xuất kho' };
+        return { bg: 'bg-red-100', text: 'text-red-800', icon: '⬇️', label: 'Export' };
       case 'ADJUSTMENT':
-        return { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔄', label: 'Chuyển kho' };
+        return { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔄', label: 'Transfer' };
       case 'TRANSFER':
-        return { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔄', label: 'Chuyển kho' };
+        return { bg: 'bg-blue-100', text: 'text-blue-800', icon: '🔄', label: 'Transfer' };
       case 'RETURN':
-        return { bg: 'bg-purple-100', text: 'text-purple-800', icon: '↩️', label: 'Hoàn trả kho' };
+        return { bg: 'bg-purple-100', text: 'text-purple-800', icon: '↩️', label: 'Return' };
       case 'RESERVE':
-        return { bg: 'bg-orange-100', text: 'text-orange-800', icon: '🔒', label: 'Tạm giữ đơn' };
+        return { bg: 'bg-orange-100', text: 'text-orange-800', icon: '🔒', label: 'Hold' };
       case 'RELEASE':
-        return { bg: 'bg-teal-100', text: 'text-teal-800', icon: '🔓', label: 'Đã hủy' };
+        return { bg: 'bg-teal-100', text: 'text-teal-800', icon: '🔓', label: 'Cancelled' };
       case 'FULFILL':
-        return { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✅', label: 'Đã giao hàng' };
+        return { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✅', label: 'Delivered' };
       default:
         return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '📦', label: type };
     }
@@ -192,14 +192,14 @@ export default function StockMovementHistoryPage() {
     if (movement?.statusLabel) return movement.statusLabel;
 
     const map = {
-      RESERVE: 'Chờ xác nhận',
-      OUT: movement?.referenceType === 'ORDER' ? 'Đang giao hàng' : 'Xuất kho',
-      FULFILL: 'Đã giao hàng',
-      RELEASE: 'Đã hủy',
-      IN: 'Nhập kho',
-      RETURN: 'Hoàn trả',
-      ADJUSTMENT: 'Chuyển kho',
-      TRANSFER: 'Chuyển kho',
+      RESERVE: 'Pending confirmation',
+      OUT: movement?.referenceType === 'ORDER' ? 'Delivering' : 'Export',
+      FULFILL: 'Delivered',
+      RELEASE: 'Cancelled',
+      IN: 'Import',
+      RETURN: 'Return',
+      ADJUSTMENT: 'Transfer',
+      TRANSFER: 'Transfer',
     };
     return map[movement?.type] || movement?.reason || '-';
   };
@@ -222,7 +222,7 @@ export default function StockMovementHistoryPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            <p className="mt-4 text-gray-600">Loading data...</p>
           </div>
         </div>
       </div>
@@ -254,8 +254,8 @@ export default function StockMovementHistoryPage() {
                 </svg>
               </div>
               <div className="min-w-0">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 whitespace-nowrap">Lịch sử xuất nhập kho</h1>
-                <p className="mt-1 text-sm lg:text-base text-gray-600 whitespace-nowrap">Theo dõi tất cả các thay đổi xuất nhập kho</p>
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 whitespace-nowrap">Stock Movement History</h1>
+                <p className="mt-1 text-sm lg:text-base text-gray-600 whitespace-nowrap">Track all stock movement changes</p>
               </div>
             </div>
             <div className="flex gap-3 flex-shrink-0">
@@ -266,7 +266,7 @@ export default function StockMovementHistoryPage() {
                 <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                Tồn kho
+                Stock
               </Link>
             </div>
           </div>
@@ -285,12 +285,12 @@ export default function StockMovementHistoryPage() {
             <svg className="w-5 h-5 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            <span className="whitespace-nowrap">Bộ lọc</span>
+            <span className="whitespace-nowrap">Filters</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 whitespace-nowrap">
-                Sản phẩm
+                Product
               </label>
               <select
                 name="productId"
@@ -298,7 +298,7 @@ export default function StockMovementHistoryPage() {
                 onChange={handleFilterChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               >
-                <option value="">Tất cả sản phẩm</option>
+                <option value="">All products</option>
                 {products.map(product => (
                   <option key={product._id} value={product._id}>
                     {product.name} ({product.sku})
@@ -309,7 +309,7 @@ export default function StockMovementHistoryPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 whitespace-nowrap">
-                Kho hàng
+                Warehouse
               </label>
               <select
                 name="warehouseId"
@@ -317,7 +317,7 @@ export default function StockMovementHistoryPage() {
                 onChange={handleFilterChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               >
-                <option value="">Tất cả kho</option>
+                <option value="">All warehouses</option>
                 {warehouses.map(warehouse => (
                   <option key={warehouse._id} value={warehouse._id}>
                     {warehouse.name} ({warehouse.code})
@@ -328,7 +328,7 @@ export default function StockMovementHistoryPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 whitespace-nowrap">
-                Trạng thái
+                Status
               </label>
               <select
                 name="type"
@@ -336,25 +336,25 @@ export default function StockMovementHistoryPage() {
                 onChange={handleFilterChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="IN">⬆️ Nhập kho</option>
-                <option value="OUT">⬇️ Xuất kho</option>
-                <option value="RESERVE">🔒 Tạm giữ đơn</option>
-                
-                <option value="FULFILL">✅ Đã giao hàng</option>              
+                <option value="">All statuses</option>
+                <option value="IN">⬆️ Import</option>
+                <option value="OUT">⬇️ Export</option>
+                <option value="RESERVE">🔒 Hold</option>
+
+                <option value="FULFILL">✅ Delivered</option>              
               </select>
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 whitespace-nowrap">
-                Tìm kiếm
+                Search
               </label>
               <input
                 type="text"
                 name="search"
                 value={filters.search}
                 onChange={handleFilterChange}
-                placeholder="Tên, SKU, kho..."
+                placeholder="Name, SKU, warehouse..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               />
             </div>
@@ -369,7 +369,7 @@ export default function StockMovementHistoryPage() {
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Áp dụng
+                Apply
               </span>
             </button>
             <button
@@ -380,7 +380,7 @@ export default function StockMovementHistoryPage() {
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Đặt lại
+                Reset
               </span>
             </button>
           </div>
@@ -398,7 +398,7 @@ export default function StockMovementHistoryPage() {
                 </div>
               </div>
               <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Tổng bản ghi</p>
+                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Total Records</p>
                 <p className="text-xl lg:text-2xl font-bold text-gray-900">{pagination.total}</p>
               </div>
             </div>
@@ -412,7 +412,7 @@ export default function StockMovementHistoryPage() {
                 </div>
               </div>
               <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Nhập kho</p>
+                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Import</p>
                 <p className="text-xl lg:text-2xl font-bold text-green-600">
                   {movements.filter(m => m.type === 'IN').length}
                 </p>
@@ -428,7 +428,7 @@ export default function StockMovementHistoryPage() {
                 </div>
               </div>
               <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Xuất kho</p>
+                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Export</p>
                 <p className="text-xl lg:text-2xl font-bold text-red-600">
                   {movements.filter(m => m.type === 'OUT').length}
                 </p>
@@ -462,28 +462,28 @@ export default function StockMovementHistoryPage() {
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Loại
+                    Type
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Sản phẩm
+                    Product
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Kho
+                    Warehouse
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Số lượng
+                    Quantity
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Lý do
+                    Reason
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Người tạo
+                    Created by
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Thời gian
+                    Time
                   </th>
                   <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Thao tác
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -495,7 +495,7 @@ export default function StockMovementHistoryPage() {
                         <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
-                        <p className="text-gray-500 font-medium">Không có lịch sử tồn kho</p>
+                        <p className="text-gray-500 font-medium">No stock history</p>
                       </div>
                     </td>
                   </tr>
@@ -580,7 +580,7 @@ export default function StockMovementHistoryPage() {
                           <button
                             onClick={() => handleDeleteMovement(movement._id)}
                             className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs lg:text-sm"
-                            title="Xóa bản ghi"
+                            title="Delete record"
                           >
                             <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -601,9 +601,9 @@ export default function StockMovementHistoryPage() {
             <div className="bg-gray-50 px-4 lg:px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 gap-4">
               <div className="flex-1 flex justify-center sm:justify-start">
                 <p className="text-sm text-gray-700 whitespace-nowrap">
-                  Hiển thị <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> đến{' '}
-                  <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> trong tổng số{' '}
-                  <span className="font-medium">{pagination.total}</span> kết quả
+                  Show <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                  <span className="font-medium">{pagination.total}</span> results
                 </p>
               </div>
               <div className="flex-shrink-0">
@@ -614,7 +614,7 @@ export default function StockMovementHistoryPage() {
                     disabled={pagination.page === 1}
                     className="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    <span className="sr-only">Trang trước</span>
+                    <span className="sr-only">Previous page</span>
                     <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
@@ -655,7 +655,7 @@ export default function StockMovementHistoryPage() {
                     disabled={pagination.page === pagination.pages}
                     className="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    <span className="sr-only">Trang sau</span>
+                    <span className="sr-only">Next page</span>
                     <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                     </svg>

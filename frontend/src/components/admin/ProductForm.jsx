@@ -46,7 +46,7 @@ export default function ProductForm({
     const { name, value, type, checked } = e.target;
     let processedValue = type === "checkbox" ? checked : value;
 
-    // Tự động chuyển SKU thành uppercase
+    // Automatically convert SKU to uppercase
     if (name === "sku") {
       processedValue = value.toUpperCase();
     }
@@ -131,7 +131,7 @@ export default function ProductForm({
       const totalExising = formData.images.length;
       const totalNew = prev.length + files.length;
       if (totalExising + totalNew > 5) {
-        alert("Bạn chỉ có thể có tối đa 5 ảnh cho mỗi sản phẩm");
+        alert("You can have at most 5 images per product");
         const remainingSlots = 5 - totalExising - prev.length;
         if (remainingSlots <= 0) return prev;
         return [...prev, ...files.slice(0, remainingSlots)];
@@ -169,32 +169,32 @@ export default function ProductForm({
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Vui lòng nhập tên sản phẩm";
+      newErrors.name = "Please enter a product name";
     }
 
     if (!formData.slug.trim()) {
-      newErrors.slug = "Vui lòng nhập slug";
+      newErrors.slug = "Please enter a slug";
     }
 
     if (formData.categoryIds.length === 0) {
-      newErrors.categoryIds = "Vui lòng chọn ít nhất một danh mục";
+      newErrors.categoryIds = "Please select at least one category";
     }
 
     // Validation for price, stock, sku
     if (!formData.sku.trim()) {
-      newErrors.sku = "Vui lòng nhập mã SKU";
+      newErrors.sku = "Please enter SKU";
     }
 
     if (!formData.originalPrice || formData.originalPrice <= 0) {
-      newErrors.originalPrice = "Giá gốc sản phẩm phải lớn hơn 0";
+      newErrors.originalPrice = "Original price must be greater than 0";
     }
 
     if (formData.discountPercentage < 0 || formData.discountPercentage > 100) {
-      newErrors.discountPercentage = "Phần trăm giảm giá phải từ 0 đến 100";
+      newErrors.discountPercentage = "Discount percentage must be between 0 and 100";
     }
 
     if (formData.images.length + selectedFiles.length === 0) {
-      newErrors.images = "Vui lòng chọn ít nhất một ảnh sản phẩm";
+      newErrors.images = "Please select at least one product image";
     }
 
     setErrors(newErrors);
@@ -246,7 +246,7 @@ export default function ProductForm({
 
       await onSubmit(data);
     } catch (err) {
-      alert("Lỗi: " + err.message);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -259,7 +259,7 @@ export default function ProductForm({
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-white">
-              {product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
+              {product ? "Edit product" : "Add new product"}
             </h2>
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function ProductForm({
             {/* Basic Info Section */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Thông tin cơ bản
+                Basic information
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,7 +278,7 @@ export default function ProductForm({
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <span className="flex items-center gap-1">
-                      Tên sản phẩm <span className="text-red-500">*</span>
+                      Product name <span className="text-red-500">*</span>
                     </span>
                   </label>
                   <div className="relative">
@@ -291,7 +291,7 @@ export default function ProductForm({
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 bg-white"
                         }`}
-                      placeholder="Ví dụ: Thức ăn cho chó vị gà"
+                      placeholder="Example: Chicken flavor dog food"
                     />
                   </div>
                   {errors.name && (
@@ -305,7 +305,7 @@ export default function ProductForm({
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <span className="flex items-center gap-1">
-                      Slug (URL thân thiện){" "}
+                      Slug (friendly URL){" "}
                       <span className="text-red-500">*</span>
                     </span>
                   </label>
@@ -332,7 +332,7 @@ export default function ProductForm({
                 {/* Brand */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Thương hiệu
+                    Brand
                   </label>
                   <div className="relative">
                     <input
@@ -341,23 +341,23 @@ export default function ProductForm({
                       value={formData.brand}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white"
-                      placeholder="Ví dụ: Royal Pet, SmartHeart..."
+                      placeholder="Example: Royal Pet, SmartHeart..."
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Giá & Kho hàng */}
+            {/* Price and stock */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Giá & Kho hàng
+                Price and stock
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* SKU */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mã SKU <span className="text-red-500">*</span>
+                    SKU <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -366,7 +366,7 @@ export default function ProductForm({
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.sku ? "border-red-500" : "border-gray-300"
                       }`}
-                    placeholder="Ví dụ: RPET001"
+                    placeholder="Example: RPET001"
                   />
                   {errors.sku && (
                     <p className="mt-1 text-sm text-red-500">{errors.sku}</p>
@@ -376,7 +376,7 @@ export default function ProductForm({
                 {/* Original Price */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giá gốc (VNĐ) <span className="text-red-500">*</span>
+                    Original price (VND) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -398,7 +398,7 @@ export default function ProductForm({
                 {/* Discount Percentage */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phần trăm giảm giá (%)
+                    Discount percentage (%)
                   </label>
                   <input
                     type="number"
@@ -421,7 +421,7 @@ export default function ProductForm({
                 {/* Final Price (Readonly) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giá bán thực tế (VNĐ)
+                    Actual selling price (VND)
                   </label>
                   <input
                     type="text"
@@ -436,7 +436,7 @@ export default function ProductForm({
             {/* Description */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Mô tả sản phẩm
+                Product description
               </h3>
               <div className="relative">
                 <textarea
@@ -445,10 +445,10 @@ export default function ProductForm({
                   onChange={handleChange}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all bg-white resize-none"
-                  placeholder="Nhập mô tả chi tiết về sản phẩm, tính năng, lợi ích..."
+                  placeholder="Enter a detailed product description, features, and benefits..."
                 />
                 <div className="absolute bottom-3 right-3 text-xs text-gray-400">
-                  {formData.description.length} ký tự
+                  {formData.description.length} characters
                 </div>
               </div>
             </div>
@@ -456,12 +456,12 @@ export default function ProductForm({
             {/* Categories */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Danh mục <span className="text-red-500 text-sm">*</span>
+                Categories <span className="text-red-500 text-sm">*</span>
               </h3>
               <div className="bg-white rounded-lg border border-gray-200 p-4">
                 {categories.length === 0 ? (
                   <p className="text-gray-500 text-sm text-center py-4">
-                    Chưa có danh mục nào
+                    No categories available
                   </p>
                 ) : (
                   <div className="max-h-64 overflow-y-auto pr-2 space-y-4">
@@ -485,12 +485,12 @@ export default function ProductForm({
                                 className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500 shrink-0"
                               />
                               <span className="font-bold text-sm uppercase tracking-wider">
-                                {rootCat.name} (Danh mục chính)
+                                {rootCat.name} (Main category)
                               </span>
                             </label>
 
                             {childCats.length === 0 ? (
-                              <p className="text-xs text-gray-500 px-1 italic">Chưa có danh mục con</p>
+                              <p className="text-xs text-gray-500 px-1 italic">No subcategories</p>
                             ) : (
                               <div className="grid grid-cols-2 gap-2 pl-4">
                                 {childCats.map((child) => (
@@ -532,7 +532,7 @@ export default function ProductForm({
               )}
               {formData.categoryIds.length > 0 && (
                 <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <span>✓</span> Đã chọn {formData.categoryIds.length} danh mục
+                  <span>✓</span> Selected {formData.categoryIds.length} categories
                 </p>
               )}
             </div>
@@ -540,18 +540,18 @@ export default function ProductForm({
             {/* Images */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Hình ảnh sản phẩm
+                Product images
               </h3>
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Thêm ảnh sản phẩm (Tối đa 5 ảnh) <span className="text-red-500">*</span>
+                      Add product images (Maximum 5 images) <span className="text-red-500">*</span>
                     </label>
                     <label className="relative cursor-pointer group">
                       <div className="w-full h-16 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition-all flex items-center justify-center bg-gray-50 shadow-sm font-medium text-gray-600">
-                        Chọn ảnh
+                        Choose images
                       </div>
                       <input
                         type="file"
@@ -565,7 +565,7 @@ export default function ProductForm({
 
                   {selectedFiles.length > 0 && (
                     <div className="bg-white p-3 rounded-lg border border-gray-200">
-                      <p className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wider">Ảnh chuẩn bị tải lên ({selectedFiles.length}/5):</p>
+                      <p className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wider">Images ready to upload ({selectedFiles.length}/5):</p>
                       <div className="flex flex-wrap gap-4">
                         {selectedFiles.map((file, idx) => (
                           <div key={idx} className="relative w-36 h-36 rounded-xl overflow-hidden border-2 border-orange-50 group shadow-sm transition-transform hover:scale-105">
@@ -574,7 +574,7 @@ export default function ProductForm({
                               type="button"
                               onClick={() => handleRemoveFile(idx)}
                               className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 font-bold text-lg"
-                              title="Gỡ ảnh này"
+                              title="Remove this image"
                             >
                               &times;
                             </button>
@@ -592,7 +592,7 @@ export default function ProductForm({
                 {formData.images.length > 0 && (
                   <div className="bg-white p-3 rounded-lg border border-gray-100">
                     <p className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-wider">
-                      Ảnh đang hiển thị ({formData.images.length})
+                      Current images ({formData.images.length})
                     </p>
                     <div className="flex flex-wrap gap-4">
                       {formData.images.map((image, index) => (
@@ -606,7 +606,7 @@ export default function ProductForm({
                           {/* Label for main image */}
                           {index === 0 && (
                             <div className="absolute top-2 left-2 bg-orange-500 text-white text-[9px] font-bold px-2 py-1 rounded shadow-md flex items-center gap-1">
-                              ⭐ Chính
+                              ⭐ Primary
                             </div>
                           )}
 
@@ -615,7 +615,7 @@ export default function ProductForm({
                             type="button"
                             onClick={() => handleRemoveImage(index)}
                             className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 font-bold text-lg"
-                            title="Xóa ảnh này"
+                            title="Delete this image"
                           >
                             &times;
                           </button>
@@ -627,7 +627,7 @@ export default function ProductForm({
                                 type="button"
                                 onClick={() => handleMoveImage(index, "up")}
                                 className="w-6 h-6 bg-white/90 rounded border border-gray-200 flex items-center justify-center hover:bg-white text-[10px]"
-                                title="Lên đầu"
+                                title="Move to top"
                               >
                                 ⬆️
                               </button>
@@ -637,7 +637,7 @@ export default function ProductForm({
                                 type="button"
                                 onClick={() => handleMoveImage(index, "down")}
                                 className="w-6 h-6 bg-white/90 rounded border border-gray-200 flex items-center justify-center hover:bg-white text-[10px]"
-                                title="Xuống dưới"
+                                title="Move down"
                               >
                                 ⬇️
                               </button>
@@ -654,7 +654,7 @@ export default function ProductForm({
             {/* Status */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Cài đặt
+                Settings
               </h3>
               <label className="flex items-center gap-3 cursor-pointer p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-orange-200 transition-all">
                 <input
@@ -666,10 +666,10 @@ export default function ProductForm({
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-900">
-                    Kích hoạt sản phẩm
+                    Activate product
                   </span>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Sản phẩm sẽ hiển thị trên website
+                    Product will be visible on the website
                   </p>
                 </div>
               </label>
@@ -685,7 +685,7 @@ export default function ProductForm({
               onClick={onCancel}
               className="px-8 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
             >
-              Hủy
+              Cancel
             </button>
             <button
               type="submit"
@@ -696,7 +696,7 @@ export default function ProductForm({
               {loading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
               ) : (
-                <span>{product ? "Cập nhật" : "Thêm mới"}</span>
+                <span>{product ? "Update" : "Add"}</span>
               )}
             </button>
           </div>

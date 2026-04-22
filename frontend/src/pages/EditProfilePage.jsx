@@ -111,12 +111,12 @@ export default function EditProfilePage() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setError('Chỉ chấp nhận file ảnh')
+      setError('Only image files are accepted')
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('File ảnh không được vượt quá 5MB')
+      setError('Image file must not exceed 5MB')
       return
     }
 
@@ -213,7 +213,7 @@ export default function EditProfilePage() {
           localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(cachedUser))
       }
 
-      setSuccess('Cập nhật thông tin thành công!')
+      setSuccess('Profile updated successfully!')
 
       setTimeout(() => {
         navigate(isAdmin || isStaff ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE, { replace: true })
@@ -236,10 +236,10 @@ export default function EditProfilePage() {
               to={isAdmin || isStaff ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              ← Quay lại
+              ← Go Back
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {isAdmin ? 'Chỉnh sửa thông tin quản trị' : isStaff ? 'Chỉnh sửa thông tin nhân viên' : 'Chỉnh sửa thông tin'}
+              {isAdmin ? 'Edit Admin Profile' : isStaff ? 'Edit Staff Profile' : 'Edit Profile'}
             </h1>
           </div>
 
@@ -258,7 +258,7 @@ export default function EditProfilePage() {
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span>🖼️</span> Ảnh đại diện
+                <span>🖼️</span> Profile Picture
               </h3>
 
               <div className="flex flex-col items-center gap-4">
@@ -281,7 +281,7 @@ export default function EditProfilePage() {
                       type="button"
                       onClick={handleRemoveAvatar}
                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
-                      title="Xóa ảnh"
+                      title="Remove photo"
                     >
                       ✕
                     </button>
@@ -290,7 +290,7 @@ export default function EditProfilePage() {
 
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tải ảnh từ máy tính (tối đa 5MB)
+                    Upload photo from your device (max 5MB)
                   </label>
                   <input
                     type="file"
@@ -302,7 +302,7 @@ export default function EditProfilePage() {
 
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hoặc dán link ảnh
+                    Or paste an image link
                   </label>
                   <input
                     type="url"
@@ -318,24 +318,24 @@ export default function EditProfilePage() {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span>📋</span> Thông tin cá nhân
+                <span>📋</span> Personal Information
               </h3>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                   <input
                     type="text"
                     name="fullName"
                     value={form.fullName}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                    placeholder="Nhập họ và tên"
+                    placeholder="Enter your full name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                   <input
                     type="tel"
                     name="phone"
@@ -347,22 +347,22 @@ export default function EditProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                   <select
                     name="gender"
                     value={form.gender}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all bg-white"
                   >
-                    <option value="">Chọn giới tính</option>
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
                   <input
                     type="date"
                     name="dob"
@@ -376,56 +376,56 @@ export default function EditProfilePage() {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span>📍</span> Địa chỉ
+                <span>📍</span> Address
               </h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ chi tiết</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Address</label>
                   <input
                     type="text"
                     name="addressLine"
                     value={form.addressLine}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                    placeholder="Số nhà, tên đường..."
+                    placeholder="House number, street name..."
                   />
                 </div>
 
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ward/Commune</label>
                     <input
                       type="text"
                       name="ward"
                       value={form.ward}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                      placeholder="Phường/Xã"
+                      placeholder="Ward/Commune"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
                     <input
                       type="text"
                       name="district"
                       value={form.district}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                      placeholder="Quận/Huyện"
+                      placeholder="District"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Province/City</label>
                     <input
                       type="text"
                       name="city"
                       value={form.city}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                      placeholder="Tỉnh/Thành phố"
+                      placeholder="Province/City"
                     />
                   </div>
                 </div>
@@ -434,7 +434,7 @@ export default function EditProfilePage() {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span>⚙️</span> Cài đặt thông báo
+                <span>⚙️</span> Notification Settings
               </h3>
 
               <div className="space-y-3">
@@ -448,7 +448,7 @@ export default function EditProfilePage() {
                   />
                   <div>
                     <p className="font-medium text-gray-900">Email marketing</p>
-                    <p className="text-sm text-gray-500">Nhận thông tin sản phẩm mới qua email</p>
+                    <p className="text-sm text-gray-500">Receive new product information via email</p>
                   </div>
                 </label>
 
@@ -462,7 +462,7 @@ export default function EditProfilePage() {
                   />
                   <div>
                     <p className="font-medium text-gray-900">Push notification</p>
-                    <p className="text-sm text-gray-500">Nhận thông báo đẩy từ ứng dụng</p>
+                    <p className="text-sm text-gray-500">Receive push notifications from the app</p>
                   </div>
                 </label>
               </div>
@@ -473,14 +473,14 @@ export default function EditProfilePage() {
                 to={isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
                 className="flex-1 px-6 py-3 text-center font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
               >
-                Hủy
+                Cancel
               </Link>
               <button
                 type="submit"
                 disabled={saving}
                 className="flex-1 px-6 py-3 font-semibold text-white bg-linear-to-r from-orange-500 to-amber-500 rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>

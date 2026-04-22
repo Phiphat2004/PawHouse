@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
@@ -54,11 +54,11 @@ export default function ProductDetailPage() {
         setProduct(response.product);
         setSelectedImageIdx(0);
       } else {
-        setError("Không tìm thấy sản phẩm");
+        setError("Product not found");
       }
     } catch (err) {
       console.error("Failed to fetch product:", err);
-      setError("Không thể tải thông tin sản phẩm");
+      setError("Unable to load product information");
     } finally {
       setLoading(false);
     }
@@ -68,8 +68,8 @@ export default function ProductDetailPage() {
     if (!product) {
       setToast({
         type: "error",
-        title: "Lỗi",
-        message: "Sản phẩm không tồn tại",
+        title: "Error",
+        message: "Product does not exist",
       });
       return;
     }
@@ -78,13 +78,13 @@ export default function ProductDetailPage() {
     if (result.success) {
       setToast({
         type: "success",
-        title: "Thành công!",
+        title: "Success!",
         message: result.message,
       });
     } else {
       setToast({
         type: "error",
-        title: "Lỗi",
+        title: "Error",
         message: result.message,
       });
     }
@@ -96,7 +96,7 @@ export default function ProductDetailPage() {
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
           <div className="text-center">
-            <p className="text-gray-600">Đang tải sản phẩm...</p>
+            <p className="text-gray-600">Loading product...</p>
           </div>
         </main>
         <Footer />
@@ -112,13 +112,13 @@ export default function ProductDetailPage() {
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="text-6xl mb-4">❌</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {error || "Không tìm thấy sản phẩm"}
+              {error || "Product not found"}
             </h2>
             <Link
               to="/"
               className="inline-block mt-4 bg-[#846551] text-white px-6 py-3 rounded-lg hover:bg-[#6d5041] transition"
             >
-              Quay lại trang chủ
+              Back to Home
             </Link>
           </div>
         </main>
@@ -150,11 +150,11 @@ export default function ProductDetailPage() {
         {/* Breadcrumb */}
         <div className="mb-8 flex items-center gap-2 text-sm">
           <Link to="/" className="text-gray-500 hover:text-[#ff4d2e] transition-colors">
-            Trang chủ
+            Home
           </Link>
           <span className="text-gray-300">/</span>
           <Link to="/san-pham" className="text-gray-500 hover:text-[#ff4d2e] transition-colors">
-            Sản phẩm
+            Products
           </Link>
           <span className="text-gray-300">/</span>
           <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-none">
@@ -176,7 +176,7 @@ export default function ProductDetailPage() {
 
                   {product.compareAtPrice > product.price && (
                     <div className="absolute top-4 right-4 bg-[#ff4d2e] text-white font-bold px-3 py-1 rounded-full shadow-lg text-xs">
-                      Tiết kiệm {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
+                      Save {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}%
                     </div>
                   )}
                 </div>
@@ -212,7 +212,7 @@ export default function ProductDetailPage() {
             <div className="p-8 lg:p-12 lg:border-l border-gray-100 flex flex-col">
               {product.brand && (
                 <p className="text-[#ff4d2e] font-bold text-xs uppercase tracking-[0.2em] mb-4">
-                  Thương hiệu: {product.brand}
+                  Brand: {product.brand}
                 </p>
               )}
 
@@ -234,10 +234,10 @@ export default function ProductDetailPage() {
 
               {/* Description */}
               <div className="mb-10 space-y-4">
-                <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Mô tả sản phẩm</h3>
+                <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">Product Description</h3>
                 <div className="h-[1px] bg-gray-100 w-24"></div>
                 <p className="text-gray-600 leading-relaxed text-lg italic">
-                  "{product.description || "Sản phẩm chất lượng cao từ PawHouse, sự lựa chọn tốt nhất cho thú cưng của bạn."}"
+                  "{product.description || "A high-quality product from PawHouse — the best choice for your pet."}"
                 </p>
               </div>
 
@@ -249,7 +249,7 @@ export default function ProductDetailPage() {
                     }`}>
                     <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? "bg-green-600" : "bg-red-600"
                       }`}></span>
-                    {product.stock > 0 ? `Còn lại: ${product.stock} sản phẩm` : "Hết hàng"}
+                    {product.stock > 0 ? `Còn lại: ${product.stock} Products` : "Out of Stock"}
                   </div>
                 </div>
 
@@ -259,7 +259,7 @@ export default function ProductDetailPage() {
                   disabled={!product || product.stock <= 0}
                   className="w-full bg-[#ff4d2e] text-white px-8 py-5 rounded-2xl hover:bg-[#e64529] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-bold text-xl shadow-xl shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                 >
-                  {product?.stock <= 0 ? 'Hiện tại hết hàng' : 'Thêm vào giỏ hàng ngay'}
+                  {product?.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
               </div>
             </div>

@@ -48,7 +48,7 @@ export default function GoogleLoginButton({ onSuccess, onError, disabled }) {
 
   const handleTokenResponse = async (tokenResponse) => {
     if (tokenResponse.error) {
-      onError?.(tokenResponse.error_description || 'Thao tác thất bại')
+      onError?.(tokenResponse.error_description || 'Action failed')
       return
     }
 
@@ -67,7 +67,7 @@ export default function GoogleLoginButton({ onSuccess, onError, disabled }) {
 
       onSuccess?.(data)
     } catch (err) {
-      onError?.(err.message || 'Thao tác thất bại')
+      onError?.(err.message || 'Action failed')
     } finally {
       setIsLoading(false)
     }
@@ -89,19 +89,19 @@ export default function GoogleLoginButton({ onSuccess, onError, disabled }) {
         {isLoading ? (
           <>
             <Spinner />
-            <span>Đang xử lý...</span>
+            <span>Processing...</span>
           </>
         ) : (
           <>
             <GoogleIcon />
-            <span>Tiếp tục với Google</span>
+            <span>Continue with Google</span>
           </>
         )}
       </button>
 
       {!isConfigured && (
         <p className="text-xs text-amber-700">
-          Chua cau hinh Google Login. Them VITE_GOOGLE_CLIENT_ID vao file frontend/.env.local.
+          Google Login is not configured. Add VITE_GOOGLE_CLIENT_ID to frontend/.env.local.
         </p>
       )}
     </div>

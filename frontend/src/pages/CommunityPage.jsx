@@ -77,11 +77,10 @@ export default function CommunityPage() {
       <section className="bg-linear-to-r from-orange-500 to-amber-500 text-white pt-28 pb-10 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-            🌐 Cộng đồng PawHouse
+            🌐 PawHouse Community
           </h1>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            Khám phá những câu chuyện, mẹo chăm sóc và kiến thức hữu ích về
-            thú cưng
+            Discover stories, care tips, and useful knowledge about pets
           </p>
         </div>
       </section>
@@ -94,7 +93,7 @@ export default function CommunityPage() {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="🔍 Tìm kiếm bài viết..."
+                  placeholder="🔍 Search posts..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-6 py-4 text-lg border border-gray-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -107,7 +106,7 @@ export default function CommunityPage() {
                 className="whitespace-nowrap bg-orange-500 text-white px-6 py-4 rounded-full font-semibold hover:bg-orange-600 transition flex items-center gap-2"
               >
                 <span>✍️</span>
-                <span>Tạo bài viết</span>
+                <span>Create Post</span>
               </button>
             )}
           </div>
@@ -120,14 +119,14 @@ export default function CommunityPage() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600">Đang tải bài viết...</p>
+              <p className="mt-4 text-gray-600">Loading posts...</p>
             </div>
           </div>
         ) : error ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">😞</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Có lỗi xảy ra
+              Unexpected Error
             </h3>
             <p className="text-gray-500">{error}</p>
           </div>
@@ -135,7 +134,7 @@ export default function CommunityPage() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📭</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Chưa có bài viết nào
+              No Posts Yet
             </h3>
             <p className="text-gray-500">
               {searchTerm
@@ -197,7 +196,7 @@ export default function CommunityPage() {
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                       <span className="text-orange-500 font-medium group-hover:gap-2 flex items-center gap-1 transition-all">
-                        Đọc thêm
+                        Read More
                         <span className="group-hover:translate-x-1 transition-transform">
                           →
                         </span>
@@ -214,7 +213,7 @@ export default function CommunityPage() {
         {filteredPosts.length > 0 && (
           <div className="mt-12 text-center">
             <p className="text-gray-500">
-              Hiển thị {filteredPosts.length} bài viết
+              Showing {filteredPosts.length} post(s)
             </p>
           </div>
         )}

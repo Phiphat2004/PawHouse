@@ -21,11 +21,11 @@ export default function FeaturedProducts() {
       setLoading(true);
       const response = await productApi.getAll();
       const productsList = response.products || response || [];
-      // Sắp xếp theo ngày tạo mới nhất (createdAt)
+      // Sort by newest created date (createdAt)
       const sortedProducts = [...productsList].sort((a, b) =>
         new Date(b.createdAt) - new Date(a.createdAt)
       );
-      // Lấy 4 sản phẩm mới nhất đang kích hoạt
+      // Keep 4 latest active products
       const featuredProducts = sortedProducts
         .filter((p) => p.isActive !== false)
         .slice(0, 4);
@@ -44,14 +44,14 @@ export default function FeaturedProducts() {
     if (result.success) {
       setToast({
         type: "success",
-        title: "Thành công!",
-        message: result.message || "Đã thêm vào giỏ hàng!",
+        title: "Success!",
+        message: result.message || "Added to cart!",
       });
-    } else if (result.message !== "Cần đăng nhập") {
+    } else if (result.message !== "Login required") {
       setToast({
         type: "error",
-        title: "Lỗi",
-        message: result.message || "Có lỗi xảy ra",
+        title: "Error",
+        message: result.message || "Something went wrong",
       });
     }
   };
@@ -62,25 +62,25 @@ export default function FeaturedProducts() {
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
           <div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-              Sản Phẩm Mới Nhất
+              Latest Products
             </h2>
-            <p className="text-gray-600">Khám phá những sản phẩm vừa mới cập nhật tại PawHouse</p>
+            <p className="text-gray-600">Discover newly updated products at PawHouse</p>
           </div>
           <Link
             to="/san-pham"
             className="inline-flex items-center gap-2 px-6 py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-full hover:bg-orange-500 hover:text-white transition-all"
           >
-            Xem tất cả <RightOutlined />
+            View all <RightOutlined />
           </Link>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">Đang tải sản phẩm...</p>
+            <p className="text-gray-600">Loading products...</p>
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">Chưa có sản phẩm nào</p>
+            <p className="text-gray-600">No products yet</p>
           </div>
         ) : (
           <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2">
@@ -111,12 +111,12 @@ export default function FeaturedProducts() {
                     </Link>
                     {product.stock <= 0 ? (
                       <span className="absolute top-3 left-3 px-3 py-1 bg-[#ff4d2e] text-white text-[10px] font-bold rounded-full uppercase tracking-widest z-20 backdrop-blur-md shadow-sm">
-                        Hết hàng
+                        Out of stock
                       </span>
                     ) : (
                       hasDiscount && (
                         <span className="absolute top-3 left-3 px-3 py-1 bg-linear-to-r from-orange-500 to-amber-500 text-white text-xs font-semibold rounded-full z-10">
-                          Giảm{" "}
+                          Save{" "}
                           {Math.round(
                             ((comparePrice - productPrice) / comparePrice) * 100,
                           )}
@@ -133,7 +133,7 @@ export default function FeaturedProducts() {
                         }}
                         disabled={cartLoading}
                         className="absolute bottom-3 right-3 w-10 h-10 bg-[#ff4d2e] text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-[#e64529] z-20"
-                        title="Thêm vào giỏ hàng"
+                        title="Add to cart"
                       >
                         <ShoppingCartOutlined className="text-lg" />
                       </button>

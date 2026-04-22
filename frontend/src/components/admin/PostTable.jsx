@@ -30,17 +30,17 @@ export default function PostTable({
       draft: {
         bg: "bg-gray-100",
         text: "text-gray-700",
-        label: "Bản nháp",
+        label: "Draft",
       },
       published: {
         bg: "bg-green-100",
         text: "text-green-700",
-        label: "Đã xuất bản",
+        label: "Published",
       },
       hidden: {
         bg: "bg-red-100",
         text: "text-red-700",
-        label: "Ẩn",
+        label: "Hidden",
       },
     };
 
@@ -83,10 +83,10 @@ export default function PostTable({
           <FileTextOutlined />
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Chưa có bài viết nào
+          No posts yet
         </h3>
         <p className="text-gray-500">
-          Nhấn nút "Tạo bài viết mới" để bắt đầu
+          Click "Create new post" to get started
         </p>
       </div>
     );
@@ -98,19 +98,19 @@ export default function PostTable({
         <TableHeader className="bg-gray-50">
           <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Bài viết
+                Post
             </TableHead>
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tác giả
+                Author
             </TableHead>
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                Trạng thái
+                Status
             </TableHead>
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ngày xuất bản
+                Published date
             </TableHead>
             <TableHead className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Thao tác
+                Actions
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -136,7 +136,7 @@ export default function PostTable({
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 mb-1">
-                        {displayTitle || "(Không có tiêu đề)"}
+                        {displayTitle || "(Untitled)"}
                       </p>
                       {displayExcerpt && (
                         <p className="text-sm text-gray-500">
@@ -159,7 +159,7 @@ export default function PostTable({
                   <div className="space-y-1.5 min-w-[180px]">
                     <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                        Ngày xuất bản
+                        Published date
                       </p>
                       {published ? (
                         <div className="mt-1 flex items-center gap-2 text-xs text-slate-900">
@@ -173,13 +173,13 @@ export default function PostTable({
                           </span>
                         </div>
                       ) : (
-                        <p className="mt-1 text-xs text-amber-700 font-medium">Chưa xuất bản</p>
+                        <p className="mt-1 text-xs text-amber-700 font-medium">Not published yet</p>
                       )}
                     </div>
 
                     <div className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                        Ngày tạo
+                        Created date
                       </p>
                       {created ? (
                         <div className="mt-1 flex items-center gap-2 text-xs text-slate-900">
@@ -203,7 +203,7 @@ export default function PostTable({
                     <Link
                       to={`/quan-tri/cong-dong/${post.slug}`}
                       className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                      title="Xem chi tiết"
+                      title="View details"
                     >
                       <EyeOutlined />
                     </Link>
@@ -217,8 +217,8 @@ export default function PostTable({
                         }`}
                         title={
                           post.status === "published"
-                            ? "Chuyển sang bản nháp"
-                            : "Xuất bản"
+                            ? "Move to draft"
+                            : "Publish"
                         }
                       >
                         {post.status === "published" ? <InboxOutlined /> : <UploadOutlined />}
@@ -227,14 +227,14 @@ export default function PostTable({
                     <button
                       onClick={() => onEdit(post)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Chỉnh sửa"
+                      title="Edit"
                     >
                       <EditOutlined />
                     </button>
                     <button
                       onClick={() => onDelete(post._id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Xóa"
+                      title="Delete"
                     >
                       <DeleteOutlined />
                     </button>

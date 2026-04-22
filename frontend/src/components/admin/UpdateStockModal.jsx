@@ -78,7 +78,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
       });
     } catch (error) {
       console.error('Error fetching data:', error);
-      setError('Không thể tải thông tin tồn kho');
+      setError('Unable to load inventory information');
     }
   };
 
@@ -103,7 +103,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
     
     // Validation
     if (!formData.quantity || formData.quantity <= 0) {
-      setError('Vui lòng nhập số lượng hợp lệ (phải lớn hơn 0)');
+      setError('Please enter a valid quantity (must be greater than 0)');
       return;
     }
     
@@ -111,7 +111,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
     if (formData.type === 'OUT') {
       const availableStock = selectedWarehouseStock?.availableQuantity || 0;
       if (Number(formData.quantity) > availableStock) {
-        setError(`Số lượng xuất không được vượt quá số khả dụng (${availableStock})`);
+        setError(`Outgoing quantity cannot exceed available stock (${availableStock})`);
         return;
       }
     }
@@ -126,7 +126,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
         warehouseId: formData.warehouseId,
         quantity: Number(formData.quantity),
         type: formData.type,
-        reason: formData.reason || (formData.type === 'IN' ? 'Nhập thêm hàng' : 'Xuất hàng')
+        reason: formData.reason || (formData.type === 'IN' ? 'Stock in' : 'Stock out')
       });
 
       // Success
@@ -136,7 +136,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
       onClose();
     } catch (error) {
       console.error('Error updating stock:', error);
-      setError(error.message || 'Có lỗi xảy ra khi cập nhật tồn kho');
+      setError(error.message || 'An error occurred while updating inventory');
     } finally {
       setLoading(false);
     }
@@ -165,8 +165,8 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
               <span className="text-2xl">📦</span>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Cập nhật tồn kho</h2>
-              <p className="text-orange-100 text-sm">Nhập thêm hoặc xuất hàng</p>
+              <h2 className="text-2xl font-bold text-white">Update inventory</h2>
+              <p className="text-orange-100 text-sm">Add or remove stock</p>
             </div>
           </div>
           <button
@@ -211,11 +211,11 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                     </p>
                     <div className="mt-3 flex items-center gap-3 text-sm">
                       <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-orange-100">
-                        <span className="text-gray-600">Tổng tồn:</span>
+                        <span className="text-gray-600">Total stock:</span>
                         <span className="font-bold text-orange-600 text-base">{totalStock}</span>
                       </div>
                       <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-green-100">
-                        <span className="text-gray-600">Khả dụng:</span>
+                        <span className="text-gray-600">Available:</span>
                         <span className="font-bold text-green-600 text-base">{availableStock}</span>
                       </div>
                     </div>
@@ -224,17 +224,17 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
               </div>
             )}
             
-            {/* Warehouse - Hiển thị cố định */}
+            {/* Warehouse - fixed display */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 <span className="text-lg">🏢</span>
-                <span>Kho hàng</span>
+                <span>Warehouse</span>
               </label>
               <div className="w-full border-2 border-amber-300 rounded-xl py-3 px-4 bg-amber-50 flex items-center gap-3">
                 <span className="text-2xl">🏢</span>
                 <div>
                   <span className="text-amber-800 font-bold text-base">
-                    {stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name || 'Chưa có kho'}
+                    {stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name || 'No warehouse'}
                   </span>
                   {(stockLevels[0]?.warehouseId?.code || allWarehouses[0]?.code) && (
                     <span className="ml-2 text-sm text-amber-600">
@@ -243,14 +243,14 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                   )}
                 </div>
               </div>
-              <p className="text-sm text-gray-500 mt-2">{stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name ? '' : 'Chưa có kho'}</p>
+              <p className="text-sm text-gray-500 mt-2">{stockLevels[0]?.warehouseId?.name || allWarehouses[0]?.name ? '' : 'No warehouse'}</p>
               {selectedWarehouseStock && (
                 <div className="mt-3 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl shadow-sm">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">📊</span>
-                        <span className="text-sm font-medium text-gray-700">Tồn kho hiện tại</span>
+                        <span className="text-sm font-medium text-gray-700">Current stock</span>
                       </div>
                       <span className="text-lg font-bold text-blue-700">{selectedWarehouseStock.quantity}</span>
                     </div>
@@ -258,7 +258,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">✅</span>
-                        <span className="text-sm font-medium text-gray-700">Số lượng khả dụng</span>
+                        <span className="text-sm font-medium text-gray-700">Available quantity</span>
                       </div>
                       <span className="text-lg font-bold text-green-700">{selectedWarehouseStock.availableQuantity}</span>
                     </div>
@@ -271,7 +271,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 <span className="text-lg">🔄</span>
-                <span>Loại thao tác</span>
+                <span>Operation type</span>
                 <span className="text-red-500">*</span>
               </label>
               {(() => {
@@ -296,7 +296,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                         />
                         <span className="text-3xl">⬆️</span>
                         <span className={`font-bold ${formData.type === 'IN' ? 'text-green-700' : 'text-gray-700'}`}>
-                          Nhập thêm
+                          Stock in
                         </span>
                         {formData.type === 'IN' && (
                           <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -326,7 +326,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                         <span className={`font-bold ${
                           !canOut ? 'text-gray-400' : formData.type === 'OUT' ? 'text-red-700' : 'text-gray-700'
                         }`}>
-                          Xuất giảm
+                          Stock out
                         </span>
                         {formData.type === 'OUT' && canOut && (
                           <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
@@ -343,7 +343,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <p className="text-sm text-gray-600 font-medium">
-                          Chỉ có thể xuất kho khi sản phẩm đã có trong kho
+                          Stock out is only available when the product already exists in inventory
                         </p>
                       </div>
                     )}
@@ -356,7 +356,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 <span className="text-lg">🔢</span>
-                <span>Số lượng {formData.type === 'IN' ? 'nhập thêm' : 'xuất'}</span>
+                <span>Quantity {formData.type === 'IN' ? 'to add' : 'to remove'}</span>
                 <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -368,7 +368,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                   min="1"
                   max={formData.type === 'OUT' ? selectedWarehouseStock?.availableQuantity : undefined}
                   required
-                  placeholder="Nhập số lượng..."
+                  placeholder="Enter quantity..."
                   className="w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:border-gray-400 text-gray-900 font-medium"
                 />
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -385,8 +385,8 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                 <span className="text-lg">{formData.type === 'IN' ? '💡' : '🚨'}</span>
                 <p className="text-sm font-medium text-gray-700">
                   {formData.type === 'IN' 
-                    ? 'Nhập số lượng muốn thêm vào kho' 
-                    : `Xuất tối đa: ${selectedWarehouseStock?.availableQuantity || 0} sản phẩm`
+                    ? 'Enter quantity to add to inventory' 
+                    : `Maximum stock out: ${selectedWarehouseStock?.availableQuantity || 0} items`
                   }
                 </p>
               </div>
@@ -396,14 +396,14 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 <span className="text-lg">📝</span>
-                <span>Lý do</span>
+                <span>Reason</span>
               </label>
               <textarea
                 name="reason"
                 value={formData.reason}
                 onChange={handleChange}
                 rows="3"
-                placeholder="Nhập lý do điều chỉnh (tùy chọn)..."
+                placeholder="Enter adjustment reason (optional)..."
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all shadow-sm hover:border-gray-400 text-gray-900"
               ></textarea>
             </div>
@@ -416,7 +416,7 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                 disabled={loading}
                 className="flex-1 px-6 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
-                Hủy bỏ
+                Cancel
               </button>
               <button
                 type="submit"
@@ -429,19 +429,19 @@ export default function UpdateStockModal({ isOpen, onClose, productId, onSuccess
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Đang xử lý...</span>
+                    <span>Processing...</span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
                     {formData.type === 'IN' ? (
                       <>
                         <span className="text-lg">⬆️</span>
-                        <span>Cập nhật</span>
+                        <span>Update</span>
                       </>
                     ) : (
                       <>
                         <span className="text-lg">⬇️</span>
-                        <span>Cập nhật</span>
+                        <span>Update</span>
                       </>
                     )}
                   </span>

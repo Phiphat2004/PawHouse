@@ -28,22 +28,22 @@ const DeleteAccountDialog = ({ account, onClose, onConfirm }) => {
                             <DeleteOutlined className="w-6 h-6 text-red-600" />
                         </div>
                         <AlertDialogTitle>
-                            Vô hiệu hoá tài khoản
+                            Disable Account
                         </AlertDialogTitle>
                     </div>
                     <AlertDialogDescription>
-                        Bạn có chắc chắn muốn vô hiệu hoá tài khoản của{' '}
+                        Are you sure you want to disable the account for{' '}
                         <span className="font-medium text-gray-900">{account.name}</span> (
-                        {account.email})? Tài khoản sẽ không thể đăng nhập cho đến khi được kích hoạt lại bởi quản trị viên.
+                        {account.email})? The account will not be able to login until re-enabled by an administrator.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onClose}>Hủy</AlertDialogCancel>
+                    <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={onConfirm}
                         className='bg-red-600 hover:bg-red-700'
                     >
-                        Xác nhận vô hiệu hoá
+                        Confirm Disable
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

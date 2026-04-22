@@ -27,7 +27,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
     if (accounts.length === 0) {
         return (
             <div className="py-20 text-center text-gray-400">
-                Không có tài khoản nào
+                No accounts found
             </div>
         );
     }
@@ -56,12 +56,12 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
     const getRoleLabel = (role) => {
         switch (role) {
             case 'admin':
-                return 'Quản trị viên';
+                return 'Administrator';
             case 'staff':
-                return 'Nhân viên';
+                return 'Staff';
             case 'user':
             default:
-                return 'Người dùng';
+                return 'User';
         }
     };
 
@@ -82,11 +82,11 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
     const getStatusLabel = (status) => {
         switch (status) {
             case AccountStatus.ACTIVE:
-                return 'Hoạt động';
+                return 'Active';
             case AccountStatus.BANNED:
-                return 'Bị khoá';
+                return 'Banned';
             case AccountStatus.INACTIVE:
-                return 'Không hoạt động';  // NEW: For soft-deleted
+                return 'Inactive';  // NEW: For soft-deleted
             default:
                 return status;
         }
@@ -97,12 +97,12 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
             <Table>
                 <TableHeader>
                     <TableRow className="bg-gray-50">
-                        <TableHead className="text-gray-700 font-semibold">HỌ TÊN</TableHead>
+                        <TableHead className="text-gray-700 font-semibold">FULL NAME</TableHead>
                         <TableHead className="text-gray-700 font-semibold">EMAIL</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">VAI TRÒ</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">TRẠNG THÁI</TableHead>
-                        <TableHead className="text-gray-700 font-semibold">NGÀY TẠO</TableHead>
-                        <TableHead className="text-gray-700 font-semibold text-center">THÁO TÁC</TableHead>
+                        <TableHead className="text-gray-700 font-semibold">ROLE</TableHead>
+                        <TableHead className="text-gray-700 font-semibold">STATUS</TableHead>
+                        <TableHead className="text-gray-700 font-semibold">CREATED AT</TableHead>
+                        <TableHead className="text-gray-700 font-semibold text-center">ACTIONS</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -137,7 +137,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>Xem chi tiết</p>
+                                                <p>View Details</p>
                                             </TooltipContent>
                                         </Tooltip>
                                         {/* UPDATED: Assign Role - Disabled + Tooltip for deleted */}
@@ -154,7 +154,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>{account.is_deleted ? 'Không thể phân công vai trò cho tài khoản đã bị xóa' : 'Phân công vai trò'}</p>
+                                                <p>{account.is_deleted ? 'Cannot assign role to a deleted account' : 'Assign Role'}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                         <Tooltip>
@@ -186,14 +186,14 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                                             <TooltipContent>
                                                 <p>
                                                     {account.role === 'admin'
-                                                        ? 'Không thể khoá quản trị viên'
+                                                        ? 'Cannot ban an administrator'
                                                         : account.status === AccountStatus.INACTIVE
-                                                            ? 'Khôi phục tài khoản đã xoá'
+                                                            ? 'Restore deleted account'
                                                             : account.is_deleted
-                                                                ? 'Không thể khoá/mở khoá tài khoản đã xoá'
+                                                                ? 'Cannot ban/unban a deleted account'
                                                             : account.status === AccountStatus.BANNED
-                                                                ? 'Mở khoá tài khoản'
-                                                                : 'Khoá tài khoản'}
+                                                                ? 'Unban Account'
+                                                                : 'Ban Account'}
                                                 </p>
                                             </TooltipContent>
                                         </Tooltip>
