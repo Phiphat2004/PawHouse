@@ -166,7 +166,9 @@ const getAccountDetailService = async (userId) => {
   }
 
   const user = await User.findOne({ _id: userId })
-    .select("email profile roles role status is_banned is_deleted createdAt")
+    .select(
+      "email phone profile roles role status is_banned is_deleted isVerified authProvider settings createdAt updatedAt",
+    )
     .lean();
 
   if (!user) {
@@ -177,10 +179,30 @@ const getAccountDetailService = async (userId) => {
     id: user._id.toString(),
     name: getUserName(user),
     email: user.email,
+    phone: user.phone || "",
     role: getUserRole(user),
     status: getUserStatus(user),
     is_deleted: user.status === "deleted" || user.is_deleted,
+    isVerified: Boolean(user.isVerified),
+    authProvider: user.authProvider || "local",
+    profile: {
+      fullName: user.profile?.fullName || "",
+      avatarUrl: user.profile?.avatarUrl || "",
+      gender: user.profile?.gender || "",
+      dob: user.profile?.dob || null,
+      address: {
+        city: user.profile?.address?.city || "",
+        district: user.profile?.address?.district || "",
+        ward: user.profile?.address?.ward || "",
+        addressLine: user.profile?.address?.addressLine || "",
+      },
+    },
+    settings: {
+      marketingEmail: Boolean(user.settings?.marketingEmail),
+      pushNotification: Boolean(user.settings?.pushNotification),
+    },
     createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 };
 

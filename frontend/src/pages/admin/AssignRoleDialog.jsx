@@ -32,7 +32,7 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
     const roles = [
         {
             value: AccountRole.USER,
-            label: 'User',
+            label: 'Customer',
             icon: UserOutlined,
             description: 'Basic account with limited permissions',
         },
