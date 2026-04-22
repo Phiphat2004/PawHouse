@@ -266,6 +266,41 @@ const deletePost = async (req, res, next) => {
   }
 };
 
+const searchPosts = async (req, res, next) => {
+  try {
+    const { q, page = 1, limit = 20, status } = req.query;
+
+    if (!q || q.trim() === "") {
+      return res
+        .status(400)
+        .json({ error: "Từ khóa tìm kiếm là bắt buộc" });
+    }
+
+    const result = await postService.searchPosts({
+      q: q.trim(),
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 20,
+      status,
+      authorId: req.user._id,
+    });
+
+    if (!result.posts || result.posts.length === 0) {
+      return res.status(404).json({
+        error: "Không tìm thấy bài viết phù hợp",
+        posts: [],
+        pagination: result.pagination,
+      });
+    }
+
+    res.json({
+      message: `Tìm thấy ${result.pagination.total} bài viết`,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   uploadImage,
   getAll,
@@ -275,4 +310,5 @@ module.exports = {
   updateMyPost,
   deleteMyPost,
   delete: deletePost,
+  searchPosts,
 };

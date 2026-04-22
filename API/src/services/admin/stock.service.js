@@ -536,102 +536,15 @@ async function getStockMovements(filters = {}) {
     attachWarehouseToMovement(movement, fallbackWarehouse),
   );
 
-  const statusToType = {
-    pending: "RESERVE",
-    shipping: "FULFILL",
-    completed: "FULFILL",
-  };
-
-  const orderStatusQuery = { $in: Object.keys(statusToType) };
-  const orderQuery = { status: orderStatusQuery };
-
-  const orders = await Order.find(orderQuery)
-    .populate("userId", "name email")
-    .sort({ updatedAt: -1 })
-    .lean();
-
-  const orderIds = orders.map((order) => order._id);
-  const orderItems = orderIds.length
-    ? await OrderItem.find({
-        orderId: { $in: orderIds },
-        ...(productId ? { productId } : {}),
-      }).lean()
-    : [];
-
-  const itemsByOrderId = new Map();
-  for (const item of orderItems) {
-    const key = String(item.orderId);
-    if (!itemsByOrderId.has(key)) itemsByOrderId.set(key, []);
-    itemsByOrderId.get(key).push(item);
-  }
-
-  const orderMovements = [];
-  for (const order of orders) {
-    const movementType = statusToType[order.status];
-    if (!movementType) continue;
-
-    const visibleStatus =
-      order.status === "pending"
-        ? "Chờ xác nhận"
-        : order.status === "shipping"
-          ? "Đang giao hàng"
-          : "Đã giao hàng";
-
-    if (type && type !== movementType) continue;
-
-    const statusHistory = Array.isArray(order.statusHistory)
-      ? order.statusHistory
-      : [];
-    const statusAt = statusHistory.find((h) => h?.to === order.status)?.at;
-    const createdAt = statusAt || order.updatedAt || order.createdAt;
-    const orderUserName =
-      order.userId?.name ||
-      order.addressSnapshot?.fullName ||
-      order.userId?.email ||
-      "Khach hang";
-
-    const itemsForOrder = itemsByOrderId.get(String(order._id)) || [];
-    for (const item of itemsForOrder) {
-      const itemProductId = item.productId?._id || item.productId;
-      if (productId && String(itemProductId) !== String(productId)) continue;
-
-      if (
-        warehouseId &&
-        String(fallbackWarehouse._id) !== String(warehouseId)
-      ) {
-        continue;
-      }
-
-      orderMovements.push({
-        _id: `order-${order._id}-${itemProductId}-${movementType}`,
-        productId: {
-          _id: itemProductId,
-          name: item.productName || "San pham",
-          sku: item.sku || "",
-        },
-        warehouseId: fallbackWarehouse,
-        type: movementType,
-        quantity: Number(item.quantity) || 0,
-        reason: visibleStatus,
-        referenceType: "ORDER",
-        referenceId: String(order._id),
-        createdBy: {
-          email: orderUserName,
-        },
-        orderStatus: order.status,
-        statusLabel: visibleStatus,
-        createdAt,
-      });
-    }
-  }
-
-  const combined = [...orderMovements, ...normalizedManual].sort(
+  // **FINAL FIX**: Combine ONLY actual DB records (manual + order-related)
+  // NO synthetic orderMovements to avoid duplicates
+  const allMovements = [...normalizedManual, ...orderRelatedNormalized].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
-  const total = combined.length;
+  const total = allMovements.length;
   const skip = (numericPage - 1) * numericLimit;
-  const movements = combined.slice(skip, skip + numericLimit);
+  const movements = allMovements.slice(skip, skip + numericLimit);
 
   return {
     movements,

@@ -672,6 +672,17 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
       amount: order.total,
       paidAt: new Date(),
     });
+
+    // ✅ UPDATE: Cập nhật targetStatus của tất cả StockMovement cho order này
+    // Để hiển thị đúng trạng thái "Đã giao hàng" trong lịch sử
+    try {
+      await StockMovement.updateMany(
+        { referenceId: String(order._id) },
+        { $set: { targetStatus: "completed" } }
+      );
+    } catch (err) {
+      console.error("Error updating stock movement status:", err.message);
+    }
   }
 
   await order.save();

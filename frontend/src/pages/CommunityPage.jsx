@@ -49,7 +49,8 @@ export default function CommunityPage() {
     const matchSearch =
       !searchTerm ||
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase());
+      post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchSearch;
   });

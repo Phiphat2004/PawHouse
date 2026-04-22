@@ -109,6 +109,7 @@ export default function AdminPostsPage() {
       !searchTerm ||
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.slug.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchStatus = !filterStatus || post.status === filterStatus;
