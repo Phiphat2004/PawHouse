@@ -190,10 +190,10 @@ export default function StockMovementHistoryPage() {
 
   const getShortReason = (movement) => {
     // Priority: targetStatus > statusLabel > reason > type label (NO HARDCODE pending for completed)
-    if (movement?.targetStatus) return getStatusLabel(movement.targetStatus);
+    if (movement?.targetStatus) return getStatusLabel(movement.targetStatus, movement);
     if (movement?.statusLabel) return movement.statusLabel;
     if (movement?.reason) return movement.reason;
-    if (movement?.orderStatus) return getStatusLabel(movement.orderStatus);
+    if (movement?.orderStatus) return getStatusLabel(movement.orderStatus, movement);
 
     // FIXED: Remove hardcoded "Chờ xác nhận" for RESERVE/FULFILL - use backend reason/type only
     const typeLabels = {
@@ -209,7 +209,7 @@ export default function StockMovementHistoryPage() {
     return typeLabels[movement?.type] || movement?.type || '-';
   };
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = (status, movement) => {
     const map = {
       RESERVE: 'Pending confirmation',
       OUT: movement?.referenceType === 'ORDER' ? 'Delivering' : 'Export',
