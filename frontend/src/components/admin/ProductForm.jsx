@@ -351,7 +351,7 @@ export default function ProductForm({
             {/* Price and stock */}
             <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                Price and stock
+                Price
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* SKU */}
@@ -475,8 +475,8 @@ export default function ProductForm({
                         return (
                           <div key={rootCat._id} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                             <label className={`flex items-center gap-2 cursor-pointer p-2 mb-2 rounded-lg transition-all ${formData.categoryIds.includes(rootCat._id)
-                                ? "bg-orange-100 text-orange-800"
-                                : "hover:bg-gray-100"
+                              ? "bg-orange-100 text-orange-800"
+                              : "hover:bg-gray-100"
                               }`}>
                               <input
                                 type="checkbox"
@@ -497,8 +497,8 @@ export default function ProductForm({
                                   <label
                                     key={child._id}
                                     className={`flex items-center gap-2 cursor-pointer p-2.5 rounded-lg border-2 transition-all bg-white ${formData.categoryIds.includes(child._id)
-                                        ? "border-orange-500 bg-orange-50"
-                                        : "border-gray-200 hover:border-orange-200"
+                                      ? "border-orange-500 bg-orange-50"
+                                      : "border-gray-200 hover:border-orange-200"
                                       }`}
                                   >
                                     <input
@@ -509,8 +509,8 @@ export default function ProductForm({
                                     />
                                     <span
                                       className={`text-sm font-medium ${formData.categoryIds.includes(child._id)
-                                          ? "text-orange-700"
-                                          : "text-gray-700"
+                                        ? "text-orange-700"
+                                        : "text-gray-700"
                                         }`}
                                     >
                                       {child.name}
