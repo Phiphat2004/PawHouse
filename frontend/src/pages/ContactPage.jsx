@@ -151,12 +151,12 @@ export default function ContactPage() {
                       required
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm bg-white"
                     >
-                      <option value="">-- Chọn chủ đề --</option>
-                      <option value="order">Hỏi về đơn hàng</option>
-                      <option value="product">Hỏi về sản phẩm</option>
-                      <option value="return">Đổi trả hàng</option>
-                      <option value="payment">Thanh toán</option>
-                      <option value="other">Khác</option>
+                      <option value="">-- Select topic --</option>
+                      <option value="order">Ask about order</option>
+                      <option value="product">Ask about product</option>
+                      <option value="return">Returns/Refunds</option>
+                      <option value="payment">Payment</option>
+                      <option value="other">Other</option>
                     </select>
                   </div>
 
@@ -194,20 +194,20 @@ export default function ContactPage() {
                 <div className="space-y-4">
                   {[
                     {
-                      q: "Thời gian giao hàng bao lâu?",
-                      a: "Thông thường 2–5 ngày làm việc tùy khu vực. Nội thành HN/HCM có thể nhận trong ngày.",
+                      q: "How long is the delivery time?",
+                      a: "Usually 2-5 business days depending on region. Inner city HN/HCM can receive same day.",
                     },
                     {
-                      q: "Tôi có thể đổi/trả hàng không?",
-                      a: "Chúng tôi hỗ trợ đổi trả trong vòng 7 ngày nếu sản phẩm bị lỗi hoặc không đúng mô tả.",
+                      q: "Can I return or exchange items?",
+                      a: "We support returns/exchanges within 7 days if the product is defective or does not match the description.",
                     },
                     {
-                      q: "PawHouse có bảo đảm chất lượng sản phẩm không?",
-                      a: "Tất cả sản phẩm đều được kiểm định kỹ lưỡng, có xuất xứ rõ ràng và an toàn cho thú cưng.",
+                      q: "Does PawHouse guarantee product quality?",
+                      a: "All products are thoroughly inspected, have clear origins, and are safe for pets.",
                     },
                     {
-                      q: "Tôi quên mật khẩu thì phải làm gì?",
-                      a: "Vào trang đăng nhập → chọn \"Quên mật khẩu\" → nhập email để nhận link đặt lại.",
+                      q: "What should I do if I forget my password?",
+                      a: "Go to login page → click \"Forgot password\" → enter email to receive reset link.",
                     },
                   ].map((item) => (
                     <div key={item.q} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">

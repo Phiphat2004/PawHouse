@@ -992,7 +992,7 @@ export default function CareAppointmentsPage() {
                                             rows={3}
                                             value={editForm.note}
                                             onChange={handleEditChange("note")}
-                                            placeholder="Ghi chú"
+                                            placeholder="Notes"
                                             className="md:col-span-2"
                                           />
                                         </div>

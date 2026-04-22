@@ -139,7 +139,7 @@ export default function CommunityPage() {
             </h3>
             <p className="text-gray-500">
               {searchTerm
-                ? "No matching articles found"
+                ? "No matching posts found"
                 : "Come back later!"}
             </p>
           </div>
