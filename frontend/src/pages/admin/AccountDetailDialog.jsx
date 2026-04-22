@@ -16,9 +16,11 @@ import {
     CalendarOutlined,
     ExclamationCircleOutlined,
     UndoOutlined,
+    PhoneOutlined,
+    CheckCircleOutlined,
 } from '@ant-design/icons';
 
-const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
+const AccountDetailDialog = ({ account, isLoading, onClose, onBanUnban, onRestore }) => {
     if (!account) return null;
 
     const formatDate = (date) => {
@@ -50,7 +52,7 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                 return 'Staff';
             case 'user':
             default:
-                return 'User';
+                return 'Customer';
         }
     };
 
@@ -81,9 +83,49 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
         }
     };
 
+    const getAddressLabel = (address) => {
+        if (!address) return 'Not set';
+        const parts = [address.addressLine, address.ward, address.district, address.city].filter(Boolean);
+        return parts.length > 0 ? parts.join(', ') : 'Not set';
+    };
+
+    const accountName = account.profile?.fullName || account.name || 'Not set';
+    const accountPhone = account.phone || 'Not set';
+    const accountGender = account.profile?.gender || 'Not set';
+    const accountDob = account.profile?.dob ? formatDate(account.profile.dob) : 'Not set';
+    const accountAddress = getAddressLabel(account.profile?.address);
+    const authProviderLabel = account.authProvider === 'google' ? 'Google' : 'Email/Password';
+    const accountInitial = accountName?.charAt(0)?.toUpperCase() || 'U';
+    const rawAvatarUrl = account.profile?.avatarUrl?.trim() || '';
+
+    const getAvatarSrc = (url) => {
+        if (!url) return '';
+        if (/^https?:\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (url.startsWith('//')) return `${window.location.protocol}${url}`;
+        if (url.startsWith('/api/uploads/')) return url.replace(/^\/api/, '');
+        if (url.startsWith('api/uploads/')) return `/${url.replace(/^api\//, '')}`;
+        if (url.startsWith('uploads/')) return `/${url}`;
+        return url;
+    };
+
+    const accountAvatarSrc = getAvatarSrc(rawAvatarUrl);
+
+    const getStatusTone = (status) => {
+        switch (status) {
+            case AccountStatus.ACTIVE:
+                return 'from-green-500 to-emerald-600';
+            case AccountStatus.BANNED:
+                return 'from-red-500 to-rose-600';
+            case AccountStatus.INACTIVE:
+                return 'from-slate-500 to-slate-600';
+            default:
+                return 'from-slate-500 to-slate-600';
+        }
+    };
+
     return (
         <Dialog open={!!account} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Account Details</DialogTitle>
                     <DialogDescription>
@@ -95,74 +137,141 @@ const AccountDetailDialog = ({ account, onClose, onBanUnban, onRestore }) => {
                         View detailed information for this account
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-6 py-4">
-                    {/* Name */}
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                            <UserOutlined className="w-5 h-5 text-blue-600" />
+                {isLoading ? (
+                    <div className="py-10 text-center text-gray-500">Loading account details...</div>
+                ) : (
+                    <div className="space-y-5 py-2">
+                        <div className={`rounded-2xl bg-linear-to-r ${getStatusTone(account.status)} p-5 text-white`}>
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/40 bg-white/20 text-xl font-bold">
+                                        {accountAvatarSrc ? (
+                                            <img
+                                                src={accountAvatarSrc}
+                                                alt={accountName}
+                                                className="h-full w-full rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            accountInitial
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xl font-semibold leading-tight">{accountName}</p>
+                                        <p className="text-sm text-white/85">{account.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <Badge className="border-0 bg-white/20 text-white font-semibold">
+                                        {getRoleLabel(account.role)}
+                                    </Badge>
+                                    <Badge className="border-0 bg-white/20 text-white font-semibold">
+                                        {getStatusLabel(account.status)}
+                                    </Badge>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Full Name</p>
-                            <p className="text-gray-900">{account.name}</p>
-                        </div>
-                    </div>
 
-                    {/* Email */}
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                            <MailOutlined className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Email</p>
-                            <p className="text-gray-900">{account.email}</p>
-                        </div>
-                    </div>
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                            <section className="rounded-2xl border border-gray-200 bg-white p-4">
+                                <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">Identity</h4>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <UserOutlined className="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">Full Name</p>
+                                            <p className="text-sm font-medium text-gray-900">{accountName}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <SafetyOutlined className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">Role</p>
+                                            <Badge className={getRoleBadgeColor(account.role)}>{getRoleLabel(account.role)}</Badge>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <CalendarOutlined className="w-4 h-4 text-orange-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">Created At</p>
+                                            <p className="text-sm font-medium text-gray-900">{formatDate(account.createdAt)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
-                    {/* Role */}
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                            <SafetyOutlined className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Role</p>
-                            <Badge className={getRoleBadgeColor(account.role)}>
-                                {getRoleLabel(account.role)}
-                            </Badge>
-                        </div>
-                    </div>
+                            <section className="rounded-2xl border border-gray-200 bg-white p-4">
+                                <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">Status & Security</h4>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <ExclamationCircleOutlined className="w-4 h-4 text-gray-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">Status</p>
+                                            <Badge className={getStatusBadgeClass(account.status)}>{getStatusLabel(account.status)}</Badge>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <CheckCircleOutlined className="w-4 h-4 text-emerald-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">Verified</p>
+                                            <p className="text-sm font-medium text-gray-900">{account.isVerified ? 'Yes' : 'No'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                                            <SafetyOutlined className="w-4 h-4 text-indigo-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">Auth Provider</p>
+                                            <p className="text-sm font-medium text-gray-900">{authProviderLabel}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
-                    {/* Status */}
-                    <div className="flex items-start gap-3">
-                        <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${account.status === AccountStatus.ACTIVE ? 'bg-green-100' :
-                                account.status === AccountStatus.BANNED ? 'bg-red-100' : 'bg-gray-100'  // NEW: Gray for inactive
-                                }`}
-                        >
-                            <ExclamationCircleOutlined
-                                className={`w-5 h-5 ${account.status === AccountStatus.ACTIVE ? 'text-green-600' :
-                                    account.status === AccountStatus.BANNED ? 'text-red-600' : 'text-gray-600'  // NEW: Gray for inactive
-                                    }`}
-                            />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Status</p>
-                            <Badge className={getStatusBadgeClass(account.status)}>
-                                {getStatusLabel(account.status)}
-                            </Badge>
+                            <section className="rounded-2xl border border-gray-200 bg-white p-4 lg:col-span-2">
+                                <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">Contact & Profile</h4>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="rounded-lg bg-gray-50 p-3">
+                                        <p className="text-xs text-gray-500">Email</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-900 flex items-center gap-2 break-all">
+                                            <MailOutlined className="text-green-600" />
+                                            {account.email}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-lg bg-gray-50 p-3">
+                                        <p className="text-xs text-gray-500">Phone</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-900 flex items-center gap-2">
+                                            <PhoneOutlined className="text-cyan-600" />
+                                            {accountPhone}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-lg bg-gray-50 p-3">
+                                        <p className="text-xs text-gray-500">Gender</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{accountGender}</p>
+                                    </div>
+                                    <div className="rounded-lg bg-gray-50 p-3">
+                                        <p className="text-xs text-gray-500">Date of Birth</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{accountDob}</p>
+                                    </div>
+                                    <div className="rounded-lg bg-gray-50 p-3 sm:col-span-2">
+                                        <p className="text-xs text-gray-500">Address</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{accountAddress}</p>
+                                    </div>
+                                </div>
+                            </section>
                         </div>
                     </div>
-
-                    {/* Created At */}
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
-                            <CalendarOutlined className="w-5 h-5 text-orange-600" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-500 mb-1">Created At</p>
-                            <p className="text-gray-900">{formatDate(account.createdAt)}</p>
-                        </div>
-                    </div>
-                </div>
+                )}
 
                 {/* Dialog Footer with Actions */}
                 <div className="border-t pt-4 flex gap-2 justify-end">

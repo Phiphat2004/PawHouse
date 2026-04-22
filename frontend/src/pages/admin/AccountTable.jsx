@@ -61,7 +61,7 @@ const AccountTable = ({ accounts, onViewDetail, onAssignRole, onBanUnban, onRest
                 return 'Staff';
             case 'user':
             default:
-                return 'User';
+                return 'Customer';
         }
     };
 

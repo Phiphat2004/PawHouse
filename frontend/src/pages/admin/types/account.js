@@ -1,5 +1,5 @@
 export const AccountRole = {
-  USER: "user",
+  CUSTOMER: "user",
   STAFF: "staff",
   ADMIN: "admin",
 };

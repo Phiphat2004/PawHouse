@@ -7,7 +7,7 @@ import { AccountDetailDialog } from './AccountDetailDialog';
 import { AssignRoleDialog } from './AssignRoleDialog';
 import { BanConfirmationDialog } from './BanConfirmationDialog';
 import { AccountRole, AccountStatus } from './types/account';
-import { getAccounts, assignRole, banUnbanAccount, restoreAccount } from '@/services/accountManagementService';
+import { getAccounts, getAccountDetail, assignRole, banUnbanAccount, restoreAccount } from '@/services/accountManagementService';
 import { toast } from "react-toastify";
 import Pagination from '@/components/layout/Pagination';
 import { debounce } from 'lodash';
@@ -23,6 +23,7 @@ const AccountManagement = () => {
     const [accountToAssignRole, setAccountToAssignRole] = useState(null);
     const [accountToBanUnban, setAccountToBanUnban] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDetailLoading, setIsDetailLoading] = useState(false);
 
     const fetchAccounts = async () => {
         setIsLoading(true);
@@ -75,6 +76,20 @@ const AccountManagement = () => {
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
+    };
+
+    const handleViewDetail = async (account) => {
+        if (!account?.id) return;
+
+        setIsDetailLoading(true);
+        try {
+            const detail = await getAccountDetail(account.id);
+            setSelectedAccount(detail);
+        } catch (error) {
+            toast.error(error.message || 'Failed to load account detail');
+        } finally {
+            setIsDetailLoading(false);
+        }
     };
 
     const handleAssignRole = async (accountId, newRole) => {
@@ -181,7 +196,7 @@ const AccountManagement = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Roles</SelectItem>
-                                    <SelectItem value={AccountRole.USER}>User</SelectItem>
+                                    <SelectItem value={AccountRole.CUSTOMER}>Customer</SelectItem>
                                     <SelectItem value={AccountRole.STAFF}>Staff</SelectItem>
                                     <SelectItem value={AccountRole.ADMIN}>Administrator</SelectItem>
                                 </SelectContent>
@@ -200,7 +215,7 @@ const AccountManagement = () => {
                     ) : (
                         <AccountTable
                             accounts={accounts}
-                            onViewDetail={setSelectedAccount}
+                            onViewDetail={handleViewDetail}
                             onAssignRole={setAccountToAssignRole}
                             onBanUnban={handleBanUnbanRequest}
                             onRestore={handleRestoreRequest}
@@ -222,6 +237,7 @@ const AccountManagement = () => {
                 {/* Dialogs */}
                 <AccountDetailDialog
                     account={selectedAccount}
+                    isLoading={isDetailLoading}
                     onClose={() => setSelectedAccount(null)}
                     onBanUnban={handleBanUnbanRequest}
                     onRestore={handleRestoreRequest}
