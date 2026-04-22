@@ -103,6 +103,25 @@ const stockMovementSchema = new mongoose.Schema(
       ref: "User",
     },
     notes: String,
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    deleteReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   {
     timestamps: true,
@@ -113,6 +132,7 @@ const stockMovementSchema = new mongoose.Schema(
 stockMovementSchema.index({ productId: 1, warehouseId: 1, createdAt: -1 });
 stockMovementSchema.index({ type: 1, createdAt: -1 });
 stockMovementSchema.index({ referenceType: 1, referenceId: 1, createdAt: -1 });
+stockMovementSchema.index({ isDeleted: 1, createdAt: -1 });
 
 stockMovementSchema.pre("save", function (next) {
   if (!this.warehouseId) {

@@ -51,6 +51,63 @@ function buildPaymentSnapshot(order, payment = null) {
   };
 }
 
+async function consolidateCancelledOrderMovements(
+  orderId,
+  previousStatus,
+  reason,
+  actorId,
+  hasFulfill = false,
+) {
+  const referenceId = String(orderId);
+  const normalizedReason =
+    typeof reason === "string" && reason.trim()
+      ? reason.trim()
+      : "Order cancelled";
+  const now = new Date();
+
+  if (hasFulfill) {
+    await StockMovement.updateMany(
+      { referenceId, type: "FULFILL", isDeleted: { $ne: true } },
+      {
+        $set: {
+          targetStatus: "cancelled",
+          sourceStatus: previousStatus,
+          reason: normalizedReason,
+          updatedAt: now,
+        },
+      },
+    );
+  } else {
+    await StockMovement.updateMany(
+      { referenceId, type: "RESERVE", isDeleted: { $ne: true } },
+      {
+        $set: {
+          targetStatus: "cancelled",
+          sourceStatus: previousStatus,
+          reason: normalizedReason,
+          updatedAt: now,
+        },
+      },
+    );
+  }
+
+  await StockMovement.updateMany(
+    {
+      referenceId,
+      type: { $in: ["RELEASE", "RESTORE"] },
+      isDeleted: { $ne: true },
+    },
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: now,
+        deletedBy: actorId || null,
+        deleteReason: "Merged into order movement status update",
+      },
+    },
+  );
+}
+
 async function attachOrderItems(orders = []) {
   if (!Array.isArray(orders) || orders.length === 0) {
     return [];
@@ -556,7 +613,14 @@ async function cancelOrder(orderId, userId, reason = "") {
   const orderItems = await OrderItem.find({ orderId: order._id }).lean();
 
   try {
-    await stockService.releaseStock(order._id, orderItems, userId);
+    await stockService.releaseStock(order._id, orderItems, userId, order.status);
+    await consolidateCancelledOrderMovements(
+      order._id,
+      order.status,
+      reason,
+      userId,
+      false,
+    );
   } catch (err) {
     console.error("Error releasing stock:", err.message);
     // Don't fail the cancellation if stock release fails
@@ -673,15 +737,20 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
       paidAt: new Date(),
     });
 
-    // ✅ UPDATE: Cập nhật targetStatus của tất cả StockMovement cho order này
-    // Để hiển thị đúng trạng thái "Đã giao hàng" trong lịch sử
     try {
       await StockMovement.updateMany(
-        { referenceId: String(order._id) },
-        { $set: { targetStatus: "completed" } }
+        { referenceId: String(order._id), type: "FULFILL" },
+        {
+          $set: {
+            targetStatus: "completed",
+            sourceStatus: previousStatus,
+            reason: "Order completed",
+          },
+        },
+        { sort: { createdAt: -1 } },
       );
     } catch (err) {
-      console.error("Error updating stock movement status:", err.message);
+      console.error("Error finalizing stock movement status:", err.message);
     }
   }
 
@@ -742,9 +811,23 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
         .lean();
 
       if (fulfilledMovement) {
-        await stockService.restoreStock(order._id, orderItems, adminId);
+        await stockService.restoreStock(order._id, orderItems, adminId, previousStatus);
+        await consolidateCancelledOrderMovements(
+          order._id,
+          previousStatus,
+          normalizedNote,
+          adminId,
+          true,
+        );
       } else {
-        await stockService.releaseStock(order._id, orderItems, adminId);
+        await stockService.releaseStock(order._id, orderItems, adminId, previousStatus);
+        await consolidateCancelledOrderMovements(
+          order._id,
+          previousStatus,
+          normalizedNote,
+          adminId,
+          false,
+        );
       }
     } catch (err) {
       console.error("Error restoring/releasing stock:", err.message);

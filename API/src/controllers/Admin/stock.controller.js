@@ -58,11 +58,12 @@ const getStockLevels = async (req, res, next) => {
 
 const getMovements = async (req, res, next) => {
   try {
-    const { productId, warehouseId, type, page, limit } = req.query;
+    const { productId, warehouseId, type, targetStatus, page, limit } = req.query;
     const result = await stockService.getStockMovements({
       productId,
       warehouseId,
       type,
+      targetStatus,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,
     });

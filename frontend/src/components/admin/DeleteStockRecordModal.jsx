@@ -25,7 +25,7 @@ export default function DeleteStockRecordModal({ isOpen, onClose, movement, onSu
       await stockApi.deleteMovement(movement._id);
 
       // Success toast
-      toast.success('Stock movement record deleted successfully!', {
+      toast.success('Stock movement record soft deleted successfully!', {
         position: 'top-right',
         autoClose: 3000,
       });
@@ -77,8 +77,8 @@ export default function DeleteStockRecordModal({ isOpen, onClose, movement, onSu
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Confirm deletion</h2>
-              <p className="text-red-100 text-sm">This action cannot be undone</p>
+              <h2 className="text-xl font-bold text-white">Confirm soft delete</h2>
+              <p className="text-red-100 text-sm">This action only hides the record from history</p>
             </div>
           </div>
           <button
@@ -111,7 +111,7 @@ export default function DeleteStockRecordModal({ isOpen, onClose, movement, onSu
                 <div>
                   <p className="font-semibold text-amber-900">Warning!</p>
                   <p className="text-sm text-amber-800 mt-1">
-                    Are you sure you want to delete this stock movement record? This will remove inventory history but will not affect current stock quantity.
+                    Are you sure you want to soft delete this stock movement record? This will hide the history item but will not affect current stock quantity.
                   </p>
                 </div>
               </div>
@@ -185,7 +185,7 @@ export default function DeleteStockRecordModal({ isOpen, onClose, movement, onSu
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  <span>Confirm delete</span>
+                  <span>Confirm soft delete</span>
                 </span>
               )}
             </button>
