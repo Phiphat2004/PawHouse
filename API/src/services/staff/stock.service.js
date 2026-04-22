@@ -149,6 +149,7 @@ async function createStockEntry(data) {
     : await resolveSingleWarehouse();
 
   const actualQuantity = Math.abs(Number(quantity) || 0);
+  const normalizedReason = typeof reason === "string" ? reason.trim() : "";
   if (actualQuantity <= 0) throw new Error("Invalid quantity");
 
   let stockLevel;
@@ -215,7 +216,9 @@ async function createStockEntry(data) {
     },
     type: type === "OUT" ? "OUT" : "IN",
     quantity: actualQuantity,
-    reason,
+    reason:
+      normalizedReason ||
+      (type === "OUT" ? "Direct in-store sale" : "Manual stock entry"),
     referenceType: type === "OUT" ? "SALE" : "PURCHASE",
     createdBy,
     notes:
@@ -242,9 +245,7 @@ async function reserveStock(orderId, items = [], createdBy) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
-  // ✅ Get order to capture status at this point
-  const order = await Order.findById(orderId).lean();
-  const targetStatus = order?.status || "pending";
+  const targetStatus = "confirmed";
 
   for (const item of items) {
     const productId = item.productId;
@@ -273,7 +274,7 @@ async function reserveStock(orderId, items = [], createdBy) {
         warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: "RESERVE",
         quantity: qty,
-        reason: "Reserve for order",
+        reason: "Reserved for order",
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
@@ -310,7 +311,7 @@ async function reserveStock(orderId, items = [], createdBy) {
         warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: "RESERVE",
         quantity: qty,
-        reason: "Reserve variation for order (fallback from ProductVariation)",
+        reason: "Reserved for order",
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
@@ -340,7 +341,7 @@ async function reserveStock(orderId, items = [], createdBy) {
   return { message: "Reserved stock for order", movements };
 }
 
-async function releaseStock(orderId, items = [], createdBy) {
+async function releaseStock(orderId, items = [], createdBy, sourceStatus = "pending") {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
@@ -366,10 +367,12 @@ async function releaseStock(orderId, items = [], createdBy) {
         warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: "RELEASE",
         quantity: qty,
-        reason: "Release reserved variation for order",
+        reason: "Order cancelled",
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
+        targetStatus: "cancelled",
+        sourceStatus,
         notes: `Released variation ${variationId} ${qty} units for order ${orderId}`,
       });
 
@@ -397,10 +400,12 @@ async function releaseStock(orderId, items = [], createdBy) {
       warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
       type: "RELEASE",
       quantity: qty,
-      reason: "Release reserved for order",
+      reason: "Order cancelled",
       referenceType: "ORDER",
       referenceId: String(orderId),
       createdBy,
+      targetStatus: "cancelled",
+      sourceStatus,
       notes: `Released ${qty} units for order ${orderId}`,
     });
 
@@ -431,7 +436,7 @@ async function fulfillStock(orderId, items = [], createdBy) {
       referenceType: "SALE",
       createdBy,
       targetStatus,
-      sourceStatus: "pending",
+      sourceStatus: "confirmed",
       notes,
     };
 
@@ -491,7 +496,7 @@ async function fulfillStock(orderId, items = [], createdBy) {
         const movement = await upsertFulfillMovement(
           productId,
           qty,
-          "Fulfill variation order",
+          "Delivered",
           `Fulfilled variation ${variationId} ${qty} units for order ${orderId}`,
         );
 
@@ -517,7 +522,7 @@ async function fulfillStock(orderId, items = [], createdBy) {
     const movement = await upsertFulfillMovement(
       productId,
       qty,
-      "Fulfill order",
+      "Delivered",
       `Fulfilled ${qty} units for order ${orderId}`,
     );
 
@@ -548,7 +553,7 @@ async function getStockLevels(filters = {}) {
 }
 
 async function getStockMovements(filters = {}) {
-  const { productId, warehouseId, type, page = 1, limit = 20 } = filters;
+  const { productId, warehouseId, type, targetStatus, page = 1, limit = 20 } = filters;
   const numericPage = Number(page) || 1;
   const numericLimit = Number(limit) || 20;
 
@@ -557,7 +562,18 @@ async function getStockMovements(filters = {}) {
   if (warehouseId && mongoose.Types.ObjectId.isValid(warehouseId)) {
     query.warehouseId = new mongoose.Types.ObjectId(warehouseId);
   }
+  query.isDeleted = { $ne: true };
   if (type) query.type = type;
+  if (targetStatus) {
+    if (targetStatus === "cancelled") {
+      query.$or = [
+        { targetStatus: "cancelled" },
+        { type: { $in: ["RELEASE", "RESTORE"] } },
+      ];
+    } else {
+      query.targetStatus = targetStatus;
+    }
+  }
 
   const fallbackWarehouse = await (warehouseId
     ? getWarehouseObjectById(warehouseId)
@@ -696,7 +712,7 @@ async function deleteWarehouse() {
   throw new Error("Single warehouse mode does not allow deleting warehouse");
 }
 
-async function restoreStock(orderId, items = [], createdBy) {
+async function restoreStock(orderId, items = [], createdBy, sourceStatus = "shipping") {
   // Restore quantity when cancelling from confirmed/packing/shipping (after fulfill)
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
@@ -725,10 +741,12 @@ async function restoreStock(orderId, items = [], createdBy) {
         warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: "RESTORE",
         quantity: qty,
-        reason: "Restore stock from cancelled order",
+        reason: "Order cancelled",
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
+        targetStatus: "cancelled",
+        sourceStatus,
         notes: `Restored variation ${variationId} ${qty} units due to order cancellation`,
       });
 
@@ -748,10 +766,12 @@ async function restoreStock(orderId, items = [], createdBy) {
         warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
         type: "RESTORE",
         quantity: qty,
-        reason: "Restore stock from cancelled order",
+        reason: "Order cancelled",
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
+        targetStatus: "cancelled",
+        sourceStatus,
         notes: `Restored ${qty} units due to order cancellation`,
       });
 
@@ -768,7 +788,12 @@ async function restoreStock(orderId, items = [], createdBy) {
 async function deleteStockMovement(movementId) {
   const movement = await StockMovement.findById(movementId);
   if (!movement) throw new Error("Stock movement not found");
-  await StockMovement.findByIdAndDelete(movementId);
+  if (!movement.isDeleted) {
+    movement.isDeleted = true;
+    movement.deletedAt = new Date();
+    movement.deleteReason = "Deleted from stock history";
+    await movement.save();
+  }
   return {
     message: "Stock movement deleted successfully",
     deletedMovement: movement,

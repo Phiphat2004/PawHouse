@@ -27,7 +27,7 @@ export default function StockMovementHistoryPage() {
   const [filters, setFilters] = useState({
     productId: '',
     warehouseId: '',
-    type: '',
+    status: '',
     search: '',
     startDate: '',
     endDate: ''
@@ -80,7 +80,25 @@ export default function StockMovementHistoryPage() {
       
       if (filters.productId) params.productId = filters.productId;
       if (filters.warehouseId) params.warehouseId = filters.warehouseId;
-      if (filters.type) params.type = filters.type;
+      if (filters.status) {
+        const typeFilters = [
+          'IN',
+          'OUT',
+          'ADJUSTMENT',
+          'TRANSFER',
+          'RETURN',
+          'RESERVE',
+          'RELEASE',
+          'RESTORE',
+          'FULFILL',
+        ];
+
+        if (typeFilters.includes(filters.status)) {
+          params.type = filters.status;
+        } else {
+          params.targetStatus = filters.status;
+        }
+      }
 
       const response = await stockApi.getMovements(params);
 
@@ -136,7 +154,7 @@ export default function StockMovementHistoryPage() {
     setFilters({
       productId: '',
       warehouseId: '',
-      type: '',
+      status: '',
       search: '',
       startDate: '',
       endDate: ''
@@ -152,7 +170,7 @@ export default function StockMovementHistoryPage() {
   };
 
   const handleDeleteMovement = async (movementId) => {
-    if (!confirm('Are you sure you want to delete this record? Note: Only deletes history, does not affect current inventory.')) {
+    if (!confirm('Are you sure you want to delete this record? This will soft delete the history item only.')) {
       return;
     }
 
@@ -165,7 +183,14 @@ export default function StockMovementHistoryPage() {
     }
   };
 
-  const getMovementTypeStyle = (type) => {
+  const getMovementTypeStyle = (movement) => {
+    const type = movement?.type;
+    const status = movement?.targetStatus || movement?.orderStatus;
+
+    if (status === 'cancelled') {
+      return { bg: 'bg-rose-100', text: 'text-rose-800', icon: '❌', label: 'Cancelled' };
+    }
+
     switch (type) {
       case 'IN':
         return { bg: 'bg-green-100', text: 'text-green-800', icon: '⬆️', label: 'Import' };
@@ -181,7 +206,12 @@ export default function StockMovementHistoryPage() {
         return { bg: 'bg-orange-100', text: 'text-orange-800', icon: '🔒', label: 'Hold' };
       case 'RELEASE':
         return { bg: 'bg-teal-100', text: 'text-teal-800', icon: '🔓', label: 'Cancelled' };
+      case 'RESTORE':
+        return { bg: 'bg-rose-100', text: 'text-rose-800', icon: '↩️', label: 'Cancelled' };
       case 'FULFILL':
+        if (status === 'shipping') {
+          return { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '🚚', label: 'Shipping' };
+        }
         return { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✅', label: 'Delivered' };
       default:
         return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '📦', label: type };
@@ -189,19 +219,18 @@ export default function StockMovementHistoryPage() {
   };
 
   const getShortReason = (movement) => {
-    // Priority: targetStatus > statusLabel > reason > type label (NO HARDCODE pending for completed)
-    if (movement?.targetStatus) return getStatusLabel(movement.targetStatus, movement);
-    if (movement?.statusLabel) return movement.statusLabel;
     if (movement?.reason) return movement.reason;
-    if (movement?.orderStatus) return getStatusLabel(movement.orderStatus, movement);
+    if (movement?.targetStatus) return getStatusLabel(movement.targetStatus);
+    if (movement?.statusLabel) return movement.statusLabel;
+    if (movement?.orderStatus) return getStatusLabel(movement.orderStatus);
 
-    // FIXED: Remove hardcoded "Chờ xác nhận" for RESERVE/FULFILL - use backend reason/type only
     const typeLabels = {
       'IN': 'Import',
       'OUT': 'Export',
-      'RESERVE': 'Hold order',
-      'RELEASE': 'Cancel hold',
-      'FULFILL': 'Delivery successful',
+      'RESERVE': 'Reserved for order',
+      'RELEASE': 'Cancelled',
+      'RESTORE': 'Cancelled',
+      'FULFILL': 'Shipping',
       'RETURN': 'Return',
       'ADJUSTMENT': 'Adjust inventory',
       'TRANSFER': 'Transfer warehouse',
@@ -209,16 +238,15 @@ export default function StockMovementHistoryPage() {
     return typeLabels[movement?.type] || movement?.type || '-';
   };
 
-  const getStatusLabel = (status, movement) => {
+  const getStatusLabel = (status) => {
     const map = {
-      RESERVE: 'Pending confirmation',
-      OUT: movement?.referenceType === 'ORDER' ? 'Delivering' : 'Export',
-      FULFILL: 'Delivered',
-      RELEASE: 'Cancelled',
-      IN: 'Import',
-      RETURN: 'Return',
-      ADJUSTMENT: 'Transfer',
-      TRANSFER: 'Transfer',
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      packing: 'Packing',
+      shipping: 'Shipping',
+      completed: 'Delivered',
+      cancelled: 'Cancelled',
+      refunded: 'Refunded',
     };
     return map[status] || status;
   };
@@ -230,9 +258,22 @@ export default function StockMovementHistoryPage() {
     const productName = movement.productId?.name?.toLowerCase() || '';
     const sku = movement.productId?.sku?.toLowerCase() || '';
     const warehouse = movement.warehouseId?.name?.toLowerCase() || '';
-    return productName.includes(searchLower) || 
-           sku.includes(searchLower) || 
-           warehouse.includes(searchLower);
+      const reason = movement.reason?.toLowerCase() || '';
+      const type = movement.type?.toLowerCase() || '';
+      const targetStatus = movement.targetStatus?.toLowerCase() || '';
+      const orderStatus = movement.orderStatus?.toLowerCase() || '';
+      const statusLabel = movement.statusLabel?.toLowerCase() || '';
+      const createdBy = movement.createdBy?.email?.toLowerCase() || '';
+
+      return productName.includes(searchLower) || 
+        sku.includes(searchLower) || 
+        warehouse.includes(searchLower) ||
+        reason.includes(searchLower) ||
+        type.includes(searchLower) ||
+        targetStatus.includes(searchLower) ||
+        orderStatus.includes(searchLower) ||
+        statusLabel.includes(searchLower) ||
+        createdBy.includes(searchLower);
   });
 
   if (loading) {
@@ -273,8 +314,8 @@ export default function StockMovementHistoryPage() {
                 </svg>
               </div>
               <div className="min-w-0">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 whitespace-nowrap">Stock Movement History</h1>
-                <p className="mt-1 text-sm lg:text-base text-gray-600 whitespace-nowrap">Track all stock movement changes</p>
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Stock Movement History</h1>
+                <p className="mt-1 text-sm lg:text-base text-gray-600">Track all stock movement changes</p>
               </div>
             </div>
             <div className="flex gap-3 flex-shrink-0">
@@ -350,8 +391,8 @@ export default function StockMovementHistoryPage() {
                 Status
               </label>
               <select
-                name="type"
-                value={filters.type}
+                name="status"
+                value={filters.status}
                 onChange={handleFilterChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               >
@@ -359,8 +400,9 @@ export default function StockMovementHistoryPage() {
                 <option value="IN">⬆️ Import</option>
                 <option value="OUT">⬇️ Export</option>
                 <option value="RESERVE">🔒 Hold</option>
-
-                <option value="FULFILL">✅ Delivered</option>              
+                <option value="shipping">🚚 Shipping</option>
+                <option value="completed">✅ Delivered</option>
+                <option value="cancelled">❌ Cancelled</option>
               </select>
             </div>
             
@@ -406,67 +448,67 @@ export default function StockMovementHistoryPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
-          <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border border-gray-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5 mb-6">
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center ring-1 ring-blue-200">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Total Records</p>
-                <p className="text-xl lg:text-2xl font-bold text-gray-900">{pagination.total}</p>
+              <div className="ml-4 min-w-0">
+                <p className="text-sm font-medium text-gray-500">Total Records</p>
+                <p className="text-4xl leading-tight font-bold text-gray-900">{pagination.total}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <span className="text-xl lg:text-2xl">⬆️</span>
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center ring-1 ring-green-200">
+                  <span className="text-xl">⬆️</span>
                 </div>
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Import</p>
-                <p className="text-xl lg:text-2xl font-bold text-green-600">
+              <div className="ml-4 min-w-0">
+                <p className="text-sm font-medium text-gray-500">Import</p>
+                <p className="text-4xl leading-tight font-bold text-green-600">
                   {movements.filter(m => m.type === 'IN').length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <span className="text-xl lg:text-2xl">⬇️</span>
+                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center ring-1 ring-red-200">
+                  <span className="text-xl">⬇️</span>
                 </div>
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Export</p>
-                <p className="text-xl lg:text-2xl font-bold text-red-600">
+              <div className="ml-4 min-w-0">
+                <p className="text-sm font-medium text-gray-500">Export</p>
+                <p className="text-4xl leading-tight font-bold text-red-600">
                   {movements.filter(m => m.type === 'OUT').length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-5 border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 lg:h-6 lg:w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center ring-1 ring-purple-200">
+                  <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                   </svg>
                 </div>
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 whitespace-nowrap">Page</p>
-                <p className="text-xl lg:text-2xl font-bold text-gray-900">
+              <div className="ml-4 min-w-0">
+                <p className="text-sm font-medium text-gray-500">Page</p>
+                <p className="text-4xl leading-tight font-bold text-gray-900">
                   {pagination.page}/{pagination.pages}
                 </p>
               </div>
@@ -476,32 +518,32 @@ export default function StockMovementHistoryPage() {
 
         {/* Movements Table */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto lg:overflow-visible">
+            <table className="w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Warehouse
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Quantity
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Reason
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="hidden xl:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Created by
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="hidden lg:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Time
                   </th>
-                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-3 lg:px-4 py-3 lg:py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -509,7 +551,7 @@ export default function StockMovementHistoryPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredMovements.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center">
+                    <td colSpan="8" className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -520,41 +562,41 @@ export default function StockMovementHistoryPage() {
                   </tr>
                 ) : (
                   filteredMovements.map((movement) => {
-                    const typeStyle = getMovementTypeStyle(movement.type);
+                    const typeStyle = getMovementTypeStyle(movement);
                     return (
                       <tr key={movement._id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 lg:px-4 py-4 align-top">
                           <span className={`inline-flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-xs lg:text-sm font-semibold ${typeStyle.bg} ${typeStyle.text} whitespace-nowrap`}>
                             <span className="text-sm lg:text-base">{typeStyle.icon}</span>
                             <span className="hidden lg:inline">{typeStyle.label}</span>
                           </span>
                         </td>
-                        <td className="px-4 lg:px-6 py-4">
+                        <td className="px-3 lg:px-4 py-4 align-top">
                           <div className="flex items-center min-w-0">
-                            <div className="flex-shrink-0 h-8 w-8 lg:h-10 lg:w-10">
+                            <div className="flex-shrink-0 h-10 w-10">
                               {movement.productId?.images?.[0]?.url ? (
                                 <img
-                                  className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg object-cover border-2 border-gray-200"
+                                  className="h-10 w-10 rounded-xl object-cover border border-gray-200 shadow-sm"
                                   src={movement.productId.images[0].url}
                                   alt={movement.productId?.name || 'Product'}
                                 />
                               ) : (
-                                <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                                  <span className="text-base lg:text-lg">📦</span>
+                                <div className="h-10 w-10 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+                                  <span className="text-base">📦</span>
                                 </div>
                               )}
                             </div>
-                            <div className="ml-2 lg:ml-3 min-w-0">
-                              <div className="text-xs lg:text-sm font-medium text-gray-900 truncate max-w-[150px] lg:max-w-xs">
+                            <div className="ml-3 min-w-0 max-w-[400px] lg:max-w-[550px]">
+                              <div className="text-xs lg:text-sm font-medium text-gray-900 break-words line-clamp-3">
                                 {movement.productId?.name || 'N/A'}
                               </div>
-                              <div className="text-xs text-gray-500 whitespace-nowrap">
+                              <div className="text-xs text-gray-500 truncate mt-1">
                                 SKU: {movement.productId?.sku || 'N/A'}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 lg:px-4 py-4 align-top">
                           <div className="text-xs lg:text-sm font-medium text-gray-900">
                             {movement.warehouseId?.name || 'N/A'}
                           </div>
@@ -562,9 +604,9 @@ export default function StockMovementHistoryPage() {
                             {movement.warehouseId?.code || 'N/A'}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 lg:px-4 py-4 align-top">
                           {(() => {
-                            const isAdd = ['IN', 'RELEASE', 'RETURN'].includes(movement.type);
+                            const isAdd = ['IN', 'RELEASE', 'RESTORE', 'RETURN'].includes(movement.type);
                             const isSub = ['OUT', 'RESERVE', 'FULFILL'].includes(movement.type);
                             return (
                               <span className={`inline-flex items-center px-2 lg:px-3 py-1 rounded-lg text-xs lg:text-sm font-bold ${
@@ -577,17 +619,17 @@ export default function StockMovementHistoryPage() {
                             );
                           })()}
                         </td>
-                        <td className="px-4 lg:px-6 py-4">
-                          <div className="text-xs lg:text-sm text-gray-900 max-w-[150px] lg:max-w-xs truncate" title={getShortReason(movement)}>
+                        <td className="px-3 lg:px-4 py-4 align-top">
+                          <div className="text-xs lg:text-sm text-gray-900 break-words max-w-[200px] lg:max-w-[280px] line-clamp-2">
                             {getShortReason(movement)}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                          <div className="text-xs lg:text-sm text-gray-900 truncate max-w-[120px]" title={movement.createdBy?.email}>
+                        <td className="hidden xl:table-cell px-3 lg:px-4 py-4 align-top">
+                          <div className="text-xs lg:text-sm text-gray-900 truncate max-w-[140px]" title={movement.createdBy?.email}>
                             {movement.createdBy?.email || 'System'}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <td className="hidden lg:table-cell px-3 lg:px-4 py-4 align-top">
                           <div className="text-xs lg:text-sm text-gray-900">
                             {new Date(movement.createdAt).toLocaleDateString('vi-VN')}
                           </div>
@@ -595,17 +637,18 @@ export default function StockMovementHistoryPage() {
                             {new Date(movement.createdAt).toLocaleTimeString('vi-VN')}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleDeleteMovement(movement._id)}
-                            className="inline-flex items-center gap-1 lg:gap-1.5 px-2 lg:px-3 py-1 lg:py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs lg:text-sm"
-                            title="Delete record"
-                          >
-                            <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span className="hidden lg:inline">Delete</span>
-                          </button>
+                        <td className="px-2 lg:px-4 py-4 align-top whitespace-nowrap text-center text-sm font-medium">
+                          <div className="inline-flex items-center justify-center">
+                            <button
+                              onClick={() => handleDeleteMovement(movement._id)}
+                              className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-all duration-200 border border-red-200 hover:border-red-300 shadow-sm hover:shadow"
+                              title="Delete record"
+                            >
+                              <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

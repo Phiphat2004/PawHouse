@@ -14,6 +14,7 @@ export default function StockDetailPage() {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState(null);
+  const [movementStatus, setMovementStatus] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -35,14 +36,25 @@ export default function StockDetailPage() {
     }
   }, [productId]);
 
-  const loadMovements = useCallback(async (page = 1) => {
+  const loadMovements = useCallback(async (page = 1, status = movementStatus) => {
     try {
       setMovementsLoading(true);
-      const response = await stockApi.getMovements({
+      const params = {
         productId,
         page,
         limit: pagination.limit
-      });
+      };
+
+      if (status) {
+        const typeFilters = ['IN', 'OUT', 'ADJUSTMENT', 'TRANSFER', 'RETURN', 'RESERVE', 'RELEASE', 'RESTORE', 'FULFILL'];
+        if (typeFilters.includes(status)) {
+          params.type = status;
+        } else {
+          params.targetStatus = status;
+        }
+      }
+
+      const response = await stockApi.getMovements(params);
       setMovements(response.movements || []);
       setPagination((prev) => response.pagination || prev);
     } catch (error) {
@@ -50,7 +62,7 @@ export default function StockDetailPage() {
     } finally {
       setMovementsLoading(false);
     }
-  }, [pagination.limit, productId]);
+  }, [movementStatus, pagination.limit, productId]);
 
   useEffect(() => {
     loadStockDetail();
@@ -78,7 +90,28 @@ export default function StockDetailPage() {
     loadMovements(pagination.page);
   };
 
-  const getMovementTypeLabel = (type) => {
+  const handleMovementStatusChange = (e) => {
+    const nextStatus = e.target.value;
+    setMovementStatus(nextStatus);
+    loadMovements(1, nextStatus);
+  };
+
+  const getMovementTypeLabel = (movement) => {
+    const type = movement?.type;
+    const status = movement?.targetStatus || movement?.orderStatus;
+
+    if (status === 'cancelled') {
+      return 'Cancelled';
+    }
+
+    if (type === 'FULFILL') {
+      return status === 'shipping' ? 'Shipping' : 'Delivered';
+    }
+
+    if (type === 'RELEASE' || type === 'RESTORE') {
+      return 'Cancelled';
+    }
+
     const types = {
       'IN': 'Import',
       'OUT': 'Export',
@@ -87,12 +120,28 @@ export default function StockDetailPage() {
       'RETURN': 'Return',
       'RESERVE': 'Hold',
       'RELEASE': 'Cancelled',
-      'FULFILL': 'Delivered'
     };
     return types[type] || type;
   };
 
-  const getMovementTypeColor = (type) => {
+  const getMovementTypeColor = (movement) => {
+    const type = movement?.type;
+    const status = movement?.targetStatus || movement?.orderStatus;
+
+    if (status === 'cancelled') {
+      return 'bg-rose-100 text-rose-800';
+    }
+
+    if (type === 'FULFILL') {
+      return status === 'shipping'
+        ? 'bg-indigo-100 text-indigo-800'
+        : 'bg-emerald-100 text-emerald-800';
+    }
+
+    if (type === 'RELEASE' || type === 'RESTORE') {
+      return 'bg-rose-100 text-rose-800';
+    }
+
     const colors = {
       'IN': 'bg-green-100 text-green-800',
       'OUT': 'bg-red-100 text-red-800',
@@ -101,24 +150,40 @@ export default function StockDetailPage() {
       'RETURN': 'bg-purple-100 text-purple-800',
       'RESERVE': 'bg-orange-100 text-orange-800',
       'RELEASE': 'bg-teal-100 text-teal-800',
-      'FULFILL': 'bg-emerald-100 text-emerald-800'
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
   };
 
   const getMovementReason = (movement) => {
+    if (movement?.reason) return movement.reason;
+    if (movement?.targetStatus) {
+      const statusMap = {
+        pending: 'Pending',
+        confirmed: 'Confirmed',
+        packing: 'Packing',
+        shipping: 'Shipping',
+        completed: 'Delivered',
+        cancelled: 'Cancelled',
+        refunded: 'Refunded'
+      };
+      return statusMap[movement.targetStatus] || movement.targetStatus;
+    }
     if (movement?.statusLabel) return movement.statusLabel;
     const map = {
-      RESERVE: 'Pending confirmation',
-      OUT: movement?.referenceType === 'ORDER' ? 'Delivering' : 'Export',
-      FULFILL: 'Delivered',
+      RESERVE: 'Reserved for order',
+      OUT: movement?.referenceType === 'ORDER' ? 'Export for shipping' : 'Export',
+      FULFILL:
+        movement?.targetStatus === 'shipping' || movement?.orderStatus === 'shipping'
+          ? 'Shipping'
+          : 'Delivered',
       RELEASE: 'Cancelled',
+      RESTORE: 'Cancelled',
       IN: 'Import',
       RETURN: 'Return',
       ADJUSTMENT: 'Adjustment',
       TRANSFER: 'Transfer'
     };
-    return map[movement?.type] || movement?.reason || '-';
+    return map[movement?.type] || '-';
   };
 
   if (loading) {
@@ -300,7 +365,24 @@ export default function StockDetailPage() {
 
         {/* Stock Movements History */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Stock Movement History</h2>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Stock Movement History</h2>
+            <div className="w-full lg:w-auto">
+              <select
+                value={movementStatus}
+                onChange={handleMovementStatusChange}
+                className="w-full lg:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+              >
+                <option value="">All statuses</option>
+                <option value="IN">⬆️ Import</option>
+                <option value="OUT">⬇️ Export</option>
+                <option value="RESERVE">🔒 Hold</option>
+                <option value="shipping">🚚 Shipping</option>
+                <option value="completed">✅ Delivered</option>
+                <option value="cancelled">❌ Cancelled</option>
+              </select>
+            </div>
+          </div>
           
           {movementsLoading ? (
             <div className="text-center py-8">
@@ -344,8 +426,8 @@ export default function StockDetailPage() {
                           {new Date(movement.createdAt).toLocaleString('vi-VN')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getMovementTypeColor(movement.type)}`}>
-                            {getMovementTypeLabel(movement.type)}
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getMovementTypeColor(movement)}`}>
+                            {getMovementTypeLabel(movement)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
