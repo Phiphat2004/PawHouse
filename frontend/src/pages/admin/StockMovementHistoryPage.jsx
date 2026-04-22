@@ -197,18 +197,19 @@ export default function StockMovementHistoryPage() {
 
     // FIXED: Remove hardcoded "Chờ xác nhận" for RESERVE/FULFILL - use backend reason/type only
     const typeLabels = {
-      'IN': 'Nhập kho',
-      'OUT': 'Xuất kho',
-      'RESERVE': 'Tạm giữ đơn hàng',
-      'RELEASE': 'Hủy giữ hàng', 
-      'FULFILL': 'Giao hàng thành công',
-      'RETURN': 'Trả hàng',
-      'ADJUSTMENT': 'Điều chỉnh tồn kho',
-      'TRANSFER': 'Chuyển kho',
+      'IN': 'Import',
+      'OUT': 'Export',
+      'RESERVE': 'Hold order',
+      'RELEASE': 'Cancel hold',
+      'FULFILL': 'Delivery successful',
+      'RETURN': 'Return',
+      'ADJUSTMENT': 'Adjust inventory',
+      'TRANSFER': 'Transfer warehouse',
     };
     return typeLabels[movement?.type] || movement?.type || '-';
   };
 
+  const getStatusLabel = (status) => {
     const map = {
       RESERVE: 'Pending confirmation',
       OUT: movement?.referenceType === 'ORDER' ? 'Delivering' : 'Export',
@@ -219,7 +220,7 @@ export default function StockMovementHistoryPage() {
       ADJUSTMENT: 'Transfer',
       TRANSFER: 'Transfer',
     };
-    return labels[status] || status;
+    return map[status] || status;
   };
 
   // Filter movements by search term (client-side for current page)
