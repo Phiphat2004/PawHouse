@@ -189,6 +189,15 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const deleteMe = async (req, res, next) => {
+  try {
+    const result = await authService.selfDeleteAccount(req.user);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   verifyOtp,
@@ -206,4 +215,5 @@ module.exports = {
   getActiveSessions,
   revokeSession,
   changePassword,
+  deleteMe,
 };
