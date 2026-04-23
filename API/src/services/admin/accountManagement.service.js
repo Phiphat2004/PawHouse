@@ -25,12 +25,6 @@ const getUserRole = (user) => {
     if (user.roles.includes("staff")) return "staff";
     if (user.roles.includes("customer")) return "user";
   }
-
-  if (user.role) {
-    if (user.role === "admin") return "admin";
-    if (user.role === "staff") return "staff";
-    return "user";
-  }
   return "user";
 };
 
@@ -79,7 +73,7 @@ const getAccountsService = async (query = {}) => {
           ? "staff"
           : "customer";
 
-    roleConditions.push({ role: roleValue }, { roles: rolesArrayValue });
+    roleConditions.push({ roles: rolesArrayValue });
   }
 
   if (searchConditions.length > 0) {
@@ -131,7 +125,7 @@ const getAccountsService = async (query = {}) => {
   }
 
   const accounts = await User.find(filter)
-    .select("email profile roles role status is_banned is_deleted createdAt")
+    .select("email profile roles status is_banned is_deleted createdAt")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit))
@@ -167,7 +161,7 @@ const getAccountDetailService = async (userId) => {
 
   const user = await User.findOne({ _id: userId })
     .select(
-      "email phone profile roles role status is_banned is_deleted isVerified authProvider settings createdAt updatedAt",
+      "email phone profile roles status is_banned is_deleted isVerified authProvider settings createdAt updatedAt",
     )
     .lean();
 
@@ -211,30 +205,26 @@ const updateRoleService = async (userId, newRole) => {
     throw new Error("Invalid user ID format!");
   }
 
-  const validRoles = ["user", "staff", "admin"];
-  if (!validRoles.includes(newRole)) {
+  const normalizedRole =
+    typeof newRole === "string" ? newRole.trim().toLowerCase() : "";
+  const validRoles = ["customer", "user", "staff", "admin"];
+  if (!validRoles.includes(normalizedRole)) {
     throw new Error("Invalid role!");
   }
 
-  try {
-    const mappedRole =
-      newRole === "admin"
-        ? "admin"
-        : newRole === "staff"
-          ? "staff"
-          : "customer";
+  const mappedRole = normalizedRole === "user" ? "customer" : normalizedRole;
 
+  try {
     const user = await User.findOneAndUpdate(
       {
         _id: userId,
         status: { $ne: "deleted" },
       },
       {
-        role: newRole,
         roles: [mappedRole],
       },
       { new: true },
-    ).select("email profile roles role status is_banned is_deleted createdAt");
+    ).select("email profile roles status is_banned is_deleted createdAt");
 
     if (!user) {
       throw new Error("Account not found!");
@@ -292,7 +282,7 @@ const updateBanStatusService = async (userId, banStatus) => {
       status: newStatus,
     },
     { new: true },
-  ).select("email profile roles role status is_banned is_deleted createdAt");
+  ).select("email profile roles status is_banned is_deleted createdAt");
 
   if (!user) {
     throw new Error("Account not found!");
@@ -329,7 +319,7 @@ const deleteAccountService = async (userId) => {
       tokenVersion: (existingUser.tokenVersion || 0) + 1,
     },
     { new: true },
-  ).select("email profile roles role status is_banned is_deleted createdAt");
+  ).select("email profile roles status is_banned is_deleted createdAt");
 
   return {
     id: updatedUser._id.toString(),
@@ -367,7 +357,7 @@ const restoreAccountService = async (userId) => {
       tokenVersion: (existingUser.tokenVersion || 0) + 1,
     },
     { new: true },
-  ).select("email profile roles role status is_banned is_deleted createdAt");
+  ).select("email profile roles status is_banned is_deleted createdAt");
 
   return {
     id: restoredUser._id.toString(),
