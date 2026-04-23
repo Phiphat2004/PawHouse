@@ -44,4 +44,7 @@ router.delete(
   authController.revokeSession,
 );
 
+// Self delete — authenticated user deletes their own account
+router.delete("/me", authenticate, authController.deleteMe);
+
 module.exports = router;

@@ -22,6 +22,9 @@ const adminStockRoutes = require("./admin/stock.routes");
 // Auth
 router.use("/auth", authRoutes);
 
+// Users (self-management: DELETE /users/me, etc.)
+router.use("/users", authRoutes);
+
 // Posts
 router.use("/posts", customerPostRoutes);
 router.use("/posts", staffPostRoutes);

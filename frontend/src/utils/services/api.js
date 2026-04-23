@@ -80,7 +80,8 @@ export const authApi = {
   verifyResetOtp: (data) => api.post("/auth/verify-reset-otp", data),
   resetPassword: (data) => api.post("/auth/reset-password", data),
   changePassword: (data) => api.put("/auth/change-password", data), 
-  googleAuth: (data) => api.post("/auth/google/auth", data),           // NEW - Recommended
+  deleteMe: () => api.delete("/users/me"),
+  googleAuth: (data) => api.post("/auth/google/auth", data),           // Recommended
   googleRegister: (data) => api.post("/auth/google/register", data),  // Legacy
   googleLogin: (data) => api.post("/auth/google/login", data),        // Legacy
 };
