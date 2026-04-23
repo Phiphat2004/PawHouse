@@ -204,6 +204,10 @@ async function login({ email, password }, deviceInfo = {}) {
     };
   }
 
+  if (user.is_deleted) {
+    throw { status: 403, message: "Tài khoản đã bị xóa" };
+  }
+
   if (user.status !== "active") {
     throw { status: 403, message: "Tài khoản đã bị khóa hoặc xóa" };
   }
@@ -710,6 +714,35 @@ async function changePassword(userId, { oldPassword, newPassword }) {
   return { message: "Đổi mật khẩu thành công" };
 }
 
+// ==================== SELF DELETE ACCOUNT ====================
+async function selfDeleteAccount(user) {
+  const existingUser = await User.findById(user._id).select(
+    "is_deleted status tokenVersion",
+  );
+  if (!existingUser) {
+    throw { status: 401, message: "Người dùng không tồn tại" };
+  }
+
+  if (existingUser.is_deleted || existingUser.status === "deleted") {
+    throw { status: 400, message: "Tài khoản đã bị xóa trước đó" };
+  }
+
+  // Soft-delete: set flags, invalidate all tokens
+  existingUser.is_deleted = true;
+  existingUser.status = "deleted";
+  existingUser.tokenVersion = (existingUser.tokenVersion || 0) + 1;
+  await existingUser.save();
+
+  // Invalidate all active sessions
+  try {
+    await Session.invalidateAllUserSessions(existingUser._id);
+  } catch (_) {
+    // Non-critical — proceed even if session cleanup fails
+  }
+
+  return { message: "Tài khoản đã được xóa thành công" };
+}
+
 module.exports = {
   register,
   verifyOtp,
@@ -723,8 +756,9 @@ module.exports = {
   forgotPassword,
   verifyResetOtp,
   resetPassword,
-  changePassword, // NEW
-  googleAuth, // NEW - Recommended
+  changePassword,
+  selfDeleteAccount,
+  googleAuth, // Recommended
   googleRegister, // Legacy - deprecated
   googleLogin, // Legacy - deprecated
 };

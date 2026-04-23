@@ -20,6 +20,8 @@ export default function EditProfilePage() {
   const [success, setSuccess] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [isStaff, setIsStaff] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const [form, setForm] = useState({
     fullName: '',
@@ -222,6 +224,22 @@ export default function EditProfilePage() {
       setError(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    try {
+      await authApi.deleteMe()
+      // Clear all local auth data
+      localStorage.removeItem(STORAGE_KEYS.TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.USER)
+      // Redirect to home page
+      navigate(ROUTES.HOME, { replace: true })
+    } catch (err) {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+      setError(err.message || 'Xóa tài khoản thất bại. Vui lòng thử lại.')
     }
   }
 
@@ -468,6 +486,27 @@ export default function EditProfilePage() {
               </div>
             </div>
 
+            {/* Delete Account — customers only, matches notification row style */}
+            {!(isAdmin || isStaff) && (
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                <div className="w-5 h-5 flex items-center justify-center text-red-400 flex-shrink-0 text-base">
+                  🗑️
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900">Delete account</p>
+                  <p className="text-sm text-gray-500">Permanently deactivate your account and log out immediately</p>
+                </div>
+                <button
+                  type="button"
+                  id="btn-delete-account"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="flex-shrink-0 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 active:scale-95 transition-all"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+
             <div className="flex gap-4 pt-4">
               <Link
                 to={isAdmin ? ROUTES.ADMIN_PROFILE : ROUTES.PROFILE}
@@ -491,7 +530,48 @@ export default function EditProfilePage() {
     </div>
   )
 
-  if (isAdmin) return <AdminLayout>{content}</AdminLayout>
-  if (isStaff) return <StaffLayout>{content}</StaffLayout>
-  return content
+  /* ── Confirm Delete Dialog ─────────────────────────────── */
+  const deleteDialog = showDeleteDialog && (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.45)' }}
+      onClick={(e) => { if (e.target === e.currentTarget && !deleting) setShowDeleteDialog(false) }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
+        <div className="flex flex-col items-center text-center gap-3 mb-6">
+          <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-3xl">
+            ⚠️
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Delete account?</h2>
+          <p className="text-sm text-gray-500">
+            Are you sure you want to delete your account? This action cannot be undone and you will be logged out immediately.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            id="btn-cancel-delete"
+            type="button"
+            disabled={deleting}
+            onClick={() => setShowDeleteDialog(false)}
+            className="flex-1 px-4 py-3 font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            id="btn-confirm-delete"
+            type="button"
+            disabled={deleting}
+            onClick={handleDeleteAccount}
+            className="flex-1 px-4 py-3 font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {deleting ? 'Deleting...' : 'Delete account'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (isAdmin) return <AdminLayout>{content}{deleteDialog}</AdminLayout>
+  if (isStaff) return <StaffLayout>{content}{deleteDialog}</StaffLayout>
+  return <>{content}{deleteDialog}</>
 }
