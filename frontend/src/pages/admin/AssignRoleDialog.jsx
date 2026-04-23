@@ -14,12 +14,12 @@ import { AccountRole } from './types/account';
 import { UserOutlined, CrownOutlined, SolutionOutlined } from '@ant-design/icons';
 
 const AssignRoleDialog = ({ account, onClose, onAssign }) => {
-    const [selectedRole, setSelectedRole] = useState(AccountRole.USER);
+    const [selectedRole, setSelectedRole] = useState(AccountRole.CUSTOMER);
 
     useEffect(() => {
         if (account) {
             const supportedRoles = Object.values(AccountRole);
-            setSelectedRole(supportedRoles.includes(account.role) ? account.role : AccountRole.USER);
+            setSelectedRole(supportedRoles.includes(account.role) ? account.role : AccountRole.CUSTOMER);
         }
     }, [account]);
 
@@ -31,7 +31,7 @@ const AssignRoleDialog = ({ account, onClose, onAssign }) => {
 
     const roles = [
         {
-            value: AccountRole.USER,
+            value: AccountRole.CUSTOMER,
             label: 'Customer',
             icon: UserOutlined,
             description: 'Basic account with limited permissions',
