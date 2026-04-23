@@ -41,10 +41,25 @@ export default function AdminOrderDetailPage() {
     fetchOrderDetail();
   }, [fetchOrderDetail]);
 
-  const submitStatusChange = async (newStatus, note = "Updated from admin panel") => {
+  const submitStatusChange = async (newStatus, customNote = "") => {
+    let noteToSend = customNote;
+    if (!noteToSend && newStatus !== "cancelled") {
+      try {
+        const rawUser = localStorage.getItem("pawhouse_user");
+        if (rawUser) {
+          const userObj = JSON.parse(rawUser);
+          noteToSend = `Updated by ${userObj.name || userObj.email || "Admin"}`;
+        } else {
+          noteToSend = "Updated from admin panel";
+        }
+      } catch (e) {
+        noteToSend = "Updated from admin panel";
+      }
+    }
+
     try {
       setUpdatingStatus(true);
-      await orderApi.updateOrderStatus(id, newStatus, note);
+      await orderApi.updateOrderStatus(id, newStatus, noteToSend);
       // Notify stock history pages (other tabs/routes) to refetch immediately
       try {
         localStorage.setItem('stockMovementUpdated', JSON.stringify({ t: Date.now(), orderId: id, status: newStatus }));

@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Header, Footer } from "../components/layout";
@@ -18,6 +18,7 @@ export default function ProductDetailPage() {
   const [toast, setToast] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -74,7 +75,7 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const result = await addToCart(product._id, 1);
+    const result = await addToCart(product._id, quantity);
     if (result.success) {
       setToast({
         type: "success",
@@ -88,6 +89,44 @@ export default function ProductDetailPage() {
         message: result.message,
       });
     }
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    
+    // Check stock before proceeding
+    if (product?.stock && quantity > product.stock) {
+      setToast({
+        type: "error",
+        title: "Insufficient stock",
+        message: `Only ${product.stock} items left in stock.`,
+      });
+      return;
+    }
+
+    // Pass the item directly to checkout state
+    navigate("/checkout", { 
+      state: { 
+        buyNowItem: {
+          product_id: product,
+          quantity: quantity
+        } 
+      } 
+    });
+  };
+
+  const handleQuantityChange = (e) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val) || val < 1) val = 1;
+    if (product?.stock && val > product.stock) {
+      val = product.stock;
+      setToast({
+        type: "error",
+        title: "Insufficient stock",
+        message: `Only ${product.stock} items left in stock.`,
+      });
+    }
+    setQuantity(val);
   };
 
   if (loading) {
@@ -249,18 +288,59 @@ export default function ProductDetailPage() {
                     }`}>
                     <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? "bg-green-600" : "bg-red-600"
                       }`}></span>
-                    {product.stock > 0 ? `Còn lại: ${product.stock} Products` : "Out of Stock"}
+                    {product.stock > 0 ? `Only ${product.stock} left in stock` : "Out of Stock"}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!product || product.stock <= 0}
-                  className="w-full bg-[#ff4d2e] text-white px-8 py-5 rounded-2xl hover:bg-[#e64529] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-bold text-xl shadow-xl shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
-                >
-                  {product?.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
-                </button>
+                <div className="flex flex-col gap-4 mt-6">
+                  {product?.stock > 0 && (
+                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 p-2 rounded-xl w-max">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        disabled={quantity <= 1}
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        max={product.stock}
+                        value={quantity}
+                        onChange={handleQuantityChange}
+                        className="w-16 h-10 text-center bg-transparent border-none font-semibold text-gray-900 focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none p-0"
+                      />
+                      <button
+                        onClick={() => {
+                          if (quantity < product.stock) setQuantity(quantity + 1);
+                        }}
+                        disabled={quantity >= product.stock}
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={!product || product.stock <= 0}
+                      className="flex-1 bg-white border-2 border-[#ff4d2e] text-[#ff4d2e] px-8 py-4 rounded-xl hover:bg-orange-50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-white"
+                    >
+                      {product?.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+
+                    <button
+                      onClick={handleBuyNow}
+                      disabled={!product || product.stock <= 0}
+                      className="flex-1 bg-[#ff4d2e] text-white !text-white px-8 py-4 rounded-xl hover:bg-[#e64529] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 font-bold text-lg shadow-xl shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                    >
+                      Buy Now
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

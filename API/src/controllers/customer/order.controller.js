@@ -2,11 +2,33 @@ const orderService = require("../../services/customer/order.service");
 
 const createOrder = async (req, res, next) => {
   try {
-    const { addressSnapshot, note } = req.body;
+    const { addressSnapshot, note, paymentMethod } = req.body;
 
     const result = await orderService.createOrder(req.user._id, {
       addressSnapshot,
       note,
+      paymentMethod,
+    });
+
+    res.status(201).json({
+      message: "Tạo đơn hàng thành công",
+      order: result.order || result,
+      reservedMovements: result.reservedMovements || [],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const createBuyNowOrder = async (req, res, next) => {
+  try {
+    const { addressSnapshot, note, directItems, paymentMethod } = req.body;
+
+    const result = await orderService.createBuyNowOrder(req.user._id, {
+      addressSnapshot,
+      note,
+      directItems,
+      paymentMethod,
     });
 
     res.status(201).json({
@@ -71,6 +93,7 @@ const cancelOrder = async (req, res, next) => {
 };
 
 module.exports = {
+  createBuyNowOrder,
   createOrder,
   searchOrders,
   getOrderById,

@@ -19,6 +19,7 @@ router.use((req, res, next) => {
   next();
 });
 
+router.post("/buy-now", customerOrderController.createBuyNowOrder);
 router.post("/", customerOrderController.createOrder);
 router.get("/", customerOrderController.searchOrders);
 router.get("/:id", customerOrderController.getOrderById);

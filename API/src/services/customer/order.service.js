@@ -135,10 +135,130 @@ async function attachOrderItems(orders = []) {
 }
 
 /**
+ * Create a new order directly without cart (Buy Now)
+ */
+async function createBuyNowOrder(userId, orderData) {
+  const { addressSnapshot, note, directItems, paymentMethod } = orderData;
+
+  if (
+    !addressSnapshot ||
+    !addressSnapshot.fullName ||
+    !addressSnapshot.phone ||
+    !addressSnapshot.addressLine
+  ) {
+    const error = new Error("Incomplete shipping address");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!directItems || directItems.length === 0) {
+    const error = new Error("No items provided for buy now");
+    error.status = 400;
+    throw error;
+  }
+
+  const orderItems = [];
+  let subtotal = 0;
+
+  for (const di of directItems) {
+    const product = await Product.findById(di.productId);
+    if (!product) {
+      const error = new Error("Product not found");
+      error.status = 400;
+      throw error;
+    }
+
+    let variation = null;
+    if (di.variationId) {
+      variation = await ProductVariation.findById(di.variationId);
+    }
+    if (!variation) {
+      variation = await ProductVariation.findOne({
+        $and: [
+          { $or: [{ product_id: product._id }, { productId: product._id }] },
+          { isDeleted: { $ne: true } },
+          { $or: [{ status: "active" }, { isActive: true }] },
+        ],
+      });
+    }
+
+    const quantity = Number(di.quantity) || 1;
+    const unitPrice =
+      variation?.price != null ? Number(variation.price) : Number(product.price) || 0;
+
+    const availableStock = await getAvailableStock(product._id, variation?._id);
+    if (availableStock < quantity) {
+      const error = new Error(`Insufficient stock for ${product.name}`);
+      error.status = 400;
+      throw error;
+    }
+
+    const lineTotal = unitPrice * quantity;
+    orderItems.push({
+      variationId: variation?._id,
+      productId: product._id,
+      sku: variation?.sku || product.sku,
+      productName: product.name,
+      variationName: variation?.name || "",
+      image: variation?.image || product.images?.[0]?.url || product.images?.[0] || "",
+      unitPrice,
+      quantity,
+      lineTotal,
+    });
+    subtotal += lineTotal;
+  }
+
+  const shippingFee = 0;
+  const total = subtotal + shippingFee;
+  const orderCode = generateOrderCode();
+
+  const order = new Order({
+    userId,
+    orderNumber: orderCode,
+    orderCode,
+    status: "pending",
+    addressSnapshot,
+    shippingFee,
+    subtotal,
+    total,
+    payment: {
+      method: paymentMethod || "cash",
+      status: "pending",
+      amount: total,
+      providerTxnId: "",
+      paidAt: null,
+    },
+    note: note || "",
+    statusHistory: [{ from: null, to: "pending", changedBy: userId, note: "Order created", at: new Date() }],
+  });
+
+  await order.save();
+  if (orderItems.length) {
+    await OrderItem.insertMany(orderItems.map((item) => ({ ...item, orderId: order._id })));
+  }
+
+  try {
+    await stockService.reserveStock(order._id, orderItems, userId);
+  } catch (err) {
+    await Order.deleteOne({ _id: order._id });
+    await OrderItem.deleteMany({ orderId: order._id });
+    const error = new Error(`Stock reservation failed: ${err.message}`);
+    error.status = 500;
+    throw error;
+  }
+
+  const populatedOrder = await order.populate("userId", "name email phone");
+  const orderResponse = populatedOrder.toObject();
+  orderResponse.items = orderItems;
+
+  return orderResponse;
+}
+
+/**
  * Create a new order from cart items
  */
 async function createOrder(userId, orderData) {
-  const { addressSnapshot, note } = orderData;
+  const { addressSnapshot, note, paymentMethod } = orderData;
 
   // Validate address
   if (
@@ -259,7 +379,7 @@ async function createOrder(userId, orderData) {
         from: null,
         to: "pending",
         changedBy: userId,
-        note: "Đơn hàng được tạo",
+        note: "Order created",
         at: new Date(),
       },
     ],
@@ -382,11 +502,11 @@ async function getOrderById(orderId, userId) {
   const isObjectId = mongoose.Types.ObjectId.isValid(cleanedOrderId);
   const query = isObjectId
     ? {
-        $or: [{ _id: cleanedOrderId }, ...orderIdentifierMatchers],
-      }
+      $or: [{ _id: cleanedOrderId }, ...orderIdentifierMatchers],
+    }
     : {
-        $or: orderIdentifierMatchers,
-      };
+      $or: orderIdentifierMatchers,
+    };
 
   if (userId) {
     query.userId = userId;
@@ -633,7 +753,7 @@ async function cancelOrder(orderId, userId, reason = "") {
     from: previousStatus,
     to: "cancelled",
     changedBy: userId,
-    note: reason || "Đơn hàng đã bị huỷ",
+    note: reason || "Order is cancelled",
     at: new Date(),
   });
 
@@ -655,6 +775,7 @@ async function cancelOrder(orderId, userId, reason = "") {
 }
 
 module.exports = {
+  createBuyNowOrder,
   createOrder,
   searchOrders,
   getDashboardStats,
@@ -724,7 +845,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     from: previousStatus,
     to: newStatus,
     changedBy: adminId,
-    note: normalizedNote || `Đơn hàng được cập nhật sang ${newStatus}`,
+    note: normalizedNote || `Order status updated to ${newStatus}`,
     at: new Date(),
   });
 

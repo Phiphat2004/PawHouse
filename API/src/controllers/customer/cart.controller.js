@@ -39,11 +39,25 @@ const getCart = async (req, res, next) => {
       return res.json({ message: "Cart is empty", cart: null, items: [] });
     }
 
-    return res.json({ message: "OK", cart, items: cart.items });
+    // Inject real stock quantity into each item's product_id object
+    const itemsWithStock = await Promise.all(
+      cart.items.map(async (item) => {
+        const stock = await getProductStock(item.product_id._id);
+        const itemObj = item.toObject();
+        itemObj.product_id = { ...itemObj.product_id, stock };
+        return itemObj;
+      })
+    );
+
+    const cartObj = cart.toObject();
+    cartObj.items = itemsWithStock;
+
+    return res.json({ message: "OK", cart: cartObj, items: itemsWithStock });
   } catch (err) {
     next(err);
   }
 };
+
 
 const addToCart = async (req, res, next) => {
   try {
@@ -106,12 +120,12 @@ const addToCart = async (req, res, next) => {
 
     cart = await Cart.findById(cart._id).populate({
       path: "items.product_id",
-      select: "name price compareAtPrice images slug",
+      select: "name price compareAtPrice images slug stock",
     });
 
     await recalculateCart(cart);
 
-    return res.json({ message: "Đã thêm vào giỏ hàng thành công!", cart });
+    return res.json({ message: "Added to cart successfully!", cart });
   } catch (err) {
     next(err);
   }
@@ -147,7 +161,7 @@ const updateQuantity = async (req, res, next) => {
     const productStock = await getProductStock(item.product_id);
     if (qty > productStock) {
       return res.status(400).json({
-        message: `Chỉ còn ${productStock} sản phẩm trong kho`,
+        message: `Only ${productStock} products available`,
         stock: productStock,
         requested: qty,
       });
