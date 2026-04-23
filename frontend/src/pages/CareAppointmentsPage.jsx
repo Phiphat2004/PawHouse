@@ -837,16 +837,6 @@ export default function CareAppointmentsPage() {
                                     {expandedGroups[group.key] ? "Hide Details" : "View Group Details"}
                                   </Button>
                                   {renderStatusBadge(group.groupStatus)}
-                                  {group.canGroupEdit && group.editTargetItem ? (
-                                    <Button
-                                      type="default"
-                                      size="small"
-                                      icon={<EditOutlined />}
-                                      onClick={() => startEdit(group.editTargetItem)}
-                                    >
-                                      Edit
-                                    </Button>
-                                  ) : null}
                                   {group.canGroupCancel ? (
                                     <Button
                                       danger
@@ -900,7 +890,7 @@ export default function CareAppointmentsPage() {
                                           View Details
                                         </Button>
                                         {!group.isBatch ? renderStatusBadge(item.status) : null}
-                                        {!group.isBatch && item.status === "pending" && editingId !== item._id ? (
+                                        {item.status === "pending" && editingId !== item._id ? (
                                           <Button
                                             type="default"
                                             size="small"

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const { CareAppointment, Service, User } = require("../../models");
-const emailService = require("../email.service");
+const { CareAppointment, Service } = require("../../models");
 
 const APPOINTMENT_STATUSES = [
   "pending",
@@ -173,26 +172,7 @@ async function createAppointment(customerId, payload) {
     cancellationReason: "",
   });
 
-  const populatedAppointment = await appointment.populate(
-    "customerId",
-    "email profile.fullName phone",
-  );
-
-  try {
-    const customer =
-      populatedAppointment.customerId || (await User.findById(customerId));
-    if (customer?.email) {
-      await emailService.sendCareAppointmentReceived(
-        populatedAppointment.toObject(),
-        customer.email,
-        customer.profile?.fullName || "",
-      );
-    }
-  } catch (err) {
-    console.error("Error sending appointment received email:", err.message);
-  }
-
-  return populatedAppointment;
+  return appointment.populate("customerId", "email profile.fullName phone");
 }
 
 async function updateMyAppointment(customerId, appointmentId, payload) {
