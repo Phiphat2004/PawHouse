@@ -53,10 +53,8 @@ const postSchema = new mongoose.Schema(
   },
 );
 
-// Indexes for performance
 postSchema.index({ status: 1, publishedAt: -1 });
 postSchema.index({ authorId: 1, createdAt: -1 });
-// slug already has unique index from schema definition
 postSchema.index({ title: "text", excerpt: "text", content: "text" });
 
 module.exports = mongoose.model("Post", postSchema);

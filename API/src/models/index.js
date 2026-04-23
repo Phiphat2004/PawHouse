@@ -30,10 +30,10 @@ module.exports = {
   Booking,
   Service,
   CareAppointment,
-  // Auth
+  // Auth,
   OtpToken,
   Session,
-  // Product
+  // Product,
   Cart,
   ProductVariation,
   StockLevel,
