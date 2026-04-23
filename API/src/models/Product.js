@@ -4,12 +4,12 @@ const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Tên sản phẩm không được để trống"],
+      required: [true, "Product name is required"],
       trim: true,
     },
     slug: {
       type: String,
-      required: [true, "Slug không được để trống"],
+      required: [true, "Slug is required"],
       unique: true,
       lowercase: true,
       trim: true,
@@ -25,22 +25,22 @@ const productSchema = new mongoose.Schema(
     ],
     price: {
       type: Number,
-      required: [true, "Giá sản phẩm không được để trống"],
-      min: [0, "Giá sản phẩm không được âm"],
+      required: [true, "Product price is required"],
+      min: [0, "Product price cannot be negative"],
     },
     compareAtPrice: {
       type: Number,
-      min: [0, "Giá so sánh không được âm"],
+      min: [0, "Compare-at price cannot be negative"],
       validate: {
         validator: function (value) {
           return !value || value > this.price;
         },
-        message: "Giá so sánh phải lớn hơn giá bán",
+        message: "Compare-at price must be greater than sale price",
       },
     },
     sku: {
       type: String,
-      required: [true, "Mã SKU không được để trống"],
+      required: [true, "SKU is required"],
       unique: true,
       uppercase: true,
       trim: true,

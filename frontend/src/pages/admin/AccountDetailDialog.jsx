@@ -37,6 +37,7 @@ const AccountDetailDialog = ({ account, isLoading, onClose, onBanUnban, onRestor
                 return 'bg-purple-600 text-white font-semibold';
             case 'staff':
                 return 'bg-blue-600 text-white font-semibold';
+            case 'customer':
             case 'user':
                 return 'bg-slate-600 text-white font-semibold';
             default:
@@ -50,6 +51,7 @@ const AccountDetailDialog = ({ account, isLoading, onClose, onBanUnban, onRestor
                 return 'Administrator';
             case 'staff':
                 return 'Staff';
+            case 'customer':
             case 'user':
             default:
                 return 'Customer';
