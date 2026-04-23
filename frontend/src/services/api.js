@@ -128,7 +128,7 @@ export const categoryApi = {
 
 export const postApi = {
   getAll: () => api.get("/posts"),
-  getPublic: () => api.get("/posts/public"),
+  getPublic: (params = {}) => api.get("/posts/public", { params }),
   getById: (id) => api.get(`/posts/${id}`),
   getBySlug: (slug) => api.get(`/posts/slug/${slug}`),
   create: (data) => api.post("/posts", data),
