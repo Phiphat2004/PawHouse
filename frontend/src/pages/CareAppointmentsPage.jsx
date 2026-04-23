@@ -829,7 +829,6 @@ export default function CareAppointmentsPage() {
                                   ) : null}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  {renderStatusBadge(group.groupStatus)}
                                   <Button
                                     type="default"
                                     size="small"
@@ -837,6 +836,7 @@ export default function CareAppointmentsPage() {
                                   >
                                     {expandedGroups[group.key] ? "Hide Details" : "View Group Details"}
                                   </Button>
+                                  {renderStatusBadge(group.groupStatus)}
                                   {group.canGroupEdit && group.editTargetItem ? (
                                     <Button
                                       type="default"
