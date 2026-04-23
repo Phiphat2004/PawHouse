@@ -1,11 +1,16 @@
-// frontend/src/components/home/CartItem.jsx
-// Author note
-import { DeleteOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 
-export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQuantityChange }) {
+export default function CartItem({
+    item,
+    onIncrease,
+    onDecrease,
+    onRemove,
+    onQuantityChange,
+}) {
     const itemId = item?._id || item?.id;
     const [localQuantity, setLocalQuantity] = useState(item?.quantity || 1);
+
     const stock = Number(item?.product_id?.stock);
     const hasValidStock = !Number.isNaN(stock) && stock >= 0;
     const maxQuantity = hasValidStock ? Math.max(1, stock) : undefined;
@@ -15,16 +20,34 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
     }, [item?.quantity]);
 
     const handleInputChange = (e) => {
-        setLocalQuantity(e.target.value);
+        const rawValue = e.target.value;
+
+        let val = parseInt(rawValue, 10);
+
+        if (Number.isNaN(val) || val < 1) {
+            val = 1;
+        }
+
+        if (hasValidStock && val > maxQuantity) {
+            val = maxQuantity;
+        }
+
+        setLocalQuantity(val);
     };
 
     const handleInputBlur = () => {
-        let val = parseInt(localQuantity, 10);
-        if (Number.isNaN(val) || val < 1) val = 1;
-        if (hasValidStock) {
-            val = Math.min(val, Math.max(1, stock));
+        let val = Number(localQuantity);
+
+        if (Number.isNaN(val) || val < 1) {
+            val = 1;
         }
+
+        if (hasValidStock && val > maxQuantity) {
+            val = maxQuantity;
+        }
+
         setLocalQuantity(val);
+
         if (val !== item?.quantity && onQuantityChange) {
             onQuantityChange(itemId, val);
         }
@@ -36,14 +59,18 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
         }
     };
 
-    const unitPrice = item?.product_id?.price || 0;
-    const lineTotal = unitPrice * (item?.quantity || 1);
+    const unitPrice = Number(item?.product_id?.price) || 0;
+    const lineTotal = unitPrice * (Number(localQuantity) || 1);
 
     return (
         <div className="flex items-center gap-4 bg-[#f9f9f9] rounded-2xl p-4 border border-gray-100">
             <div className="w-22 h-22 bg-white rounded-xl overflow-hidden shrink-0 border border-gray-100 flex items-center justify-center">
                 <img
-                    src={item?.product_id?.images?.[0]?.url || item?.product_id?.image || "/placeholder.png"}
+                    src={
+                        item?.product_id?.images?.[0]?.url ||
+                        item?.product_id?.image ||
+                        "/placeholder.png"
+                    }
                     alt={item?.product_id?.name || "Product"}
                     className="w-full h-full object-contain p-1 mix-blend-multiply"
                 />
@@ -53,6 +80,7 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                 <h3 className="font-bold text-gray-900 text-lg leading-tight truncate">
                     {item?.product_id?.name || "Product"}
                 </h3>
+
                 <p className="mt-1 text-sm text-gray-500">
                     Unit price: {unitPrice.toLocaleString("vi-VN")}₫
                 </p>
@@ -62,9 +90,11 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                         <button
                             onClick={() => onDecrease(itemId)}
                             className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-black transition"
+                            type="button"
                         >
                             <MinusOutlined />
                         </button>
+
                         <input
                             type="number"
                             min="1"
@@ -73,11 +103,13 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                             onChange={handleInputChange}
                             onBlur={handleInputBlur}
                             onKeyDown={handleKeyDown}
-                            className="w-12 text-center font-medium text-base bg-transparent outline-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-16 text-center font-medium text-base bg-transparent outline-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none"
                         />
+
                         <button
                             onClick={() => onIncrease(itemId)}
                             className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-black transition"
+                            type="button"
                         >
                             <PlusOutlined />
                         </button>
@@ -93,6 +125,7 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, onQua
                 onClick={() => onRemove(itemId)}
                 className="self-start text-red-500 hover:text-red-700 transition p-1"
                 title="Remove product"
+                type="button"
             >
                 <DeleteOutlined className="text-lg" />
             </button>

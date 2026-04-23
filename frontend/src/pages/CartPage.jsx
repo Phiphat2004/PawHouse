@@ -7,6 +7,7 @@ import Toast from "../components/layout/Toast";
 import { cartApi } from "../utils/services/api";
 import { STORAGE_KEYS } from "../utils/constants";
 import { updateCartCount, getCachedCart, subscribeToCartData } from "../hooks/useCart";
+import { Modal } from "antd";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -98,14 +99,18 @@ export default function CartPage() {
       if (!item) return;
 
       const stock = Number(item.product_id?.stock);
-      const newQuantity = item.quantity + 1;
+      let newQuantity = item.quantity + 1;
+      
       if (!Number.isNaN(stock) && stock >= 0 && newQuantity > stock) {
         setToast({
           type: "error",
           title: "Insufficient stock",
-          message: `Only ${stock} items left in stock`,
+          message: `Only ${stock} items left in stock. Quantity adjusted to maximum.`,
         });
-        return;
+        
+        newQuantity = stock;
+
+        if (item.quantity === stock) return; 
       }
 
       await cartApi.updateQuantity(itemId, newQuantity);
@@ -141,15 +146,20 @@ export default function CartPage() {
       if (!item) return;
       if (newQuantity === item.quantity) return;
 
-      const validQuantity = Math.max(1, newQuantity);
+      let validQuantity = Math.max(1, newQuantity);
       const stock = Number(item.product_id?.stock);
+      
       if (!Number.isNaN(stock) && stock >= 0 && validQuantity > stock) {
         setToast({
           type: "error",
           title: "Insufficient stock",
-          message: `Only ${stock} items left in stock`,
+          message: `Only ${stock} items left in stock. Quantity adjusted to maximum.`,
         });
-        return;
+        
+        validQuantity = stock; // Auto adjust to max available stock
+        
+        // If they already have the max stock in cart, do nothing further
+        if (item.quantity === stock) return;
       }
 
       await cartApi.updateQuantity(itemId, validQuantity);
@@ -162,39 +172,51 @@ export default function CartPage() {
   };
 
   // Handle remove item
-  const handleRemove = async (itemId) => {
-    try {
-      const item = cartItems.find((i) => i._id === itemId);
-      if (!item) return;
+  const handleRemove = (itemId) => {
+    Modal.confirm({
+      title: "Remove Item",
+      content: "Are you sure you want to remove this product from your cart?",
+      okText: "Yes, Remove",
+      okType: "danger",
+      cancelText: "Cancel",
+      centered: true,
+      onOk: async () => {
+        try {
+          const item = cartItems.find((i) => i._id === itemId);
+          if (!item) return;
 
-      if (!confirm("Are you sure you want to remove this product from your cart?")) {
-        return;
+          await cartApi.removeItem(item.product_id._id || item.product_id);
+          await fetchCart();
+          updateCartCount();
+        } catch (err) {
+          console.error("Failed to remove item:", err);
+          showErrorToast(err.data?.message || "Unable to remove product");
+        }
       }
-
-      await cartApi.removeItem(item.product_id._id || item.product_id);
-      await fetchCart(); // Refresh cart
-      updateCartCount(); // Update cart count in header
-    } catch (err) {
-      console.error("Failed to remove item:", err);
-      alert(err.data?.message || "Unable to remove product");
-    }
+    });
   };
 
   // Handle clear cart
-  const handleClearCart = async () => {
-    try {
-      if (!confirm("Are you sure you want to remove all products from your cart?")) {
-        return;
+  const handleClearCart = () => {
+    Modal.confirm({
+      title: "Clear Cart",
+      content: "Are you sure you want to remove all products from your cart?",
+      okText: "Yes, Clear All",
+      okType: "danger",
+      cancelText: "Cancel",
+      centered: true,
+      onOk: async () => {
+        try {
+          await cartApi.clearCart();
+          setCartItems([]);
+          setSelectedItems([]);
+          updateCartCount();
+        } catch (err) {
+          console.error("Failed to clear cart:", err);
+          showErrorToast(err.data?.message || "Unable to clear cart");
+        }
       }
-
-      await cartApi.clearCart();
-      setCartItems([]);
-      setSelectedItems([]);
-      updateCartCount(); // Update cart count in header
-    } catch (err) {
-      console.error("Failed to clear cart:", err);
-      alert(err.data?.message || "Unable to clear cart");
-    }
+    });
   };
 
   // Toggle item selection
@@ -253,6 +275,14 @@ export default function CartPage() {
     <div className="font-['Inter',sans-serif] bg-gray-50 min-h-screen">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+        {toast && (
+          <Toast
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        )}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
           <p className="text-gray-600">
@@ -344,14 +374,6 @@ export default function CartPage() {
                 cart={cartItems}
                 selectedItems={selectedItems}
               />
-              {toast && (
-                <Toast
-                  type={toast.type}
-                  title={toast.title}
-                  message={toast.message}
-                  onClose={() => setToast(null)}
-                />
-              )}
             </div>
           </div>
         )}

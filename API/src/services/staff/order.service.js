@@ -259,7 +259,7 @@ async function createOrder(userId, orderData) {
         from: null,
         to: "pending",
         changedBy: userId,
-        note: "Đơn hàng được tạo",
+        note: "Order is created",
         at: new Date(),
       },
     ],
@@ -644,7 +644,7 @@ async function cancelOrder(orderId, userId, reason = "") {
     from: previousStatus,
     to: "cancelled",
     changedBy: userId,
-    note: reason || "Đơn hàng đã bị huỷ",
+    note: reason || "Order is cancelled",
     at: new Date(),
   });
 
@@ -735,7 +735,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     from: previousStatus,
     to: newStatus,
     changedBy: adminId,
-    note: normalizedNote || `Đơn hàng được cập nhật sang ${newStatus}`,
+    note: normalizedNote || `Order status updated to ${newStatus}`,
     at: new Date(),
   });
 

@@ -8,7 +8,7 @@ import Toast from "../components/layout/Toast";
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedItemIds } = location.state || {};
+  const { selectedItemIds, buyNowItem } = location.state || {};
 
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
@@ -32,6 +32,12 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (buyNowItem) {
+      setCartItems([buyNowItem]);
+      prefillFromProfile();
+      return;
+    }
+
     if (!selectedItemIds || selectedItemIds.length === 0) {
       alert("No products selected for checkout");
       navigate("/gio-hang");
@@ -40,7 +46,7 @@ export default function CheckoutPage() {
 
     fetchCartItems();
     prefillFromProfile();
-  }, [navigate]);
+  }, [navigate, selectedItemIds, buyNowItem]);
 
   const prefillFromProfile = async () => {
     try {
@@ -129,13 +135,25 @@ export default function CheckoutPage() {
         },
       };
 
-      const response = await orderApi.createOrder(orderData);
+            let response;
+      if (buyNowItem) {
+        const pid = buyNowItem.product_id?._id || buyNowItem.product_id;
+        orderData.directItems = [{
+          productId: pid,
+          variationId: buyNowItem.variation_id?._id || null,
+          quantity: buyNowItem.quantity,
+        }];
+        response = await orderApi.createBuyNowOrder(orderData);
+      } else {
+        response = await orderApi.createOrder(orderData);
+      }
       const orderId = response.order?._id || response.data?._id;
 
       if (response.order || response.message || response.success) {
         // Remove ordered products from cart
-        try {
-          for (const item of cartItems) {
+        if (!buyNowItem) {
+          try {
+            for (const item of cartItems) {
             const productId = item.product_id?._id || item.product_id;
             if (productId) {
               await cartApi.removeItem(productId);
@@ -144,6 +162,7 @@ export default function CheckoutPage() {
         } catch (cartErr) {
           // Don't block flow if removing from cart fails
           console.warn("Could not remove items from cart:", cartErr);
+          }
         }
 
         setToast({

@@ -159,6 +159,7 @@ export const cartApi = {
 
 export const orderApi = {
   createOrder: (data) => api.post("/orders", data),
+  createBuyNowOrder: (data) => api.post("/orders/buy-now", data),
   getMyOrders: (params = {}) => api.get("/orders", { params }),
   getOrderDetail: (id) => api.get(`/orders/${id}`),
   cancelOrder: (id, reason) =>
