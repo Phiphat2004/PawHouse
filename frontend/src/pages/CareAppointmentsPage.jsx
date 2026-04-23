@@ -847,7 +847,7 @@ export default function CareAppointmentsPage() {
                                         )
                                       }
                                     >
-                                      Cancel Appointment
+                                      Cancel 
                                     </Button>
                                   ) : null}
                                 </div>
