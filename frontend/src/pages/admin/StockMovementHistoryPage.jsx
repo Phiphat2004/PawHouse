@@ -209,10 +209,10 @@ export default function StockMovementHistoryPage() {
       case 'RESTORE':
         return { bg: 'bg-rose-100', text: 'text-rose-800', icon: '↩️', label: 'Cancelled' };
       case 'FULFILL':
-        if (status === 'shipping') {
-          return { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '🚚', label: 'Shipping' };
+        if (status === 'completed') {
+          return { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✅', label: 'Delivered' };
         }
-        return { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '✅', label: 'Delivered' };
+        return { bg: 'bg-indigo-100', text: 'text-indigo-800', icon: '🚚', label: 'Shipping' };
       default:
         return { bg: 'bg-gray-100', text: 'text-gray-800', icon: '📦', label: type };
     }
@@ -230,7 +230,10 @@ export default function StockMovementHistoryPage() {
       'RESERVE': 'Reserved for order',
       'RELEASE': 'Cancelled',
       'RESTORE': 'Cancelled',
-      'FULFILL': 'Shipping',
+      'FULFILL':
+        movement?.targetStatus === 'completed' || movement?.orderStatus === 'completed'
+          ? 'Delivered'
+          : 'Shipping',
       'RETURN': 'Return',
       'ADJUSTMENT': 'Adjust inventory',
       'TRANSFER': 'Transfer warehouse',

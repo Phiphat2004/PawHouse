@@ -746,13 +746,13 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   await order.save();
 
-  // Deduct stock directly when admin confirms the order (pending -> confirmed).
+  // Reserve stock when admin confirms the order (pending -> confirmed).
   if (newStatus === "confirmed" && previousStatus === "pending") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
-      await stockService.fulfillStock(order._id, orderItems, adminId);
+      await stockService.reserveStock(order._id, orderItems, adminId);
     } catch (err) {
-      // Revert status if we cannot deduct stock
+      // Revert status if we cannot reserve stock
       order.status = previousStatus;
       order.statusHistory.push({
         from: newStatus,
@@ -763,7 +763,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
       });
       await order.save();
       const error = new Error(
-        "Không đủ hàng để xác nhận đơn hàng: " + (err.message || ""),
+        "Không đủ hàng để tạm khóa đơn hàng: " + (err.message || ""),
       );
       error.status = 400;
       throw error;
@@ -774,25 +774,44 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   if (newStatus === "shipping" && previousStatus !== "shipping") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
-      await stockService.shipStock(order._id, orderItems, adminId);
+      await stockService.shipStock(order._id, orderItems, adminId, previousStatus);
     } catch (err) {
       console.error("Error deducting physical stock on shipping:", err.message);
       // Don't fail the status update if stock deduction fails
     }
   }
 
-  // Cancel flow: restore stock if order was already confirmed (stock was deducted).
-  // If still pending, nothing was ever deducted so no restore needed.
+  // Cancel flow:
+  // - confirmed/packing: release reserved stock
+  // - shipping/completed: restore physically deducted stock
   if (newStatus === "cancelled" && previousStatus !== "pending") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
-      await stockService.restoreStock(order._id, orderItems, adminId, previousStatus);
+      const isAfterShipping =
+        previousStatus === "shipping" || previousStatus === "completed";
+
+      if (isAfterShipping) {
+        await stockService.restoreStock(
+          order._id,
+          orderItems,
+          adminId,
+          previousStatus,
+        );
+      } else {
+        await stockService.releaseStock(
+          order._id,
+          orderItems,
+          adminId,
+          previousStatus,
+        );
+      }
+
       await consolidateCancelledOrderMovements(
         order._id,
         previousStatus,
         normalizedNote,
         adminId,
-        true,
+        isAfterShipping,
       );
     } catch (err) {
       console.error("Error restoring stock:", err.message);
