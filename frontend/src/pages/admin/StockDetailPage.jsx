@@ -104,8 +104,13 @@ export default function StockDetailPage() {
       return 'Cancelled';
     }
 
+    if (type === 'RESERVE') {
+      return 'Hold';
+    }
+
     if (type === 'FULFILL') {
-      return status === 'shipping' ? 'Shipping' : 'Delivered';
+      if (status === 'completed') return 'Delivered';
+      return 'Shipping';
     }
 
     if (type === 'RELEASE' || type === 'RESTORE') {
@@ -132,10 +137,14 @@ export default function StockDetailPage() {
       return 'bg-rose-100 text-rose-800';
     }
 
+    if (type === 'RESERVE') {
+      return 'bg-orange-100 text-orange-800';
+    }
+
     if (type === 'FULFILL') {
-      return status === 'shipping'
-        ? 'bg-indigo-100 text-indigo-800'
-        : 'bg-emerald-100 text-emerald-800';
+      return status === 'completed'
+        ? 'bg-emerald-100 text-emerald-800'
+        : 'bg-indigo-100 text-indigo-800';
     }
 
     if (type === 'RELEASE' || type === 'RESTORE') {
@@ -173,9 +182,9 @@ export default function StockDetailPage() {
       RESERVE: 'Reserved for order',
       OUT: movement?.referenceType === 'ORDER' ? 'Export for shipping' : 'Export',
       FULFILL:
-        movement?.targetStatus === 'shipping' || movement?.orderStatus === 'shipping'
-          ? 'Shipping'
-          : 'Delivered',
+        movement?.targetStatus === 'completed' || movement?.orderStatus === 'completed'
+          ? 'Delivered'
+          : 'Shipping',
       RELEASE: 'Cancelled',
       RESTORE: 'Cancelled',
       IN: 'Import',
@@ -434,8 +443,8 @@ export default function StockDetailPage() {
                           {movement.warehouseId?.name || 'No warehouse'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`text-sm font-semibold ${movement.type === 'IN' ? 'text-green-600' : 'text-red-600'}`}>
-                            {movement.type === 'IN' ? '+' : '-'}{movement.quantity}
+                          <span className={`text-sm font-semibold ${['IN', 'RELEASE', 'RESTORE', 'RETURN'].includes(movement.type) ? 'text-green-600' : 'text-red-600'}`}>
+                            {['IN', 'RELEASE', 'RESTORE', 'RETURN'].includes(movement.type) ? '+' : '-'}{movement.quantity}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
