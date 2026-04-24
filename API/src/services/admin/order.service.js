@@ -273,17 +273,7 @@ async function createOrder(userId, orderData) {
     );
   }
 
-  // Reserve stock immediately so first successful checkout gets the stock.
-  try {
-    await stockService.reserveStock(order._id, orderItems, userId);
-  } catch (err) {
-    console.error("Error reserving stock:", err.message);
-    await Order.deleteOne({ _id: order._id });
-    await OrderItem.deleteMany({ orderId: order._id });
-    const error = new Error(`Stock reservation failed: ${err.message}`);
-    error.status = 500;
-    throw error;
-  }
+
 
   // Clear user's cart
   cart.items = [];
@@ -767,82 +757,57 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   await order.save();
 
-  // Fallback reservation for legacy pending orders created before reserve-on-create.
+  // Deduct stock directly when admin confirms the order (pending -> confirmed).
   if (newStatus === "confirmed" && previousStatus === "pending") {
-    const reservedMovement = await StockMovement.findOne({
-      referenceId: String(order._id),
-      type: "RESERVE",
-    })
-      .select("_id")
-      .lean();
-
-    if (!reservedMovement) {
-      const orderItems = await OrderItem.find({ orderId: order._id }).lean();
-      try {
-        await stockService.reserveStock(order._id, orderItems, adminId);
-      } catch (err) {
-        order.status = previousStatus;
-        order.statusHistory.push({
-          from: newStatus,
-          to: previousStatus,
-          changedBy: adminId,
-          note: "Reverted due to stock reservation error",
-          at: new Date(),
-        });
-        await order.save();
-        const error = new Error(
-          "Không thể giữ hàng cho đơn hàng: " + (err.message || ""),
-        );
-        error.status = 500;
-        throw error;
-      }
-    }
-  }
-
-  // Fulfill stock only when order starts shipping
-  if (newStatus === "shipping" && previousStatus !== "shipping") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
       await stockService.fulfillStock(order._id, orderItems, adminId);
     } catch (err) {
-      console.error("Error fulfilling stock:", err.message);
-      // Don't fail the status update if stock fulfillment fails
+      // Revert status if we cannot deduct stock
+      order.status = previousStatus;
+      order.statusHistory.push({
+        from: newStatus,
+        to: previousStatus,
+        changedBy: adminId,
+        note: "Reverted due to insufficient stock",
+        at: new Date(),
+      });
+      await order.save();
+      const error = new Error(
+        "Không đủ hàng để xác nhận đơn hàng: " + (err.message || ""),
+      );
+      error.status = 400;
+      throw error;
     }
   }
 
-  // Cancel flow: restore if already fulfilled, otherwise release reservation
-  if (newStatus === "cancelled") {
+  // Deduct physical quantity when order starts shipping (confirmed/packing -> shipping)
+  if (newStatus === "shipping" && previousStatus !== "shipping") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
-      const fulfilledMovement = await StockMovement.findOne({
-        referenceId: String(order._id),
-        type: "FULFILL",
-      })
-        .select("_id")
-        .lean();
-
-      if (fulfilledMovement) {
-        await stockService.restoreStock(order._id, orderItems, adminId, previousStatus);
-        await consolidateCancelledOrderMovements(
-          order._id,
-          previousStatus,
-          normalizedNote,
-          adminId,
-          true,
-        );
-      } else {
-        await stockService.releaseStock(order._id, orderItems, adminId, previousStatus);
-        await consolidateCancelledOrderMovements(
-          order._id,
-          previousStatus,
-          normalizedNote,
-          adminId,
-          false,
-        );
-      }
+      await stockService.shipStock(order._id, orderItems, adminId);
     } catch (err) {
-      console.error("Error restoring/releasing stock:", err.message);
-      // Don't fail the cancellation if stock restore/release fails
+      console.error("Error deducting physical stock on shipping:", err.message);
+      // Don't fail the status update if stock deduction fails
+    }
+  }
+
+  // Cancel flow: restore stock if order was already confirmed (stock was deducted).
+  // If still pending, nothing was ever deducted so no restore needed.
+  if (newStatus === "cancelled" && previousStatus !== "pending") {
+    const orderItems = await OrderItem.find({ orderId: order._id }).lean();
+    try {
+      await stockService.restoreStock(order._id, orderItems, adminId, previousStatus);
+      await consolidateCancelledOrderMovements(
+        order._id,
+        previousStatus,
+        normalizedNote,
+        adminId,
+        true,
+      );
+    } catch (err) {
+      console.error("Error restoring stock:", err.message);
+      // Don't fail the cancellation if stock restore fails
     }
   }
 
