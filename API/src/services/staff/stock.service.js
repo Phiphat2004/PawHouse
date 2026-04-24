@@ -315,6 +315,8 @@ async function reserveStock(orderId, items = [], createdBy) {
         referenceType: "ORDER",
         referenceId: String(orderId),
         createdBy,
+        targetStatus,
+        sourceStatus: "manual",
         notes: `Reserved variation ${variationId} ${qty} units for order ${orderId}`,
       });
 
@@ -637,54 +639,38 @@ function getMovementTypeLabel(type) {
 async function getProductTotalStock(productId) {
   const stockLevels = await StockLevel.find({ productId }).lean();
 
-  const pendingOrders = await Order.find({ status: "pending" })
-    .select("_id")
-    .lean();
+  const totalQuantity = stockLevels.reduce(
+    (sum, level) => sum + Math.max(Number(level.quantity) || 0, 0),
+    0,
+  );
+  const reservedQuantity = stockLevels.reduce(
+    (sum, level) => sum + Math.max(Number(level.reservedQuantity) || 0, 0),
+    0,
+  );
+  const availableQuantity = stockLevels.reduce((sum, level) => {
+    const fallbackAvailable =
+      (Number(level.quantity) || 0) - (Number(level.reservedQuantity) || 0);
+    const levelAvailable =
+      level.availableQuantity === undefined || level.availableQuantity === null
+        ? fallbackAvailable
+        : Number(level.availableQuantity) || 0;
+    return sum + Math.max(levelAvailable, 0);
+  }, 0);
 
-  const pendingOrderIds = pendingOrders.map((order) => order._id);
-  const reservationAgg = pendingOrderIds.length
-    ? await OrderItem.aggregate([
-        {
-          $match: {
-            orderId: { $in: pendingOrderIds },
-            productId: new mongoose.Types.ObjectId(productId),
-          },
-        },
-        { $group: { _id: null, quantity: { $sum: "$quantity" } } },
-      ])
-    : [];
-
-  const reservedFromOrders = Number(reservationAgg?.[0]?.quantity || 0);
-
-  const totalQuantity = stockLevels.reduce((sum, l) => sum + l.quantity, 0);
-  const reservedQuantity = Math.min(reservedFromOrders, totalQuantity);
-  const availableQuantity = Math.max(totalQuantity - reservedQuantity, 0);
-
-  const warehouseCount = stockLevels.length || 0;
-  let remainingReserved = reservedQuantity;
-  const byWarehouse = stockLevels.map((level, index) => {
-    const isLast = index === warehouseCount - 1;
-    const proportionalReserved =
-      warehouseCount > 0
-        ? Math.floor(
-            (reservedQuantity * (Number(level.quantity) || 0)) /
-              Math.max(totalQuantity, 1),
-          )
-        : 0;
-    const reservedForWarehouse = isLast
-      ? remainingReserved
-      : Math.min(proportionalReserved, Number(level.quantity) || 0);
-    remainingReserved -= reservedForWarehouse;
-
+  const byWarehouse = stockLevels.map((level) => {
     const warehouse = warehouseFromStockLevel(level);
+    const quantity = Math.max(Number(level.quantity) || 0, 0);
+    const reserved = Math.max(Number(level.reservedQuantity) || 0, 0);
+    const available =
+      level.availableQuantity === undefined || level.availableQuantity === null
+        ? Math.max(quantity - reserved, 0)
+        : Math.max(Number(level.availableQuantity) || 0, 0);
+
     return {
       warehouseId: warehouse,
-      quantity: level.quantity,
-      available: Math.max(
-        (Number(level.quantity) || 0) - reservedForWarehouse,
-        0,
-      ),
-      reserved: reservedForWarehouse,
+      quantity,
+      available,
+      reserved,
     };
   });
 
@@ -786,9 +772,58 @@ async function restoreStock(orderId, items = [], createdBy, sourceStatus = "ship
   return { message: "Restored stock for cancelled order", movements };
 }
 
-async function shipStock(orderId, items = [], createdBy) {
+async function shipStock(orderId, items = [], createdBy, sourceStatus = "packing") {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
+
+  async function upsertShippingMovement(productId, qty, notes) {
+    const referenceId = String(orderId);
+    const now = new Date();
+
+    const existingReserve = await StockMovement.findOneAndUpdate(
+      {
+        referenceId,
+        productId,
+        type: "RESERVE",
+        isDeleted: { $ne: true },
+      },
+      {
+        $set: {
+          warehouseId: warehouse._id,
+          warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+          type: "FULFILL",
+          quantity: qty,
+          reason: "Order shipped - physical stock deducted",
+          referenceType: "SALE",
+          createdBy,
+          targetStatus: "shipping",
+          sourceStatus,
+          notes,
+          updatedAt: now,
+        },
+      },
+      { new: true, sort: { createdAt: -1 } },
+    );
+
+    if (existingReserve) {
+      return existingReserve;
+    }
+
+    return StockMovement.create({
+      productId,
+      warehouseId: warehouse._id,
+      warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+      type: "FULFILL",
+      quantity: qty,
+      reason: "Order shipped - physical stock deducted",
+      referenceType: "SALE",
+      referenceId,
+      createdBy,
+      targetStatus: "shipping",
+      sourceStatus,
+      notes,
+    });
+  }
 
   for (const item of items) {
     const productId = item.productId;
@@ -804,20 +839,11 @@ async function shipStock(orderId, items = [], createdBy) {
     if (stockLevel) {
       await recalculateAndSyncProductStock(productId);
 
-      const movement = await StockMovement.create({
+      const movement = await upsertShippingMovement(
         productId,
-        warehouseId: warehouse._id,
-        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
-        type: "FULFILL",
-        quantity: qty,
-        reason: "Order shipped - physical stock deducted",
-        referenceType: "SALE",
-        referenceId: String(orderId),
-        createdBy,
-        targetStatus: "shipping",
-        sourceStatus: "packing",
-        notes: `Shipped ${qty} units for order ${orderId}`,
-      });
+        qty,
+        `Shipped ${qty} units for order ${orderId}`,
+      );
 
       const movementDoc = await StockMovement.findById(movement._id)
         .populate("productId", "name sku")
