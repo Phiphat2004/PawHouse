@@ -413,13 +413,19 @@ export default function CareAppointmentsPage() {
 
   const startEdit = (item) => {
     setEditingId(item._id);
+    const parsed = parseBatchNote(item.note);
     setEditForm({
       petName: item.petName || "",
       petType: item.petType || "",
       serviceType: item.serviceType || "",
-      appointmentDate: new Date(item.appointmentDate).toISOString().slice(0, 10),
+      appointmentDate: dayjs(item.appointmentDate).format("YYYY-MM-DD"),
       startTime: item.startTime || "",
-      note: parseBatchNote(item.note).cleanNote,
+      note: parsed.cleanNote,
+      _batchInfo: parsed.batchId ? {
+        batchId: parsed.batchId,
+        sequence: parsed.sequence,
+        total: parsed.total
+      } : null
     });
   };
 
@@ -444,7 +450,20 @@ export default function CareAppointmentsPage() {
 
     try {
       setSavingEdit(true);
-      await careAppointmentApi.updateAppointment(editingId, editForm);
+      
+      const cleanNote = String(editForm.note || "").trim();
+      let finalNote = cleanNote;
+      if (editForm._batchInfo) {
+        finalNote = `${cleanNote}${cleanNote ? "\n" : ""}[BATCH:${editForm._batchInfo.batchId}:${editForm._batchInfo.sequence}/${editForm._batchInfo.total}]`;
+      }
+      
+      const payload = {
+        ...editForm,
+        note: finalNote
+      };
+      delete payload._batchInfo;
+
+      await careAppointmentApi.updateAppointment(editingId, payload);
       await fetchMyAppointments();
       cancelEdit();
     } catch (err) {
