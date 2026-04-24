@@ -422,9 +422,8 @@ async function fulfillStock(orderId, items = [], createdBy) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
-  // ✅ Get order to capture status at this point
   const order = await Order.findById(orderId).lean();
-  const targetStatus = order?.status || "shipping";
+  const targetStatus = order?.status || "confirmed";
 
   async function upsertFulfillMovement(productId, qty, reason, notes) {
     const referenceId = String(orderId);
@@ -436,7 +435,7 @@ async function fulfillStock(orderId, items = [], createdBy) {
       referenceType: "SALE",
       createdBy,
       targetStatus,
-      sourceStatus: "confirmed",
+      sourceStatus: "pending",
       notes,
     };
 
@@ -480,12 +479,12 @@ async function fulfillStock(orderId, items = [], createdBy) {
       {
         productId,
         warehouseId: warehouse._id,
-        $expr: { $gte: ["$reservedQuantity", qty] },
+        availableQuantity: { $gte: qty },
       },
       {
         $inc: {
-          reservedQuantity: -qty,
-          quantity: -qty,
+          reservedQuantity: qty,
+          availableQuantity: -qty,
         },
       },
       { new: true },
@@ -496,7 +495,7 @@ async function fulfillStock(orderId, items = [], createdBy) {
         const movement = await upsertFulfillMovement(
           productId,
           qty,
-          "Delivered",
+          "Order confirmed - stock deducted",
           `Fulfilled variation ${variationId} ${qty} units for order ${orderId}`,
         );
 
@@ -511,9 +510,9 @@ async function fulfillStock(orderId, items = [], createdBy) {
         productId,
         warehouseId: warehouse._id,
       });
-      const reserved = existing ? existing.reservedQuantity : 0;
+      const available = existing ? existing.availableQuantity : 0;
       throw new Error(
-        `Cannot fulfill stock. Reserved: ${reserved}, Requested: ${qty}`,
+        `Insufficient stock to confirm order. Available: ${available}, Requested: ${qty}`,
       );
     }
 
@@ -522,7 +521,7 @@ async function fulfillStock(orderId, items = [], createdBy) {
     const movement = await upsertFulfillMovement(
       productId,
       qty,
-      "Delivered",
+      "Order confirmed - stock deducted",
       `Fulfilled ${qty} units for order ${orderId}`,
     );
 
@@ -726,7 +725,9 @@ async function restoreStock(orderId, items = [], createdBy, sourceStatus = "ship
     const stockLevel = await StockLevel.findOneAndUpdate(
       { productId, warehouseId: warehouse._id },
       {
-        $inc: { quantity: qty, availableQuantity: qty },
+        ...(sourceStatus === "shipping"
+          ? { $inc: { quantity: qty, availableQuantity: qty } }
+          : { $inc: { reservedQuantity: -qty, availableQuantity: qty } }),
       },
       { new: true },
     );
@@ -783,6 +784,49 @@ async function restoreStock(orderId, items = [], createdBy, sourceStatus = "ship
   }
 
   return { message: "Restored stock for cancelled order", movements };
+}
+
+async function shipStock(orderId, items = [], createdBy) {
+  const warehouse = await resolveSingleWarehouse();
+  const movements = [];
+
+  for (const item of items) {
+    const productId = item.productId;
+    const qty = Math.abs(Number(item.quantity) || 0);
+    if (!productId || qty <= 0) continue;
+
+    const stockLevel = await StockLevel.findOneAndUpdate(
+      { productId, warehouseId: warehouse._id },
+      { $inc: { quantity: -qty, reservedQuantity: -qty } },
+      { new: true },
+    );
+
+    if (stockLevel) {
+      await recalculateAndSyncProductStock(productId);
+
+      const movement = await StockMovement.create({
+        productId,
+        warehouseId: warehouse._id,
+        warehouseSnapshot: { name: warehouse.name, code: warehouse.code },
+        type: "FULFILL",
+        quantity: qty,
+        reason: "Order shipped - physical stock deducted",
+        referenceType: "SALE",
+        referenceId: String(orderId),
+        createdBy,
+        targetStatus: "shipping",
+        sourceStatus: "packing",
+        notes: `Shipped ${qty} units for order ${orderId}`,
+      });
+
+      const movementDoc = await StockMovement.findById(movement._id)
+        .populate("productId", "name sku")
+        .lean();
+      movements.push(attachWarehouseToMovement(movementDoc, warehouse));
+    }
+  }
+
+  return { message: "Stock deducted for shipped order", movements };
 }
 
 async function deleteStockMovement(movementId) {
@@ -918,6 +962,7 @@ module.exports = {
   reserveStock,
   releaseStock,
   fulfillStock,
+  shipStock,
   restoreStock,
   getStockLevels,
   getStockMovements,
