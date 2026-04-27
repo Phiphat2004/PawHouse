@@ -222,7 +222,9 @@ export default function AdminOrdersPage() {
         {/* Search and Filters */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-            <div className="relative flex-1">
+
+            {/* SEARCH */}
+            <div className="relative flex-1 min-w-[950px]">
               <SearchOutlined className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 type="text"
@@ -232,9 +234,11 @@ export default function AdminOrdersPage() {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 shadow-none transition focus-visible:ring-2 focus-visible:ring-[#846551]/20"
+                className="h-11 w-full rounded-xl border-slate-200 bg-slate-50 pl-10 shadow-none"
               />
             </div>
+
+            {/* SELECT */}
             <Select
               value={normalizeStatus(statusFilter)}
               onValueChange={(value) => {
@@ -243,7 +247,7 @@ export default function AdminOrdersPage() {
               }}
               disabled={loading}
             >
-              <SelectTrigger className="w-60 bg-white border-gray-200">
+              <SelectTrigger className="h-11 w-[180px] min-w-fit px-3 shrink-0 rounded-xl bg-white border-gray-200">
                 <span>
                   {
                     statusOptions.find(
@@ -262,9 +266,10 @@ export default function AdminOrdersPage() {
               </SelectContent>
             </Select>
 
+            {/* RESET */}
             <Button
               variant="outline"
-              className="h-10 rounded-xl border-slate-200 px-3 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-50"
+              className="h-11 shrink-0 rounded-xl border-slate-200 px-4 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-50"
               onClick={() => {
                 setSearchQuery("");
                 setStatusFilter("all");
