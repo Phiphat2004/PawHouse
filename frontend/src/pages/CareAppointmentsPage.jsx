@@ -838,12 +838,12 @@ export default function CareAppointmentsPage() {
                                   </span>
                                   {group.items.length > 0 ? (
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                                      <span>
+                                      {/* <span>
                                         <CalendarOutlined /> {new Date(group.items[0].appointmentDate).toLocaleDateString("en-US")}
-                                      </span>
-                                      <span>
+                                      </span> */}
+                                      {/* <span>
                                         <ClockCircleOutlined /> {group.items[0].startTime}
-                                      </span>
+                                      </span> */}
                                     </div>
                                   ) : null}
                                 </div>
