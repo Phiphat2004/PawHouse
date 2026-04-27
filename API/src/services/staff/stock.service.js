@@ -6,6 +6,7 @@ const {
   ProductVariation,
   Order,
   OrderItem,
+  User,
 } = require("../../models");
 
 const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId(
@@ -232,7 +233,7 @@ async function createStockEntry(data) {
     .lean();
   const movementDoc = await StockMovement.findById(movement._id)
     .populate("productId", "name sku")
-    .populate("createdBy", "email")
+    .populate("createdBy", "profile.fullName roles")
     .lean();
 
   return {
@@ -343,7 +344,12 @@ async function reserveStock(orderId, items = [], createdBy) {
   return { message: "Reserved stock for order", movements };
 }
 
-async function releaseStock(orderId, items = [], createdBy, sourceStatus = "pending") {
+async function releaseStock(
+  orderId,
+  items = [],
+  createdBy,
+  sourceStatus = "pending",
+) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
@@ -554,7 +560,14 @@ async function getStockLevels(filters = {}) {
 }
 
 async function getStockMovements(filters = {}) {
-  const { productId, warehouseId, type, targetStatus, page = 1, limit = 20 } = filters;
+  const {
+    productId,
+    warehouseId,
+    type,
+    targetStatus,
+    page = 1,
+    limit = 20,
+  } = filters;
   const numericPage = Number(page) || 1;
   const numericLimit = Number(limit) || 20;
 
@@ -576,6 +589,24 @@ async function getStockMovements(filters = {}) {
     }
   }
 
+  const actorIds = await User.find({
+    roles: { $in: ["admin", "staff"] },
+  }).distinct("_id");
+
+  if (!actorIds.length) {
+    return {
+      movements: [],
+      pagination: {
+        page: numericPage,
+        limit: numericLimit,
+        total: 0,
+        pages: 1,
+      },
+    };
+  }
+
+  query.createdBy = { $in: actorIds };
+
   const fallbackWarehouse = await (warehouseId
     ? getWarehouseObjectById(warehouseId)
     : resolveSingleWarehouse());
@@ -583,17 +614,20 @@ async function getStockMovements(filters = {}) {
   // **100% DB ONLY** - No synthetic logic
   const movements = await StockMovement.find(query)
     .populate("productId", "name sku")
-    .populate("createdBy", "name email")
+    .populate("createdBy", "profile.fullName roles")
     .sort({ createdAt: -1 })
     .lean();
 
   const normalizedMovements = movements.map((movement) =>
-    attachWarehouseToMovement(movement, fallbackWarehouse)
+    attachWarehouseToMovement(movement, fallbackWarehouse),
   );
 
   const total = normalizedMovements.length;
   const skip = (numericPage - 1) * numericLimit;
-  const paginatedMovements = normalizedMovements.slice(skip, skip + numericLimit);
+  const paginatedMovements = normalizedMovements.slice(
+    skip,
+    skip + numericLimit,
+  );
 
   return {
     movements: paginatedMovements,
@@ -615,7 +649,7 @@ function getStatusLabel(status) {
     shipping: "Đang giao hàng",
     completed: "Đã giao hàng",
     cancelled: "Đã hủy",
-    refunded: "Hoàn trả"
+    refunded: "Hoàn trả",
   };
   return labels[status] || status;
 }
@@ -631,7 +665,7 @@ function getMovementTypeLabel(type) {
     IN: "Nhập kho",
     OUT: "Xuất kho",
     ADJUSTMENT: "Điều chỉnh",
-    TRANSFER: "Chuyển kho"
+    TRANSFER: "Chuyển kho",
   };
   return labels[type] || type;
 }
@@ -697,7 +731,12 @@ async function deleteWarehouse() {
   throw new Error("Single warehouse mode does not allow deleting warehouse");
 }
 
-async function restoreStock(orderId, items = [], createdBy, sourceStatus = "shipping") {
+async function restoreStock(
+  orderId,
+  items = [],
+  createdBy,
+  sourceStatus = "shipping",
+) {
   // Restore quantity when cancelling from confirmed/packing/shipping (after fulfill)
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
@@ -772,7 +811,12 @@ async function restoreStock(orderId, items = [], createdBy, sourceStatus = "ship
   return { message: "Restored stock for cancelled order", movements };
 }
 
-async function shipStock(orderId, items = [], createdBy, sourceStatus = "packing") {
+async function shipStock(
+  orderId,
+  items = [],
+  createdBy,
+  sourceStatus = "packing",
+) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
@@ -871,7 +915,12 @@ async function deleteStockMovement(movementId) {
 }
 
 // ✅ THÊM: Hàm xử lý hủy order (tự động chọn RELEASE vs RESTORE)
-async function handleOrderCancellation(orderId, items = [], createdBy, orderStatus = "pending") {
+async function handleOrderCancellation(
+  orderId,
+  items = [],
+  createdBy,
+  orderStatus = "pending",
+) {
   /**
    * Xử lý huỷ order:
    * - Nếu order chưa shipped (pending/confirmed/packing) → RELEASE
@@ -935,7 +984,6 @@ async function handleOrderCancellation(orderId, items = [], createdBy, orderStat
         .populate("productId", "name sku")
         .lean();
       movements.push(attachWarehouseToMovement(movementDoc, warehouse));
-
     } else {
       // ✅ Hoàn lại hàng đã bán (đã bị trừ)
       const stockLevel = await StockLevel.findOneAndUpdate(
@@ -979,7 +1027,7 @@ async function handleOrderCancellation(orderId, items = [], createdBy, orderStat
   return {
     message: `Order cancelled - ${movementType} movement created`,
     movementType,
-    movements
+    movements,
   };
 }
 
