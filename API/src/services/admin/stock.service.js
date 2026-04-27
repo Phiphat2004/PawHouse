@@ -232,7 +232,11 @@ async function createStockEntry(data) {
     .lean();
   const movementDoc = await StockMovement.findById(movement._id)
     .populate("productId", "name sku")
-    .populate("createdBy", "email")
+    .populate({
+      path: "createdBy",
+      select: "profile.fullName roles",
+      match: { roles: { $in: ["admin", "staff"] } },
+    })
     .lean();
 
   return {
@@ -341,7 +345,12 @@ async function reserveStock(orderId, items = [], createdBy) {
   return { message: "Reserved stock for order", movements };
 }
 
-async function releaseStock(orderId, items = [], createdBy, sourceStatus = "pending") {
+async function releaseStock(
+  orderId,
+  items = [],
+  createdBy,
+  sourceStatus = "pending",
+) {
   const warehouse = await resolveSingleWarehouse();
   const movements = [];
 
@@ -523,7 +532,14 @@ async function getStockLevels(filters = {}) {
 }
 
 async function getStockMovements(filters = {}) {
-  const { productId, warehouseId, type, targetStatus, page = 1, limit = 20 } = filters;
+  const {
+    productId,
+    warehouseId,
+    type,
+    targetStatus,
+    page = 1,
+    limit = 20,
+  } = filters;
   const numericPage = Number(page) || 1;
   const numericLimit = Number(limit) || 20;
 
@@ -551,7 +567,11 @@ async function getStockMovements(filters = {}) {
 
   const movements = await StockMovement.find(query)
     .populate("productId", "name sku")
-    .populate("createdBy", "name email")
+    .populate({
+      path: "createdBy",
+      select: "profile.fullName roles",
+      match: { roles: { $in: ["admin", "staff"] } },
+    })
     .sort({ createdAt: -1 })
     .lean();
 
@@ -654,7 +674,12 @@ async function deleteWarehouse() {
   throw new Error("Single warehouse mode does not allow deleting warehouse");
 }
 
-async function restoreStock(orderId, items = [], createdBy, sourceStatus = "shipping") {
+async function restoreStock(
+  orderId,
+  items = [],
+  createdBy,
+  sourceStatus = "shipping",
+) {
   // Restore quantity when cancelling from confirmed/packing/shipping (after fulfill)
   const warehouse = await resolveSingleWarehouse();
   const movements = [];

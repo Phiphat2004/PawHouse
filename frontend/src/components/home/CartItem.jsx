@@ -9,30 +9,40 @@ export default function CartItem({
     onQuantityChange,
 }) {
     const itemId = item?._id || item?.id;
-    const [localQuantity, setLocalQuantity] = useState(item?.quantity || 1);
+    const [localQuantity, setLocalQuantity] = useState(
+        String(item?.quantity || 1),
+    );
 
     const stock = Number(item?.product_id?.stock);
     const hasValidStock = !Number.isNaN(stock) && stock >= 0;
     const maxQuantity = hasValidStock ? Math.max(1, stock) : undefined;
 
     useEffect(() => {
-        setLocalQuantity(item?.quantity || 1);
+        setLocalQuantity(String(item?.quantity || 1));
     }, [item?.quantity]);
 
     const handleInputChange = (e) => {
         const rawValue = e.target.value;
 
-        let val = parseInt(rawValue, 10);
-
-        if (Number.isNaN(val) || val < 1) {
-            val = 1;
+        // Allow temporary empty state so user can delete and retype naturally.
+        if (rawValue === "") {
+            setLocalQuantity("");
+            return;
         }
+
+        if (!/^\d+$/.test(rawValue)) {
+            return;
+        }
+
+        let val = Number(rawValue);
+
+        if (Number.isNaN(val)) return;
 
         if (hasValidStock && val > maxQuantity) {
             val = maxQuantity;
         }
 
-        setLocalQuantity(val);
+        setLocalQuantity(String(val));
     };
 
     const handleInputBlur = () => {
@@ -46,7 +56,7 @@ export default function CartItem({
             val = maxQuantity;
         }
 
-        setLocalQuantity(val);
+        setLocalQuantity(String(val));
 
         if (val !== item?.quantity && onQuantityChange) {
             onQuantityChange(itemId, val);
@@ -60,7 +70,12 @@ export default function CartItem({
     };
 
     const unitPrice = Number(item?.product_id?.price) || 0;
-    const lineTotal = unitPrice * (Number(localQuantity) || 1);
+    const previewQuantity = Number(localQuantity);
+    const quantityForDisplay =
+        Number.isNaN(previewQuantity) || previewQuantity < 1
+            ? Number(item?.quantity) || 1
+            : previewQuantity;
+    const lineTotal = unitPrice * quantityForDisplay;
 
     return (
         <div className="flex items-center gap-4 bg-[#f9f9f9] rounded-2xl p-4 border border-gray-100">
@@ -96,7 +111,9 @@ export default function CartItem({
                         </button>
 
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             min="1"
                             max={maxQuantity}
                             value={localQuantity}

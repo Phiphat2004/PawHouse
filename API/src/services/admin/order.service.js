@@ -273,7 +273,17 @@ async function createOrder(userId, orderData) {
     );
   }
 
-
+  // Reserve stock immediately so first successful checkout gets the stock.
+  try {
+    await stockService.reserveStock(order._id, orderItems, userId);
+  } catch (err) {
+    console.error("Error reserving stock:", err.message);
+    await Order.deleteOne({ _id: order._id });
+    await OrderItem.deleteMany({ orderId: order._id });
+    const error = new Error(`Stock reservation failed: ${err.message}`);
+    error.status = 500;
+    throw error;
+  }
 
   // Clear user's cart
   cart.items = [];
