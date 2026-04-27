@@ -5,7 +5,7 @@ const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId(
   "000000000000000000000001",
 );
 const DEFAULT_WAREHOUSE = {
-  name: "Kho Cần Thơ",
+  name: "Kho Can Tho",
   code: "WH001",
   address: {
     street: "",
@@ -178,8 +178,8 @@ async function createProduct(data, userRoles, userId) {
   // compareAtPrice=0 means "no discount" (will be saved as undefined)
   const rawCompareAt =
     compareAtPrice === undefined ||
-    compareAtPrice === null ||
-    compareAtPrice === ""
+      compareAtPrice === null ||
+      compareAtPrice === ""
       ? undefined
       : Number(compareAtPrice);
   const normalizedCompareAtPrice =
@@ -354,8 +354,8 @@ async function updateProduct(id, data, userRoles) {
   // compareAtPrice=0 means "remove discount" (will be saved as undefined)
   const rawCompareAt =
     compareAtPrice === undefined ||
-    compareAtPrice === null ||
-    compareAtPrice === ""
+      compareAtPrice === null ||
+      compareAtPrice === ""
       ? undefined
       : Number(compareAtPrice);
   const normalizedCompareAtPrice = rawCompareAt === 0 ? null : rawCompareAt;

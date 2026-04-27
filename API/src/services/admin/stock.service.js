@@ -607,14 +607,14 @@ async function getProductTotalStock(productId) {
   const pendingOrderIds = pendingOrders.map((order) => order._id);
   const reservationAgg = pendingOrderIds.length
     ? await OrderItem.aggregate([
-        {
-          $match: {
-            orderId: { $in: pendingOrderIds },
-            productId: new mongoose.Types.ObjectId(productId),
-          },
+      {
+        $match: {
+          orderId: { $in: pendingOrderIds },
+          productId: new mongoose.Types.ObjectId(productId),
         },
-        { $group: { _id: null, quantity: { $sum: "$quantity" } } },
-      ])
+      },
+      { $group: { _id: null, quantity: { $sum: "$quantity" } } },
+    ])
     : [];
 
   const reservedFromOrders = Number(reservationAgg?.[0]?.quantity || 0);
@@ -630,9 +630,9 @@ async function getProductTotalStock(productId) {
     const proportionalReserved =
       warehouseCount > 0
         ? Math.floor(
-            (reservedQuantity * (Number(level.quantity) || 0)) /
-              Math.max(totalQuantity, 1),
-          )
+          (reservedQuantity * (Number(level.quantity) || 0)) /
+          Math.max(totalQuantity, 1),
+        )
         : 0;
     const reservedForWarehouse = isLast
       ? remainingReserved
