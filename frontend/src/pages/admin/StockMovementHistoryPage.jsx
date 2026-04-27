@@ -255,15 +255,15 @@ export default function StockMovementHistoryPage() {
   };
 
   const getCreatorDisplayName = (createdBy) => {
-    if (!createdBy) return '-';
-    return createdBy?.profile?.fullName || createdBy?.name || '-';
+    if (!createdBy) return 'System';
+    return createdBy?.profile?.fullName || 'Admin/Staff';
   };
 
   const getCreatorRoleLabel = (createdBy) => {
     const roles = Array.isArray(createdBy?.roles) ? createdBy.roles : [];
     if (roles.includes('staff')) return 'Staff';
     if (roles.includes('admin')) return 'Admin';
-    return '-';
+    return 'System';
   };
 
   // Filter movements by search term (client-side for current page)
@@ -289,7 +289,7 @@ export default function StockMovementHistoryPage() {
         targetStatus.includes(searchLower) ||
         orderStatus.includes(searchLower) ||
         statusLabel.includes(searchLower) ||
-          createdByName.includes(searchLower) ||
+        createdByName.includes(searchLower) ||
         createdByRole.includes(searchLower);
   });
 
@@ -555,7 +555,7 @@ export default function StockMovementHistoryPage() {
                     Reason
                   </th>
                   <th className="hidden lg:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Staff/Admin
+                    Staff entry
                   </th>
                   <th className="hidden lg:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Time
