@@ -374,6 +374,7 @@ async function getMyAppointments(
 
   const [appointments, total] = await Promise.all([
     CareAppointment.find(query)
+      .populate("reviewedBy", "email profile.fullName")
       .sort({ appointmentDate: -1, startTime: -1 })
       .skip(skip)
       .limit(parsedLimit),

@@ -11,7 +11,7 @@ const createOrder = async (req, res, next) => {
     });
 
     res.status(201).json({
-      message: "Tạo đơn hàng thành công",
+      message: "Order created successfully",
       order: result.order || result,
       reservedMovements: result.reservedMovements || [],
     });
@@ -32,7 +32,7 @@ const createBuyNowOrder = async (req, res, next) => {
     });
 
     res.status(201).json({
-      message: "Tạo đơn hàng thành công",
+      message: "Order created successfully",
       order: result.order || result,
       reservedMovements: result.reservedMovements || [],
     });
@@ -52,7 +52,7 @@ const searchOrders = async (req, res, next) => {
     });
 
     res.json({
-      message: "Lấy danh sách đơn hàng thành công",
+      message: "Fetched orders successfully",
       ...result,
     });
   } catch (error) {
@@ -65,7 +65,7 @@ const getOrderById = async (req, res, next) => {
     const order = await orderService.getOrderById(req.params.id, req.user._id);
 
     res.json({
-      message: "Lấy chi tiết đơn hàng thành công",
+      message: "Fetched order details successfully",
       order,
     });
   } catch (error) {
@@ -84,7 +84,7 @@ const cancelOrder = async (req, res, next) => {
     );
 
     res.json({
-      message: "Huỷ đơn hàng thành công",
+      message: "Order cancelled successfully",
       order,
     });
   } catch (error) {
