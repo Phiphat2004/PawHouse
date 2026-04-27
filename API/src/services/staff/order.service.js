@@ -275,7 +275,6 @@ async function createOrder(userId, orderData) {
 
   // Reserve stock immediately so first successful checkout gets the stock.
 
-
   // Clear user's cart
   cart.items = [];
   cart.original_price = 0;
@@ -774,7 +773,12 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   if (newStatus === "shipping" && previousStatus !== "shipping") {
     const orderItems = await OrderItem.find({ orderId: order._id }).lean();
     try {
-      await stockService.shipStock(order._id, orderItems, adminId, previousStatus);
+      await stockService.shipStock(
+        order._id,
+        orderItems,
+        adminId,
+        previousStatus,
+      );
     } catch (err) {
       console.error("Error deducting physical stock on shipping:", err.message);
       // Don't fail the status update if stock deduction fails
@@ -789,26 +793,17 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
     try {
       const isAfterShipping =
         previousStatus === "shipping" || previousStatus === "completed";
-      const isAfterShipping =
-        previousStatus === "shipping" || previousStatus === "completed";
 
       if (isAfterShipping) {
         await stockService.restoreStock(
-      if (isAfterShipping) {
-        await stockService.restoreStock(
           order._id,
-          orderItems,
-          adminId,
           orderItems,
           adminId,
           previousStatus,
         );
       } else {
         await stockService.releaseStock(
-        await stockService.releaseStock(
           order._id,
-          orderItems,
-          adminId,
           orderItems,
           adminId,
           previousStatus,
