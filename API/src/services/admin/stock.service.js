@@ -6,7 +6,6 @@ const {
   ProductVariation,
   Order,
   OrderItem,
-  User,
 } = require("../../models");
 
 const DEFAULT_WAREHOUSE_ID = new mongoose.Types.ObjectId(
@@ -233,7 +232,11 @@ async function createStockEntry(data) {
     .lean();
   const movementDoc = await StockMovement.findById(movement._id)
     .populate("productId", "name sku")
-    .populate("createdBy", "profile.fullName roles")
+    .populate({
+      path: "createdBy",
+      select: "profile.fullName roles",
+      match: { roles: { $in: ["admin", "staff"] } },
+    })
     .lean();
 
   return {
@@ -558,31 +561,17 @@ async function getStockMovements(filters = {}) {
     }
   }
 
-  const actorIds = await User.find({
-    roles: { $in: ["admin", "staff"] },
-  }).distinct("_id");
-
-  if (!actorIds.length) {
-    return {
-      movements: [],
-      pagination: {
-        page: numericPage,
-        limit: numericLimit,
-        total: 0,
-        pages: 1,
-      },
-    };
-  }
-
-  query.createdBy = { $in: actorIds };
-
   const fallbackWarehouse = await (warehouseId
     ? getWarehouseObjectById(warehouseId)
     : resolveSingleWarehouse());
 
   const movements = await StockMovement.find(query)
     .populate("productId", "name sku")
-    .populate("createdBy", "profile.fullName roles")
+    .populate({
+      path: "createdBy",
+      select: "profile.fullName roles",
+      match: { roles: { $in: ["admin", "staff"] } },
+    })
     .sort({ createdAt: -1 })
     .lean();
 
