@@ -48,12 +48,12 @@ export default function AdminOrderDetailPage() {
         const rawUser = localStorage.getItem("pawhouse_user");
         if (rawUser) {
           const userObj = JSON.parse(rawUser);
-          noteToSend = `Updated by ${userObj.name || userObj.email || "Admin"}`;
+          noteToSend = "";
         } else {
-          noteToSend = "Updated from admin panel";
+          noteToSend = "";
         }
       } catch (e) {
-        noteToSend = "Updated from admin panel";
+        noteToSend = "";
       }
     }
 
@@ -527,11 +527,35 @@ export default function AdminOrderDetailPage() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900">
                           {statusLabels[history.to] || history.to}
-                          {history.from && (
+                          {/* {history.from && (
                             <span className="text-gray-400 font-normal ml-2 text-xs">(from: {statusLabels[history.from] || history.from})</span>
-                          )}
+                          )} */}
                         </p>
-                        {history.note && <p className="text-xs text-gray-500 mt-0.5">{history.note}</p>}
+                        {history.note &&
+                          !history.note.includes("Updated by") &&
+                          !history.note.includes("Updated from admin panel") && (
+                            <p className="text-xs text-gray-500 mt-0.5">{history.note}</p>
+                          )}
+                        {history.changedBy && history.to !== "pending" && (
+                          <p className="text-xs text-gray-600 mt-0.5">
+                            Updated by: <span className="font-medium">
+                              {history.changedBy ? (
+                                typeof history.changedBy === 'object' ? (
+                                  <>
+                                    {history.changedBy?.profile?.fullName || history.changedBy?.name || history.changedBy?.email}
+                                    {history.changedBy?.roles?.includes("admin")
+                                      ? " (Admin)"
+                                      : history.changedBy?.roles?.includes("staff")
+                                        ? " (Staff)"
+                                        : ""}
+                                  </>
+                                ) : (
+                                  <span className="text-gray-400 font-normal italic">User ID: {history.changedBy}</span>
+                                )
+                              ) : "System"}
+                            </span>
+                          </p>
+                        )}
                         <p className="text-xs text-gray-400 mt-0.5">{formatDate(history.at)}</p>
                       </div>
                     </div>

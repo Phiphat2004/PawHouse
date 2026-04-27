@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); mongoose.connect('mongodb://127.0.0.1:27017/pawcare').then(async () => { const db = mongoose.connection.db; const order = await db.collection('orders').findOne({ statusHistory: { $type: 'array' } }); console.log(JSON.stringify(order.statusHistory, null, 2)); process.exit(0); }).catch(console.error);

@@ -369,7 +369,7 @@ async function createOrder(userId, orderData) {
       {
         from: null,
         to: "pending",
-        changedBy: userId,
+        changedBy: new mongoose.Types.ObjectId(userId),
         note: "Order created",
         at: new Date(),
       },
