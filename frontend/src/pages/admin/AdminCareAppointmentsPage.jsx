@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { DatePicker } from "antd";
 import { AdminLayout } from "../../components/admin";
@@ -639,6 +639,16 @@ export default function AdminCareAppointmentsPage() {
                   <p className="text-gray-500">Time Slot</p>
                   <p className="font-medium text-gray-900">{selectedAppointment.startTime}</p>
                 </div>
+                {selectedAppointment.reviewedBy ? (
+                  <div>
+                    <p className="text-gray-500">Confirmed/Reviewed By</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedAppointment.reviewedBy?.profile?.fullName ||
+                        selectedAppointment.reviewedBy?.email ||
+                        "Staff/Admin"}
+                    </p>
+                  </div>
+                ) : null}
                 <div className="md:col-span-2">
                   <p className="text-gray-500">Note</p>
                   <p className="font-medium text-gray-900 whitespace-pre-wrap">
