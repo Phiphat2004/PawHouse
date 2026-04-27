@@ -205,7 +205,7 @@ async function createOrder(userId, orderData) {
 
     // Check stock availability
     if (availableStock < quantity) {
-      const error = new Error(`Không đủ hàng tồn kho cho ${product.name}`);
+      const error = new Error(`Not enough stock available for ${product.name}`);
       error.status = 400;
       throw error;
     }
@@ -393,10 +393,9 @@ async function getOrderById(orderId, userId) {
     query.userId = userId;
   }
 
-  const order = await Order.findOne(query).populate(
-    "userId",
-    "name email phone",
-  );
+  const order = await Order.findOne(query)
+    .populate("userId", "name email phone")
+    .populate("statusHistory.changedBy", "name email profile roles");
 
   if (!order) {
     const error = new Error("Order not found");
@@ -605,7 +604,7 @@ async function cancelOrder(orderId, userId, reason = "") {
 
   if (!["pending", "confirmed", "packing"].includes(order.status)) {
     const error = new Error(
-      "Chỉ có thể huỷ đơn hàng ở trạng thái chờ xác nhận, đã xác nhận hoặc đang đóng gói",
+      "Orders can only be cancelled when they are in pending confirmation, confirmed, or packaging status",
     );
     error.status = 400;
     throw error;
@@ -714,7 +713,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
 
   if (!allowedNextStatuses.includes(newStatus)) {
     const error = new Error(
-      `Không thể chuyển trạng thái từ '${previousStatus}' sang '${newStatus}'`,
+      `Cannot change status from '${previousStatus}' to '${newStatus}'.'`,
     );
     error.status = 400;
     throw error;
@@ -724,7 +723,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   order.statusHistory.push({
     from: previousStatus,
     to: newStatus,
-    changedBy: adminId,
+    changedBy: new mongoose.Types.ObjectId(adminId),
     note: normalizedNote || `Order status updated to ${newStatus}`,
     at: new Date(),
   });
@@ -768,13 +767,13 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
       order.statusHistory.push({
         from: newStatus,
         to: previousStatus,
-        changedBy: adminId,
+        changedBy: new mongoose.Types.ObjectId(adminId),
         note: "Reverted due to insufficient stock",
         at: new Date(),
       });
       await order.save();
       const error = new Error(
-        "Không đủ hàng để xác nhận đơn hàng: " + (err.message || ""),
+        "Insufficient stock to confirm the order." + (err.message || ""),
       );
       error.status = 400;
       throw error;

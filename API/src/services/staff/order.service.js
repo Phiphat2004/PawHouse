@@ -258,7 +258,7 @@ async function createOrder(userId, orderData) {
       {
         from: null,
         to: "pending",
-        changedBy: userId,
+        changedBy: new mongoose.Types.ObjectId(userId),
         note: "Order is created",
         at: new Date(),
       },
@@ -394,10 +394,9 @@ async function getOrderById(orderId, userId) {
     query.userId = userId;
   }
 
-  const order = await Order.findOne(query).populate(
-    "userId",
-    "name email phone",
-  );
+  const order = await Order.findOne(query)
+    .populate("userId", "name email phone")
+    .populate("statusHistory.changedBy", "name email profile roles");
 
   if (!order) {
     const error = new Error("Order not found");
@@ -622,7 +621,7 @@ async function cancelOrder(orderId, userId, reason = "") {
   order.statusHistory.push({
     from: previousStatus,
     to: "cancelled",
-    changedBy: userId,
+    changedBy: new mongoose.Types.ObjectId(userId),
     note: reason || "Order is cancelled",
     at: new Date(),
   });
@@ -713,7 +712,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
   order.statusHistory.push({
     from: previousStatus,
     to: newStatus,
-    changedBy: adminId,
+    changedBy: new mongoose.Types.ObjectId(adminId),
     note: normalizedNote || `Order status updated to ${newStatus}`,
     at: new Date(),
   });
@@ -757,7 +756,7 @@ async function updateOrderStatus(orderId, newStatus, adminId, note = "") {
       order.statusHistory.push({
         from: newStatus,
         to: previousStatus,
-        changedBy: adminId,
+        changedBy: new mongoose.Types.ObjectId(adminId),
         note: "Reverted due to insufficient stock",
         at: new Date(),
       });
