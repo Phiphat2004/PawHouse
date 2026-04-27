@@ -172,6 +172,7 @@ export default function CareAppointmentsPage() {
     open: false,
     appointmentIds: [],
     reason: "",
+    error: "",
   });
   const [expandedGroups, setExpandedGroups] = useState({});
   const [errorPopup, setErrorPopup] = useState("");
@@ -297,19 +298,16 @@ export default function CareAppointmentsPage() {
 
     const startTotalMinutes = hour * 60 + minute;
     const maxTotalMinutes = BUSINESS_END_HOUR * 60;
+
+    if (startTotalMinutes > maxTotalMinutes) {
+      return [];
+    }
+
+    const formattedTime = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     const times = [];
 
     for (let i = 0; i < count; i += 1) {
-      const slotMinutes = startTotalMinutes + i * 30;
-      if (slotMinutes > maxTotalMinutes) {
-        return [];
-      }
-
-      const slotHour = Math.floor(slotMinutes / 60);
-      const slotMinute = slotMinutes % 60;
-      times.push(
-        `${String(slotHour).padStart(2, "0")}:${String(slotMinute).padStart(2, "0")}`,
-      );
+      times.push(formattedTime);
     }
 
     return times;
@@ -482,6 +480,7 @@ export default function CareAppointmentsPage() {
       open: true,
       appointmentIds,
       reason: "",
+      error: "",
     });
   };
 
@@ -490,13 +489,14 @@ export default function CareAppointmentsPage() {
       open: false,
       appointmentIds: [],
       reason: "",
+      error: "",
     });
   };
 
   const submitCancelAppointment = async () => {
     const reason = String(cancelPopup.reason || "").trim();
     if (!reason) {
-      showErrorPopup("Please enter a reason for cancellation");
+      setCancelPopup((prev) => ({ ...prev, error: "Please enter a reason for cancellation" }));
       return;
     }
 
@@ -1095,10 +1095,14 @@ export default function CareAppointmentsPage() {
             rows={4}
             value={cancelPopup.reason}
             onChange={(e) =>
-              setCancelPopup((prev) => ({ ...prev, reason: e.target.value }))
+              setCancelPopup((prev) => ({ ...prev, reason: e.target.value, error: "" }))
             }
             placeholder="Enter reason for cancellation..."
+            status={cancelPopup.error ? "error" : ""}
           />
+          {cancelPopup.error && (
+            <p className="text-rose-500 text-sm mt-1">{cancelPopup.error}</p>
+          )}
         </div>
       </Modal>
 

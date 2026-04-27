@@ -652,7 +652,7 @@ export default function AdminCareAppointmentsPage() {
                 <div className="md:col-span-2">
                   <p className="text-gray-500">Note</p>
                   <p className="font-medium text-gray-900 whitespace-pre-wrap">
-                    {selectedAppointment.note || "No notes"}
+                    {selectedAppointment._displayNote || "No notes"}
                   </p>
                 </div>
                 {selectedAppointment.rejectionReason ? (
