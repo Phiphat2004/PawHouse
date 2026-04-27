@@ -144,12 +144,22 @@ async function createAppointment(customerId, payload) {
 
   validateScheduleNotPast(normalizedDate, startMinutes);
 
-  const duplicate = await CareAppointment.findOne({
+  const BATCH_NOTE_REGEX = /\[BATCH:([A-Za-z0-9_-]+):\d+\/\d+\]\s*$/;
+  const batchMatch = String(note || "").match(BATCH_NOTE_REGEX);
+  const batchId = batchMatch ? batchMatch[1] : null;
+
+  const duplicateQuery = {
     customerId,
     appointmentDate: normalizedDate,
     startTime,
     status: { $in: ACTIVE_BOOKING_STATUSES },
-  });
+  };
+
+  if (batchId) {
+    duplicateQuery.note = { $not: new RegExp(`\\[BATCH:${batchId}:\\d+/\\d+\\]\\s*$`) };
+  }
+
+  const duplicate = await CareAppointment.findOne(duplicateQuery);
 
   if (duplicate) {
     const error = new Error(
@@ -260,13 +270,23 @@ async function updateMyAppointment(customerId, appointmentId, payload) {
 
   validateScheduleNotPast(nextDate, nextStartMinutes);
 
-  const duplicate = await CareAppointment.findOne({
+  const BATCH_NOTE_REGEX = /\[BATCH:([A-Za-z0-9_-]+):\d+\/\d+\]\s*$/;
+  const batchMatch = String(nextNote || "").match(BATCH_NOTE_REGEX);
+  const batchId = batchMatch ? batchMatch[1] : null;
+
+  const duplicateQuery = {
     _id: { $ne: appointment._id },
     customerId,
     appointmentDate: nextDate,
     startTime: nextStartTime,
     status: { $in: ACTIVE_BOOKING_STATUSES },
-  });
+  };
+
+  if (batchId) {
+    duplicateQuery.note = { $not: new RegExp(`\\[BATCH:${batchId}:\\d+/\\d+\\]\\s*$`) };
+  }
+
+  const duplicate = await CareAppointment.findOne(duplicateQuery);
 
   if (duplicate) {
     const error = new Error(
