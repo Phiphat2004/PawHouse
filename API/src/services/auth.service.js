@@ -711,7 +711,7 @@ async function changePassword(userId, { oldPassword, newPassword }) {
   user.tokenVersion += 1; // Invalidate old tokens
   await user.save();
 
-  return { message: "Đổi mật khẩu thành công" };
+  return { message: "Change password successfully" };
 }
 
 // ==================== SELF DELETE ACCOUNT ====================
@@ -720,11 +720,11 @@ async function selfDeleteAccount(user) {
     "is_deleted status tokenVersion",
   );
   if (!existingUser) {
-    throw { status: 401, message: "Người dùng không tồn tại" };
+    throw { status: 401, message: "User is not exist" };
   }
 
   if (existingUser.is_deleted || existingUser.status === "deleted") {
-    throw { status: 400, message: "Tài khoản đã bị xóa trước đó" };
+    throw { status: 400, message: "User is deleted" };
   }
 
   // Soft-delete: set flags, invalidate all tokens
@@ -740,7 +740,7 @@ async function selfDeleteAccount(user) {
     // Non-critical — proceed even if session cleanup fails
   }
 
-  return { message: "Tài khoản đã được xóa thành công" };
+  return { message: "User is deleted successfully" };
 }
 
 module.exports = {

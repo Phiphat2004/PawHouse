@@ -886,16 +886,7 @@ export default function CareAppointmentsPage() {
                                         <p className="text-slate-900 font-semibold text-base">
                                           {item.petName} - {item.serviceType}
                                         </p>
-                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                                          <span className="inline-flex items-center gap-1">
-                                            <CalendarOutlined />
-                                            {new Date(item.appointmentDate).toLocaleDateString("en-US")}
-                                          </span>
-                                          <span className="inline-flex items-center gap-1">
-                                            <ClockCircleOutlined />
-                                            {item.startTime}
-                                          </span>
-                                        </div>
+                                        {/* Date and time hidden as requested */}
                                         <p className="text-sm text-slate-500 mt-1">
                                           Pet type: {item.petType}
                                         </p>
@@ -1066,6 +1057,9 @@ export default function CareAppointmentsPage() {
             <p><strong>Time:</strong> {selectedAppointment.startTime}</p>
             <p><strong>Status:</strong> {statusLabel[String(selectedAppointment.status || "").toLowerCase()] || selectedAppointment.status}</p>
             <p><strong>Note:</strong> {selectedAppointment._displayNote || "No notes"}</p>
+            {selectedAppointment.reviewedBy ? (
+              <p><strong>Reviewed by:</strong> {selectedAppointment.reviewedBy?.profile?.fullName || selectedAppointment.reviewedBy?.email || "Staff/Admin"}</p>
+            ) : null}
             {selectedAppointment.rejectionReason ? (
               <p className="text-rose-600"><strong>Rejection reason:</strong> {selectedAppointment.rejectionReason}</p>
             ) : null}
