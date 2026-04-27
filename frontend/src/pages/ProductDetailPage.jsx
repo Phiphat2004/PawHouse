@@ -19,6 +19,7 @@ export default function ProductDetailPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState("1");
 
   useEffect(() => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -54,6 +55,8 @@ export default function ProductDetailPage() {
       if (response.product) {
         setProduct(response.product);
         setSelectedImageIdx(0);
+        setQuantity(1);
+        setQuantityInput("1");
       } else {
         setError("Product not found");
       }
@@ -75,7 +78,8 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const result = await addToCart(product._id, quantity);
+    const finalQuantity = commitQuantity();
+    const result = await addToCart(product._id, finalQuantity);
     if (result.success) {
       setToast({
         type: "success",
@@ -93,9 +97,10 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (!product) return;
+    const finalQuantity = commitQuantity();
     
     // Check stock before proceeding
-    if (product?.stock && quantity > product.stock) {
+    if (product?.stock && finalQuantity > product.stock) {
       setToast({
         type: "error",
         title: "Insufficient stock",
@@ -109,24 +114,61 @@ export default function ProductDetailPage() {
       state: { 
         buyNowItem: {
           product_id: product,
-          quantity: quantity
+          quantity: finalQuantity
         } 
       } 
     });
   };
 
-  const handleQuantityChange = (e) => {
-    let val = parseInt(e.target.value);
-    if (isNaN(val) || val < 1) val = 1;
-    if (product?.stock && val > product.stock) {
-      val = product.stock;
+  const normalizeQuantity = (rawValue) => {
+    let next = Number(rawValue);
+
+    if (Number.isNaN(next) || next < 1) {
+      next = 1;
+    }
+
+    if (product?.stock && next > product.stock) {
+      next = product.stock;
       setToast({
         type: "error",
         title: "Insufficient stock",
         message: `Only ${product.stock} items left in stock.`,
       });
     }
-    setQuantity(val);
+
+    return next;
+  };
+
+  const handleQuantityChange = (e) => {
+    const rawValue = e.target.value;
+
+    if (rawValue === "") {
+      setQuantityInput("");
+      return;
+    }
+
+    if (!/^\d+$/.test(rawValue)) {
+      return;
+    }
+
+    setQuantityInput(rawValue);
+  };
+
+  const commitQuantity = () => {
+    const next = normalizeQuantity(quantityInput);
+    setQuantity(next);
+    setQuantityInput(String(next));
+    return next;
+  };
+
+  const handleQuantityBlur = () => {
+    commitQuantity();
+  };
+
+  const handleQuantityKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+    }
   };
 
   if (loading) {
@@ -297,23 +339,35 @@ export default function ProductDetailPage() {
                   {product?.stock > 0 && (
                     <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 p-2 rounded-xl w-max">
                       <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        onClick={() => {
+                          const next = Math.max(1, quantity - 1);
+                          setQuantity(next);
+                          setQuantityInput(String(next));
+                        }}
                         disabled={quantity <= 1}
                         className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
                         -
                       </button>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         min="1"
                         max={product.stock}
-                        value={quantity}
+                        value={quantityInput}
                         onChange={handleQuantityChange}
+                        onBlur={handleQuantityBlur}
+                        onKeyDown={handleQuantityKeyDown}
                         className="w-16 h-10 text-center bg-transparent border-none font-semibold text-gray-900 focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none p-0"
                       />
                       <button
                         onClick={() => {
-                          if (quantity < product.stock) setQuantity(quantity + 1);
+                          if (quantity < product.stock) {
+                            const next = quantity + 1;
+                            setQuantity(next);
+                            setQuantityInput(String(next));
+                          }
                         }}
                         disabled={quantity >= product.stock}
                         className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"

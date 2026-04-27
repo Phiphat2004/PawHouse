@@ -254,6 +254,18 @@ export default function StockMovementHistoryPage() {
     return map[status] || status;
   };
 
+  const getCreatorDisplayName = (createdBy) => {
+    if (!createdBy) return '-';
+    return createdBy?.profile?.fullName || createdBy?.name || '-';
+  };
+
+  const getCreatorRoleLabel = (createdBy) => {
+    const roles = Array.isArray(createdBy?.roles) ? createdBy.roles : [];
+    if (roles.includes('staff')) return 'Staff';
+    if (roles.includes('admin')) return 'Admin';
+    return '-';
+  };
+
   // Filter movements by search term (client-side for current page)
   const filteredMovements = movements.filter(movement => {
     if (!filters.search) return true;
@@ -266,7 +278,8 @@ export default function StockMovementHistoryPage() {
       const targetStatus = movement.targetStatus?.toLowerCase() || '';
       const orderStatus = movement.orderStatus?.toLowerCase() || '';
       const statusLabel = movement.statusLabel?.toLowerCase() || '';
-      const createdBy = movement.createdBy?.email?.toLowerCase() || '';
+      const createdByName = movement.createdBy?.profile?.fullName?.toLowerCase() || '';
+      const createdByRole = (Array.isArray(movement.createdBy?.roles) ? movement.createdBy.roles.join(' ') : '').toLowerCase();
 
       return productName.includes(searchLower) || 
         sku.includes(searchLower) || 
@@ -276,7 +289,8 @@ export default function StockMovementHistoryPage() {
         targetStatus.includes(searchLower) ||
         orderStatus.includes(searchLower) ||
         statusLabel.includes(searchLower) ||
-        createdBy.includes(searchLower);
+          createdByName.includes(searchLower) ||
+        createdByRole.includes(searchLower);
   });
 
   if (loading) {
@@ -540,8 +554,8 @@ export default function StockMovementHistoryPage() {
                   <th className="px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Reason
                   </th>
-                  <th className="hidden xl:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Created by
+                  <th className="hidden lg:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Staff/Admin
                   </th>
                   <th className="hidden lg:table-cell px-3 lg:px-4 py-3 lg:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Time
@@ -627,9 +641,12 @@ export default function StockMovementHistoryPage() {
                             {getShortReason(movement)}
                           </div>
                         </td>
-                        <td className="hidden xl:table-cell px-3 lg:px-4 py-4 align-top">
-                          <div className="text-xs lg:text-sm text-gray-900 truncate max-w-[140px]" title={movement.createdBy?.email}>
-                            {movement.createdBy?.email || 'System'}
+                        <td className="hidden lg:table-cell px-3 lg:px-4 py-4 align-top">
+                          <div className="text-xs lg:text-sm text-gray-900 truncate">
+                            {getCreatorDisplayName(movement.createdBy)}
+                          </div>
+                          <div className="text-xs text-indigo-600 font-medium mt-0.5">
+                            {getCreatorRoleLabel(movement.createdBy)}
                           </div>
                         </td>
                         <td className="hidden lg:table-cell px-3 lg:px-4 py-4 align-top">
