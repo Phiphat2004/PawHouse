@@ -207,12 +207,12 @@ export default function EditProfilePage() {
 
       const storedUser = localStorage.getItem(STORAGE_KEYS.USER)
       if (storedUser) {
-          const cachedUser = JSON.parse(storedUser)
-          cachedUser.fullName = responseData.user.profile.fullName
-          cachedUser.avatarUrl = responseData.user.profile.avatarUrl
-          cachedUser.isAdmin = isAdmin
-          cachedUser.isStaff = isStaff
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(cachedUser))
+        const cachedUser = JSON.parse(storedUser)
+        cachedUser.fullName = responseData.user.profile.fullName
+        cachedUser.avatarUrl = responseData.user.profile.avatarUrl
+        cachedUser.isAdmin = isAdmin
+        cachedUser.isStaff = isStaff
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(cachedUser))
       }
 
       setSuccess('Profile updated successfully!')
@@ -455,7 +455,7 @@ export default function EditProfilePage() {
                 <span>⚙️</span> Notification Settings
               </h3>
 
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
                   <input
                     type="checkbox"
@@ -483,7 +483,7 @@ export default function EditProfilePage() {
                     <p className="text-sm text-gray-500">Receive push notifications from the app</p>
                   </div>
                 </label>
-              </div>
+              </div> */}
             </div>
 
             {/* Delete Account — customers only, matches notification row style */}

@@ -165,10 +165,10 @@ export default function ProfilePage() {
                 <p className="text-gray-700">{getFullAddress(user?.profile?.address)}</p>
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mt-8 mb-4 flex items-center gap-2">
+              {/* <h3 className="text-lg font-semibold text-gray-900 mt-8 mb-4 flex items-center gap-2">
                 <span>⚙️</span> Notification Settings
-              </h3>
-              <div className="grid sm:grid-cols-2 gap-4">
+              </h3> */}
+              {/* <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <span className="text-gray-700">Marketing Email</span>
                   <span className={`px-3 py-1 rounded-full text-sm ${
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                     {user?.settings?.pushNotification ? 'On' : 'Off'}
                   </span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
