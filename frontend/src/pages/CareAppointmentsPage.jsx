@@ -836,7 +836,16 @@ export default function CareAppointmentsPage() {
                                   <span className="text-sm text-orange-700 font-medium">
                                     Group schedule for {group.total || group.items.length} pet(s)
                                   </span>
-                                  {/* Date and time hidden as requested */}
+                                  {group.items.length > 0 ? (
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                                      {/* <span>
+                                        <CalendarOutlined /> {new Date(group.items[0].appointmentDate).toLocaleDateString("en-US")}
+                                      </span> */}
+                                      {/* <span>
+                                        <ClockCircleOutlined /> {group.items[0].startTime}
+                                      </span> */}
+                                    </div>
+                                  ) : null}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Button
